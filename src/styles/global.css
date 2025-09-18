@@ -88,7 +88,7 @@ a:focus {
   color: var(--color-cp-black);
 }
 
-/* global.css에 추가 */
+/* 반응형 좌우 라인 - 뷰포트 너비에 비례하도록 수정 */
 body::before,
 body::after {
   content: '';
@@ -102,9 +102,9 @@ body::after {
 }
 
 body::before {
-  left: 91px; /* 좌측 라인 */
+  left: calc(4.74vw); /* 91px / 1920px * 100 = 4.74vw */
 }
 
 body::after {
-  right: 91px; /* 우측 라인 */
+  right: calc(4.74vw); /* 91px / 1920px * 100 = 4.74vw */
 }
