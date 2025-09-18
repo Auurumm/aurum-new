@@ -72,42 +72,43 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({ isOpen, onClose, onCom
     }
   };
 
-  // 모달이 열릴 때 자동 스크롤
+  // 모달이 열릴 때 모달 최상단으로 스크롤
   useEffect(() => {
     if (isOpen) {
-      // 모달 위치(611px)로 부드럽게 스크롤 이동
-      window.scrollTo({
-        top: 611,
-        behavior: 'smooth'
-      });
+      // 스케일링을 고려한 정확한 스크롤 계산
+      setTimeout(() => {
+        const scaledContent = document.querySelector('.scaled-content');
+        const modalElement = document.querySelector('[data-modal="wisdom"]');
+        
+        if (scaledContent && modalElement) {
+          // 모달의 실제 위치 계산
+          const modalRect = modalElement.getBoundingClientRect();
+          const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+          const modalTop = modalRect.top + scrollTop;
+          
+          window.scrollTo({
+            top: modalTop - 50, // 50px 여유 공간
+            behavior: 'smooth'
+          });
+        } else {
+          // 대체 방법: 페이지 최상단으로 스크롤
+          window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+          });
+        }
+      }, 100);
     }
   }, [isOpen]);
 
-  // 토스트 팝업이 뜰 때 자동 스크롤 처리
+  // 토스트 팝업이 뜰 때 페이지 최상단으로 스크롤
   useEffect(() => {
     if (popupType) {
-      // 버셀 환경에서도 작동하도록 더 안정적인 스크롤 처리
-      const scrollToTop = () => {
-        // 여러 방법 동시 적용으로 호환성 향상
+      setTimeout(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
-        
-        // 스케일링된 환경에서도 작동하도록 추가 처리
-        const scaledContent = document.querySelector('.scaled-content');
-        if (scaledContent) {
-          scaledContent.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'start' 
-          });
-        }
-      };
-
-      // 팝업이 완전히 렌더링된 후 스크롤 실행
-      setTimeout(scrollToTop, 100);
-      
-      // 버셀 환경에서 지연이 있을 수 있으므로 추가 시도
-      setTimeout(scrollToTop, 300);
+      }, 100);
     }
   }, [popupType]);
 
@@ -117,11 +118,11 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({ isOpen, onClose, onCom
     <>
       <div 
         className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 backdrop-blur-sm"
-        style={{ paddingTop: '611px' }}
         onClick={onClose}
       >
         <div 
-          className="px-8 lg:px-16 xl:px-28 py-8 lg:py-12 xl:py-16 bg-neutral-900 rounded-[20px] outline outline-1 outline-offset-[-1px] outline-stone-500 inline-flex flex-col justify-start items-start gap-2.5 max-h-[calc(100vh-4rem)] overflow-y-auto w-full max-w-[1000px] mx-4"
+          data-modal="wisdom"
+          className="px-8 lg:px-16 xl:px-28 py-8 lg:py-12 xl:py-16 bg-neutral-900 rounded-[20px] outline outline-1 outline-offset-[-1px] outline-stone-500 inline-flex flex-col justify-start items-start gap-2.5 max-h-[90vh] overflow-y-auto w-full max-w-[1000px] mx-4 mt-16"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex flex-col justify-center items-center gap-8 lg:gap-12 w-full">
@@ -287,17 +288,16 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({ isOpen, onClose, onCom
         </div>
       </div>
 
-      {/* 팝업 */}
+      {/* 토스트 팝업 - 페이지 최상단에 고정 위치 */}
       {popupType === 'temporary' && (
         <div
           className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm"
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
           onClick={closePopup}
         >
           <div
-            className="absolute left-1/2 -translate-x-1/2 top-[918px]
-                      inline-flex flex-col justify-start items-start gap-2.5
-                      px-28 py-20 bg-neutral-900 rounded-[20px]
-                      outline outline-2 outline-offset-[-1px] outline-CP-CPC"
+            className="absolute left-1/2 -translate-x-1/2 px-28 py-20 bg-neutral-900 rounded-[20px] outline outline-2 outline-offset-[-1px] outline-stone-500 inline-flex flex-col justify-start items-start gap-2.5"
+            style={{ top: '50px' }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex flex-col items-center gap-12">
@@ -309,17 +309,15 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({ isOpen, onClose, onCom
         </div>
       )}
 
-
       {popupType === 'complete' && (
         <div
           className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm"
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
           onClick={closePopup}
         >
           <div
-            className="absolute left-1/2 -translate-x-1/2 top-[918px]
-                      w-fit rounded-[20px] bg-neutral-900
-                      outline outline-2 outline-offset-[-1px] outline-stone-500
-                      px-28 py-20 inline-flex flex-col justify-start items-start gap-2.5"
+            className="absolute left-1/2 -translate-x-1/2 px-28 py-20 bg-neutral-900 rounded-[20px] outline outline-2 outline-offset-[-1px] outline-stone-500 inline-flex flex-col justify-start items-start gap-2.5"
+            style={{ top: '50px' }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex flex-col items-center gap-12">
@@ -330,7 +328,6 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({ isOpen, onClose, onCom
           </div>
         </div>
       )}
-
     </>
   );
 };
