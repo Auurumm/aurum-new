@@ -389,11 +389,10 @@
 /* 페이지 전체 높이에 맞춰지는 라인 */
 body::before,
 body::after {
-  content: '';
-  position: absolute; /* fixed → absolute로 변경 */
+  height: 100vh; /* 100%에서 100vh로 변경 */
+  position: fixed; /* absolute에서 fixed로 변경 */
   top: 0;
   width: 1px;
-  height: 100%; /* 100vh → 100%로 변경 */
   background: rgba(255, 255, 255, 0.2);
   z-index: 999;
   pointer-events: none;
