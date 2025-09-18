@@ -94,8 +94,8 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
     const newCount = reactionCount + 1;
     setReactionCount(newCount);
     
-    // 테스트를 위해 2번째에서 완료 팝업이 뜨도록 설정
-    if (newCount >= 2) {
+    // 12번째 표현행위 완료 시 완료 팝업이 뜨도록 설정
+    if (newCount >= 12) {
       setIsCompletePopup(true);
       console.log('완료 팝업 설정됨 - newCount:', newCount);
     } else {
@@ -114,28 +114,18 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
   // 토스트 팝업이 뜰 때 자동 스크롤 처리
   useEffect(() => {
     if (showReactionPopup) {
-      // 버셀 환경에서도 작동하도록 더 안정적인 스크롤 처리
-      const scrollToTop = () => {
-        // 여러 방법 동시 적용으로 호환성 향상
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-        
-        // 스케일링된 환경에서도 작동하도록 추가 처리
-        const scaledContent = document.querySelector('.scaled-content');
-        if (scaledContent) {
-          scaledContent.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'start' 
-          });
-        }
+      // 1811px 위치로 스크롤 이동
+      const scrollToPosition = () => {
+        window.scrollTo({ top: 1811, behavior: 'smooth' });
+        document.documentElement.scrollTop = 1811;
+        document.body.scrollTop = 1811;
       };
 
       // 팝업이 완전히 렌더링된 후 스크롤 실행
-      setTimeout(scrollToTop, 100);
+      setTimeout(scrollToPosition, 100);
       
       // 버셀 환경에서 지연이 있을 수 있으므로 추가 시도
-      setTimeout(scrollToTop, 300);
+      setTimeout(scrollToPosition, 300);
     }
   }, [showReactionPopup]);
 
@@ -147,33 +137,36 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
     
     setShowReactionPopup(false);
     
-    // 테스트를 위해 2번째 완료 후 팝업을 닫을 때 상위 컴포넌트에 알림
-    if (isCompletePopup && reactionCount >= 2 && onAllReactionsComplete) {
-      console.log('🎉 2번째 완료 콜백 호출!');
+    // 12번째 완료 후 팝업을 닫을 때 상위 컴포넌트에 알림
+    if (isCompletePopup && reactionCount >= 12 && onAllReactionsComplete) {
+      console.log('🎉 12번째 완료 콜백 호출!');
       
-      // 프로그레스 바로 스크롤 이동
+      // 완료 팝업일 때는 카드 상세 모달도 함께 닫기
+      setSelectedCard(null);
+      setSelectedReaction(null);
+      
+      // 최상단으로 스크롤 이동 (별 떨어지는 모션을 보기 위해)
       setTimeout(() => {
-        const progressElement = document.querySelector('section[class*="py-12"]'); // ProgressSection 찾기
-        if (progressElement) {
-          progressElement.scrollIntoView({ 
-            behavior: 'smooth',
-            block: 'center'
-          });
-        }
+        window.scrollTo({ 
+          top: 0, 
+          behavior: 'smooth' 
+        });
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
       }, 500); // 팝업이 사라진 후 스크롤
       
       onAllReactionsComplete();
     } else {
       console.log('콜백 호출 조건 미충족:', {
         isCompletePopup,
-        countCheck: reactionCount >= 2,
+        countCheck: reactionCount >= 12,
         callbackExists: !!onAllReactionsComplete
       });
     }
     
     console.log('=== 팝업 닫기 완료 ===');
   };
-
+  
   return (
     <>
       <div className="w-full flex justify-center mb-[120px]">

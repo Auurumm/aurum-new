@@ -10,11 +10,8 @@ const reactionCards = [
     description: "최고의 지혜를 뽐내는 1명에게 부여하는 나의 '감탄' 입니다. :)",
     subDescription: "1명 밖에 선택할 수 없으니, 신중하게 나의 경의를 표현해보세요!",
     position: { left: "-100px", top: "74.80px" },
-    hoverPosition: { left: "0px", top: "0px" },
     rotation: "rotate-[-15deg]",
     iconPosition: { left: "16.36px", top: "20.72px" },
-    cardSize: { width: "w-[345px]", height: "h-[495px]" },
-    contentWidth: "w-[285px]"
   },
   {
     id: 2,
@@ -25,11 +22,8 @@ const reactionCards = [
     description: "다른 사람들에게도 보여주고 싶은 3명의 지혜를 뽑는 나의 '추천' 입니다.",
     subDescription: "3명을 선택할 수 있으니, 동료 크루의 지혜에 감탄을 보내주세요!",
     position: { left: "408.43px", top: "0" },
-    hoverPosition: { left: "345px", top: "0px" },
     rotation: "rotate-[15deg]",
     iconPosition: { left: "13.36px", top: "20.52px" },
-    cardSize: { width: "w-[345px]", height: "h-[495px]" },
-    contentWidth: "w-[285px]"
   },
   {
     id: 3,
@@ -40,11 +34,8 @@ const reactionCards = [
     description: "나의 지혜와 완전히 같지는 않지만 새로운 관점과 재미를 준 지혜를 뽑는 나의 '존중' 입니다.",
     subDescription: "5명을 골라, 소소한 존중을 표현해보자구요!",
     position: { left: "601.75px", top: "75.26px" },
-    hoverPosition: { left: "690px", top: "0px" },
     rotation: "rotate-[-15deg]",
     iconPosition: { left: "16.43px", top: "20.70px" },
-    cardSize: { width: "w-[345px]", height: "h-[495px]" },
-    contentWidth: "w-[285px]"
   },
   {
     id: 4,
@@ -55,137 +46,139 @@ const reactionCards = [
     description: "조금 더 분발한다면 더 좋은 지혜에 도전해볼 수 있을 지혜를 뽑는 나의 '응원' 입니다.",
     subDescription: "3명을 골라, 힘차게 어깨를 주물러 주자구요!",
     position: { left: "1105.25px", top: "0" },
-    hoverPosition: { left: "1035px", top: "0px" },
     rotation: "rotate-[15deg]",
     iconPosition: { left: "13.36px", top: "20.52px" },
-    cardSize: { width: "w-[345px]", height: "h-[495px]" },
-    contentWidth: "w-[285px]"
   }
 ];
 
 export const ReactionCardsSection = (): JSX.Element => {
   return (
-    <section 
-      className="w-full px-4 sm:px-6 lg:px-8"
-      style={{ 
-        paddingTop: '135px', 
-        paddingBottom: '135px',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center'
-      }}
-    >
-      {/* 데스크톱: 개별 카드 호버 애니메이션이 적용된 absolute 레이아웃 */}
-      <div className="hidden xl:block relative w-[1277.57px] h-[464.77px] rounded-[20px]">
-        {reactionCards.map((card) => (
-          <div
-            key={card.id}
-            className={`${card.cardSize.width} ${card.cardSize.height} px-7 py-12 absolute origin-top-left ${card.rotation} hover:rotate-0 bg-neutral-900 rounded-[20px] outline outline-1 outline-offset-[-1px] outline-stone-500 inline-flex flex-col justify-start items-start gap-8 transition-transform duration-500 ease-in-out cursor-pointer`}
-            style={{
-              left: card.position.left,
-              top: card.position.top
-            }}
-          >
-            <div className={`${card.contentWidth} flex flex-col justify-start items-start gap-8`}>
-              
-              {/* 아이콘 - Figma와 동일한 absolute positioning */}
-              <div className="w-32 h-32 relative bg-stone-700 rounded-[100px] shadow-[0px_8px_16px_0px_rgba(0,0,0,0.08)] overflow-hidden">
-                <img
-                  className="w-24 h-24 absolute"
-                  style={{
-                    left: card.iconPosition.left,
-                    top: card.iconPosition.top
-                  }}
-                  alt={card.title}
-                  src={card.icon}
-                />
-              </div>
-              
-              {/* 텍스트 정보 */}
-              <div className="self-stretch flex flex-col justify-start items-start gap-3.5">
-                
-                {/* 제목과 카운트 */}
-                <div className="self-stretch inline-flex justify-between items-center">
-                  <div className="flex justify-center items-center gap-2">
-                    <div className="justify-start text-white text-3xl font-bold font-['Pretendard'] leading-10">
-                      {card.title}
+    <section className="w-full section-padding content-padding">
+      <div className="responsive-container">
+        
+        {/* 데스크톱 레이아웃: XL 이상에서만 표시 */}
+        <div className="hidden xl:flex xl:justify-center xl:items-center">
+          <div className="relative" style={{ width: '1277.57px', height: '464.77px' }}>
+            {reactionCards.map((card) => (
+              <div
+                key={card.id}
+                className={`
+                  absolute w-[345px] h-[495px] p-7 
+                  ${card.rotation} hover:rotate-0
+                  bg-neutral-900 rounded-[20px] 
+                  outline outline-1 outline-offset-[-1px] outline-stone-500
+                  flex flex-col justify-start items-start gap-8
+                  transition-transform duration-500 ease-in-out cursor-pointer
+                  origin-top-left
+                `}
+                style={{
+                  left: card.position.left,
+                  top: card.position.top
+                }}
+              >
+                <div className="w-[285px] flex flex-col justify-start items-start gap-8">
+                  
+                  {/* 아이콘 */}
+                  <div className="w-32 h-32 relative bg-stone-700 rounded-full shadow-lg overflow-hidden">
+                    <img
+                      className="w-24 h-24 absolute"
+                      style={{
+                        left: card.iconPosition.left,
+                        top: card.iconPosition.top
+                      }}
+                      alt={card.title}
+                      src={card.icon}
+                    />
+                  </div>
+                  
+                  {/* 텍스트 정보 */}
+                  <div className="self-stretch flex flex-col justify-start items-start gap-3.5">
+                    
+                    {/* 제목과 카운트 */}
+                    <div className="self-stretch flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-white text-3xl font-bold font-pretendard leading-10">
+                          {card.title}
+                        </h4>
+                        <span className="text-gray-400 text-xl font-semibold font-pretendard leading-9">
+                          {card.subtitle}
+                        </span>
+                      </div>
+                      <span className="text-white text-xl font-semibold font-pretendard leading-9">
+                        {card.count}
+                      </span>
                     </div>
-                    <div className="justify-start text-gray-400 text-xl font-semibold font-['Pretendard'] leading-9">
-                      {card.subtitle}
+                    
+                    {/* 설명 텍스트 */}
+                    <div className="self-stretch">
+                      <p className="text-neutral-400 text-lg font-normal font-pretendard leading-relaxed">
+                        {card.description}
+                      </p>
+                      <p className="text-neutral-400 text-lg font-bold font-pretendard leading-relaxed">
+                        {card.subDescription}
+                      </p>
                     </div>
                   </div>
-                  <div className="justify-start text-white text-xl font-semibold font-['Pretendard'] leading-9">
-                    {card.count}
-                  </div>
-                </div>
-                
-                {/* 설명 텍스트 */}
-                <div className="self-stretch justify-start">
-                  <span className="text-neutral-400 text-lg font-normal font-['Pretendard'] leading-relaxed">
-                    {card.description}
-                    <br />
-                  </span>
-                  <span className="text-neutral-400 text-lg font-bold font-['Pretendard'] leading-relaxed">
-                    {card.subDescription}
-                  </span>
                 </div>
               </div>
-            </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
 
-      {/* 태블릿과 모바일: CSS Grid를 사용한 안정적인 반응형 레이아웃 */}
-      <div className="xl:hidden w-full max-w-7xl mx-auto">
-        {/* 모바일: 1열, 태블릿: 2열, 대형 태블릿: 2열 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 place-items-center">
-          {reactionCards.map((card) => (
-            <div
-              key={card.id}
-              className={`w-72 sm:w-80 md:w-72 lg:w-80 h-96 sm:h-[26rem] md:h-96 lg:h-[26rem] px-6 sm:px-7 py-8 sm:py-10 lg:py-12 origin-center ${card.rotation} hover:rotate-0 bg-neutral-900 rounded-[20px] outline outline-1 outline-offset-[-1px] outline-stone-500 flex flex-col justify-start items-start gap-6 sm:gap-8 transition-transform duration-500 ease-in-out cursor-pointer`}
-            >
-              <div className="w-full flex flex-col justify-start items-start gap-6 sm:gap-8">
+        {/* 모바일/태블릿 레이아웃: XL 미만에서만 표시 */}
+        <div className="xl:hidden w-full">
+          {/* 단순하고 안정적인 Grid 레이아웃 */}
+          <div className="responsive-grid-2">
+            {reactionCards.map((card) => (
+              <div
+                key={card.id}
+                className="responsive-card hover:rotate-0 cursor-pointer"
+                style={{
+                  transform: `${card.rotation}`,
+                  transition: 'transform 0.5s ease-in-out'
+                }}
+              >
                 
-                {/* 아이콘 - 반응형 크기 조정 */}
-                <div className="w-28 h-28 sm:w-32 sm:h-32 relative bg-stone-700 rounded-[100px] shadow-[0px_8px_16px_0px_rgba(0,0,0,0.08)] overflow-hidden flex items-center justify-center">
+                {/* 아이콘 */}
+                <div className="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 relative bg-stone-700 rounded-full shadow-lg overflow-hidden flex items-center justify-center">
                   <img
-                    className="w-20 h-20 sm:w-24 sm:h-24"
+                    className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24"
                     alt={card.title}
                     src={card.icon}
                   />
                 </div>
                 
                 {/* 텍스트 정보 */}
-                <div className="w-full flex flex-col justify-start items-start gap-3 sm:gap-3.5">
+                <div className="w-full flex flex-col justify-start items-start gap-3">
                   
                   {/* 제목과 카운트 */}
-                  <div className="w-full flex justify-between items-center">
-                    <div className="flex justify-start items-center gap-2">
-                      <h4 className="text-white text-2xl sm:text-3xl font-bold font-['Pretendard'] leading-tight sm:leading-10">
+                  <div className="w-full flex justify-between items-start">
+                    <div className="flex items-start gap-2 flex-1 min-w-0">
+                      <h4 className="responsive-title text-xl sm:text-2xl lg:text-3xl">
                         {card.title}
                       </h4>
-                      <span className="text-gray-400 text-lg sm:text-xl font-semibold font-['Pretendard'] leading-relaxed sm:leading-9">
+                      <span className="responsive-subtitle text-base sm:text-lg lg:text-xl flex-shrink-0">
                         {card.subtitle}
                       </span>
                     </div>
-                    <span className="text-white text-lg sm:text-xl font-semibold font-['Pretendard'] leading-relaxed sm:leading-9 flex-shrink-0">
+                    <span className="responsive-title text-base sm:text-lg lg:text-xl flex-shrink-0 ml-2">
                       {card.count}
                     </span>
                   </div>
                   
                   {/* 설명 텍스트 */}
-                  <div className="w-full text-left">
-                    <p className="text-neutral-400 text-sm sm:text-base lg:text-lg font-normal font-['Pretendard'] leading-relaxed">
+                  <div className="w-full">
+                    <p className="responsive-text text-xs sm:text-sm lg:text-base mb-1">
                       {card.description}
                     </p>
-                    <p className="text-neutral-400 text-sm sm:text-base lg:text-lg font-bold font-['Pretendard'] leading-relaxed mt-1">
+                    <p className="responsive-text font-bold text-xs sm:text-sm lg:text-base">
                       {card.subDescription}
                     </p>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </section>
