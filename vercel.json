@@ -1,15 +1,9 @@
 {
     "buildCommand": "npm run build",
-    "outputDirectory": ".next",
+    "outputDirectory": "build",
     "installCommand": "npm install",
-    "devCommand": "npm run dev",
-    "framework": "nextjs",
+    "devCommand": "npm start",
     "regions": ["icn1"],
-    "functions": {
-      "pages/api/**/*.js": {
-        "maxDuration": 30
-      }
-    },
     "headers": [
       {
         "source": "/(.*)",
@@ -29,7 +23,7 @@
         ]
       },
       {
-        "source": "/(.*)\\.(css|js)$",
+        "source": "/static/(.*)",
         "headers": [
           {
             "key": "Cache-Control",
@@ -47,10 +41,11 @@
         ]
       }
     ],
-    "rewrites": [
+    "redirects": [
       {
-        "source": "/api/(.*)",
-        "destination": "/api/$1"
+        "source": "/index.html",
+        "destination": "/",
+        "permanent": true
       }
     ],
     "trailingSlash": false,
