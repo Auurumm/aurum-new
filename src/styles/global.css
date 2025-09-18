@@ -386,31 +386,33 @@
   }
 }
 
-/* 반응형 좌우 라인 - 뷰포트 너비에 비례하도록 최적화 */
+/* 페이지 전체 높이에 맞춰지는 라인 */
 body::before,
 body::after {
   content: '';
-  position: fixed;
+  position: absolute; /* fixed → absolute로 변경 */
   top: 0;
   width: 1px;
-  height: 100vh;
-  height: 100dvh; /* 동적 뷰포트 높이 지원 */
+  height: 100%; /* 100vh → 100%로 변경 */
   background: rgba(255, 255, 255, 0.2);
   z-index: 999;
   pointer-events: none;
-  /* 버셀 환경에서 성능 최적화 */
   will-change: auto;
   transform: translateZ(0);
 }
 
 body::before {
-  left: clamp(20px, 4.74vw, 91px); /* 최소 20px, 최대 91px */
+  left: clamp(20px, 4.74vw, 91px);
 }
 
 body::after {
-  right: clamp(20px, 4.74vw, 91px); /* 최소 20px, 최대 91px */
+  right: clamp(20px, 4.74vw, 91px);
 }
 
+/* body에 relative 포지션 추가 필요 */
+body {
+  position: relative;
+}
 /* 극소형 화면에서 좌우 라인 숨김 */
 @media (max-width: 375px) {
   body::before,
