@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 interface WisdomModalProps {
   isOpen: boolean;
@@ -72,30 +72,42 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({ isOpen, onClose, onCom
     }
   };
 
+  // 모달이 열릴 때 자동 스크롤
+  useEffect(() => {
+    if (isOpen) {
+      // 모달 위치(611px)로 부드럽게 스크롤 이동
+      window.scrollTo({
+        top: 611,
+        behavior: 'smooth'
+      });
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
     <>
       <div 
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 backdrop-blur-sm"
+        style={{ paddingTop: '611px' }}
         onClick={onClose}
       >
         <div 
-          className="px-28 py-20 bg-neutral-900 rounded-[20px] outline outline-1 outline-offset-[-1px] outline-stone-500 inline-flex flex-col justify-start items-start gap-2.5 max-h-screen overflow-y-auto"
+          className="px-8 lg:px-16 xl:px-28 py-8 lg:py-12 xl:py-16 bg-neutral-900 rounded-[20px] outline outline-1 outline-offset-[-1px] outline-stone-500 inline-flex flex-col justify-start items-start gap-2.5 max-h-[calc(100vh-4rem)] overflow-y-auto w-full max-w-[1000px] mx-4"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex flex-col justify-center items-center gap-12">
+          <div className="flex flex-col justify-center items-center gap-8 lg:gap-12 w-full">
             
             {/* 제목 */}
-            <div className="justify-start text-white text-5xl font-bold font-['Pretendard'] leading-[72px]">
+            <div className="justify-start text-white text-3xl lg:text-4xl xl:text-5xl font-bold font-['Pretendard'] leading-tight lg:leading-[72px] text-center">
               위즈덤 작성하기
             </div>
             
-            <div className="w-[916px] flex flex-col justify-start items-start gap-12">
-              <div className="self-stretch flex flex-col justify-start items-start gap-10">
+            <div className="w-full max-w-[916px] flex flex-col justify-start items-start gap-8 lg:gap-12">
+              <div className="self-stretch flex flex-col justify-start items-start gap-8 lg:gap-10">
                 
                 {/* Request A */}
-                <div className="w-[916px] flex flex-col justify-start items-start gap-5">
+                <div className="w-full flex flex-col justify-start items-start gap-5">
                   <div className="w-28 h-10 px-1.5 py-2 bg-stone-900/60 border-t border-b border-white backdrop-blur-[6px] inline-flex justify-center items-center gap-12">
                     <div className="justify-start text-lime-400 text-base font-bold font-['Chakra_Petch'] uppercase leading-relaxed">
                       Request a
@@ -105,7 +117,7 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({ isOpen, onClose, onCom
                   <div className="self-stretch flex flex-col justify-start items-end gap-2">
                     <div className="self-stretch flex flex-col justify-start items-start gap-6">
                       <div className="self-stretch flex flex-col justify-center items-start gap-[5px]">
-                        <div className="justify-start text-white text-xl font-semibold font-['Pretendard'] leading-9">
+                        <div className="justify-start text-white text-lg lg:text-xl font-semibold font-['Pretendard'] leading-7 lg:leading-9">
                           이번 위즈덤 소재를 크루의 표현으로 한 줄 요약/정리하세요!
                         </div>
                         <div className="self-stretch justify-start text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight">
@@ -137,7 +149,7 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({ isOpen, onClose, onCom
                 </div>
 
                 {/* Request B */}
-                <div className="w-[916px] flex flex-col justify-start items-start gap-5">
+                <div className="w-full flex flex-col justify-start items-start gap-5">
                   <div className="w-28 h-10 px-1.5 py-2 bg-stone-900/60 border-t border-b border-white backdrop-blur-[6px] inline-flex justify-center items-center gap-12">
                     <div className="justify-start text-lime-400 text-base font-bold font-['Chakra_Petch'] uppercase leading-relaxed">
                       Request B
@@ -147,7 +159,7 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({ isOpen, onClose, onCom
                   <div className="self-stretch flex flex-col justify-start items-end gap-2">
                     <div className="self-stretch flex flex-col justify-start items-start gap-6">
                       <div className="self-stretch flex flex-col justify-center items-start gap-[5px]">
-                        <div className="justify-start text-white text-xl font-semibold font-['Pretendard'] leading-9">
+                        <div className="justify-start text-white text-lg lg:text-xl font-semibold font-['Pretendard'] leading-7 lg:leading-9">
                           이번 위즈덤 소재를 크루가 희망하는 '직무' 및 산업 분야와 접목하여 활용할 수 있는 인사이트, 상상을 펼쳐보세요!
                         </div>
                         <div className="self-stretch justify-start text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight">
@@ -178,7 +190,7 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({ isOpen, onClose, onCom
                 </div>
 
                 {/* Request C */}
-                <div className="w-[916px] flex flex-col justify-start items-start gap-5">
+                <div className="w-full flex flex-col justify-start items-start gap-5">
                   <div className="w-28 h-10 px-1.5 py-2 bg-stone-900/60 border-t border-b border-white backdrop-blur-[6px] inline-flex justify-center items-center gap-12">
                     <div className="justify-start text-lime-400 text-base font-bold font-['Chakra_Petch'] uppercase leading-relaxed">
                       Request c
@@ -188,7 +200,7 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({ isOpen, onClose, onCom
                   <div className="flex flex-col justify-start items-end gap-2">
                     <div className="self-stretch flex flex-col justify-start items-start gap-6">
                       <div className="flex flex-col justify-center items-start gap-[5px]">
-                        <div className="justify-start text-white text-xl font-semibold font-['Pretendard'] leading-9">
+                        <div className="justify-start text-white text-lg lg:text-xl font-semibold font-['Pretendard'] leading-7 lg:leading-9">
                           이번 위즈덤 소재를 기회로 그동안 몰랐던 지식과 지혜를 향해 나아갈 수 있는 지식, 새롭게 생긴 궁금증이 있다면?
                         </div>
                         <div className="self-stretch justify-start text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight">
@@ -223,10 +235,10 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({ isOpen, onClose, onCom
               </div>
 
               {/* 버튼들 */}
-              <div className="self-stretch inline-flex justify-start items-center gap-20">
+              <div className="self-stretch flex flex-col sm:flex-row justify-center sm:justify-start items-center gap-4 sm:gap-20">
                 <button 
                   onClick={handleTemporarySave}
-                  className="w-96 h-14 px-9 py-3 bg-stone-900/60 border-t border-b border-white/20 backdrop-blur-[6px] flex justify-center items-center gap-2.5 hover:bg-stone-800/60 transition-colors"
+                  className="w-full sm:w-96 h-14 px-9 py-3 bg-stone-900/60 border-t border-b border-white/20 backdrop-blur-[6px] flex justify-center items-center gap-2.5 hover:bg-stone-800/60 transition-colors"
                 >
                   <div className="justify-start text-white text-xl font-semibold font-['Pretendard'] leading-9">
                     임시 저장
@@ -235,7 +247,7 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({ isOpen, onClose, onCom
                 
                 <button 
                   onClick={handleComplete}
-                  className="w-96 h-14 px-9 py-3 bg-stone-900/60 border-t border-b border-white/20 backdrop-blur-[6px] flex justify-center items-center gap-2.5 hover:bg-stone-800/60 transition-colors"
+                  className="w-full sm:w-96 h-14 px-9 py-3 bg-stone-900/60 border-t border-b border-white/20 backdrop-blur-[6px] flex justify-center items-center gap-2.5 hover:bg-stone-800/60 transition-colors"
                 >
                   <div className="justify-start text-lime-400 text-xl font-semibold font-['Pretendard'] leading-9">
                     작성 완료
@@ -250,15 +262,15 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({ isOpen, onClose, onCom
       {/* 팝업 */}
       {popupType === 'temporary' && (
         <div 
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
           onClick={closePopup}
         >
           <div 
-            className="px-28 py-20 bg-neutral-900 outline outline-2 outline-offset-[-1px] outline-stone-500 inline-flex flex-col justify-start items-start gap-2.5 rounded-[20px]"
+            className="px-8 lg:px-16 xl:px-28 py-8 lg:py-12 xl:py-20 bg-neutral-900 outline outline-2 outline-offset-[-1px] outline-stone-500 inline-flex flex-col justify-start items-start gap-2.5 rounded-[20px] max-w-[600px] w-full"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex flex-col justify-center items-center gap-12">
-              <div className="text-white text-3xl font-bold font-['Pretendard'] leading-10 text-center">
+              <div className="text-white text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-8 lg:leading-10 text-center">
                 임시저장이 완료 되었습니다<br/>작성 완료 버튼을 누르시고, 최종 제출을 완료하세요
               </div>
             </div>
@@ -268,15 +280,15 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({ isOpen, onClose, onCom
 
       {popupType === 'complete' && (
         <div 
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
           onClick={closePopup}
         >
           <div 
-            className="px-28 py-20 bg-neutral-900 outline outline-2 outline-offset-[-1px] outline-stone-500 inline-flex flex-col justify-start items-start gap-2.5 rounded-[20px]"
+            className="px-8 lg:px-16 xl:px-28 py-8 lg:py-12 xl:py-20 bg-neutral-900 outline outline-2 outline-offset-[-1px] outline-stone-500 inline-flex flex-col justify-start items-start gap-2.5 rounded-[20px] max-w-[500px] w-full"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex flex-col justify-center items-center gap-12">
-              <div className="text-white text-3xl font-bold font-['Pretendard'] leading-10 text-center">
+              <div className="text-white text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-8 lg:leading-10 text-center">
                 위즈덤 작성이 완료 되었습니다 :) !
               </div>
             </div>
