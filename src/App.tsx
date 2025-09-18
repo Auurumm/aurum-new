@@ -13,40 +13,27 @@ const App = () => {
   const [isWisdomCompleted, setIsWisdomCompleted] = useState(false);
   const [isAllReactionsCompleted, setIsAllReactionsCompleted] = useState(false);
   const [showMotionEffect, setShowMotionEffect] = useState(false);
-  const [scale, setScale] = useState(1);
+  const [viewportDimensions, setViewportDimensions] = useState({ width: 0, height: 0 });
 
-  // 브라우저 크기에 따른 스케일 계산
+  // 뷰포트 크기 추적 (스케일링 대신 반응형 접근)
   useEffect(() => {
-    const updateScale = () => {
-      const designWidth = 1920; // 피그마 디자인 기준 너비
-      const currentWidth = window.innerWidth;
-      
-      // 스케일 계산 (최소 0.3, 최대 1.5로 제한)
-      let newScale = currentWidth / designWidth;
-      newScale = Math.min(Math.max(newScale, 0.3), 1.5);
-      
-      setScale(newScale);
-      
-      // 스케일에 따른 body 높이 조정으로 스크롤 문제 해결
-      const scaledContentElement = document.querySelector('.scaled-content');
-      if (scaledContentElement) {
-        setTimeout(() => {
-          const actualHeight = scaledContentElement.scrollHeight;
-          const scaledHeight = actualHeight * newScale;
-          document.body.style.height = `${scaledHeight}px`;
-          document.body.style.minHeight = `${scaledHeight}px`;
-        }, 100);
-      }
+    const updateViewportDimensions = () => {
+      setViewportDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
     };
 
-    updateScale();
-    window.addEventListener('resize', updateScale);
+    updateViewportDimensions();
+    window.addEventListener('resize', updateViewportDimensions);
+    
+    // body 스타일 초기화 - 자연스러운 높이 설정
+    document.body.style.height = 'auto';
+    document.body.style.minHeight = '100vh';
+    document.body.style.overflow = 'visible';
     
     return () => {
-      window.removeEventListener('resize', updateScale);
-      // cleanup 시 원래대로 복원
-      document.body.style.height = 'auto';
-      document.body.style.minHeight = '100vh';
+      window.removeEventListener('resize', updateViewportDimensions);
     };
   }, []);
 
@@ -93,7 +80,7 @@ const App = () => {
     };
   }, []);
 
-  // 별 떨어지는 효과
+  // 별 떨어지는 효과 - 개선된 버전
   useEffect(() => {
     if (!showMotionEffect) return;
 
@@ -111,8 +98,9 @@ const App = () => {
     let animationId: number;
     
     const resizeCanvas = () => {
-      canvas.width = motionElement.clientWidth;
-      canvas.height = motionElement.clientHeight;
+      const rect = motionElement.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
     };
     
     resizeCanvas();
@@ -235,31 +223,33 @@ const App = () => {
         canvas.parentNode.removeChild(canvas);
       }
     };
-  }, [showMotionEffect]);
+  }, [showMotionEffect, viewportDimensions]);
 
   return (
     <div 
-      className="w-full bg-gradient-to-b from-[#111410] to-black"
+      className="w-full min-h-screen bg-gradient-to-b from-[#111410] to-black"
       style={{
-        overflow: 'hidden',
-        height: 'fit-content',
         minHeight: '100vh',
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
-      {/* 전체 앱을 스케일링하는 래퍼 */}
+      {/* 반응형 컨테이너 - 스케일링 대신 자연스러운 반응형 레이아웃 사용 */}
       <div 
-        className="scaled-content transition-transform duration-300 ease-out"
+        className="w-full flex-1 flex flex-col"
         style={{
-          transform: `translateX(-50%) scale(${scale})`,
-          transformOrigin: 'top center',
-          width: '1920px', // 피그마 디자인 기준 너비
-          position: 'relative',
-          left: '50%',
+          maxWidth: '100vw',
+          overflow: 'hidden',
         }}
       >
-        <Header />
+        {/* 헤더 */}
+        <div className="w-full relative z-20">
+          <Header />
+        </div>
         
-        <div className={`w-full transition-all duration-1000 ${showMotionEffect ? 'motion-effect' : ''}`}>
+        {/* 메인 콘텐츠 영역 */}
+        <div className={`w-full flex-1 transition-all duration-1000 relative ${showMotionEffect ? 'motion-effect' : ''}`}>
           <ProgressSection 
             isCompleted={isWisdomCompleted} 
             isAllReactionsCompleted={isAllReactionsCompleted}
@@ -271,22 +261,25 @@ const App = () => {
               onComplete={() => setIsWisdomCompleted(true)} 
             />
           </div>
+
+          <MainContentSection />
+          
+          <div id="navigation-section" className="w-full">
+            <NavigationSection isAllReactionsCompleted={isAllReactionsCompleted} />
+          </div>
+          
+          <ReactionCardsSection />
+          
+          <WisdomCardGrid 
+            isWisdomCompleted={isWisdomCompleted}
+            onAllReactionsComplete={handleAllReactionsComplete}
+          />
         </div>
         
-        <MainContentSection />
-        
-        <div id="navigation-section" className="w-full">
-          <NavigationSection isAllReactionsCompleted={isAllReactionsCompleted} />
+        {/* 푸터 - 항상 하단에 위치하도록 보장 */}
+        <div className="w-full mt-auto relative z-20">
+          <FooterSection />
         </div>
-        
-        <ReactionCardsSection />
-        
-        <WisdomCardGrid 
-          isWisdomCompleted={isWisdomCompleted}
-          onAllReactionsComplete={handleAllReactionsComplete}
-        />
-        
-        <FooterSection />
       </div>
     </div>
   );
