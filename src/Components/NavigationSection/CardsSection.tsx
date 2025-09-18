@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 interface WisdomCard {
   id: number;
@@ -21,9 +21,9 @@ interface WisdomCardGridProps {
 export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComplete }: WisdomCardGridProps): JSX.Element => {
   const [selectedCard, setSelectedCard] = useState<WisdomCard | null>(null);
   const [selectedReaction, setSelectedReaction] = useState<string | null>(null);
-  const [reactionCount, setReactionCount] = useState(0); // 0부터 시작하도록 변경
+  const [reactionCount, setReactionCount] = useState(0);
   const [showReactionPopup, setShowReactionPopup] = useState(false);
-  const [isCompletePopup, setIsCompletePopup] = useState(false); // 12장 완료 팝업 구분
+  const [isCompletePopup, setIsCompletePopup] = useState(false);
 
   // 카드 데이터 (12개)
   const wisdomCards: WisdomCard[] = Array(12).fill(null).map((_, index) => ({
@@ -110,6 +110,34 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
       closeReactionPopup();
     }, 3000);
   };
+
+  // 토스트 팝업이 뜰 때 자동 스크롤 처리
+  useEffect(() => {
+    if (showReactionPopup) {
+      // 버셀 환경에서도 작동하도록 더 안정적인 스크롤 처리
+      const scrollToTop = () => {
+        // 여러 방법 동시 적용으로 호환성 향상
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+        
+        // 스케일링된 환경에서도 작동하도록 추가 처리
+        const scaledContent = document.querySelector('.scaled-content');
+        if (scaledContent) {
+          scaledContent.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+          });
+        }
+      };
+
+      // 팝업이 완전히 렌더링된 후 스크롤 실행
+      setTimeout(scrollToTop, 100);
+      
+      // 버셀 환경에서 지연이 있을 수 있으므로 추가 시도
+      setTimeout(scrollToTop, 300);
+    }
+  }, [showReactionPopup]);
 
   const closeReactionPopup = () => {
     console.log('=== 팝업 닫기 시작 ===');

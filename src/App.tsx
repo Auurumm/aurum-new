@@ -26,6 +26,17 @@ const App = () => {
       newScale = Math.min(Math.max(newScale, 0.3), 1.5);
       
       setScale(newScale);
+      
+      // 스케일에 따른 body 높이 조정으로 스크롤 문제 해결
+      const scaledContentElement = document.querySelector('.scaled-content');
+      if (scaledContentElement) {
+        setTimeout(() => {
+          const actualHeight = scaledContentElement.scrollHeight;
+          const scaledHeight = actualHeight * newScale;
+          document.body.style.height = `${scaledHeight}px`;
+          document.body.style.minHeight = `${scaledHeight}px`;
+        }, 100);
+      }
     };
 
     updateScale();
@@ -33,6 +44,9 @@ const App = () => {
     
     return () => {
       window.removeEventListener('resize', updateScale);
+      // cleanup 시 원래대로 복원
+      document.body.style.height = 'auto';
+      document.body.style.minHeight = '100vh';
     };
   }, []);
 
@@ -225,21 +239,22 @@ const App = () => {
 
   return (
     <div 
-      className="w-full min-h-screen bg-gradient-to-b from-[#111410] to-black"
+      className="w-full bg-gradient-to-b from-[#111410] to-black"
       style={{
         overflow: 'hidden',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'flex-start',
+        height: 'fit-content',
+        minHeight: '100vh',
       }}
     >
       {/* 전체 앱을 스케일링하는 래퍼 */}
       <div 
         className="scaled-content transition-transform duration-300 ease-out"
         style={{
-          transform: `scale(${scale})`,
+          transform: `translateX(-50%) scale(${scale})`,
           transformOrigin: 'top center',
           width: '1920px', // 피그마 디자인 기준 너비
+          position: 'relative',
+          left: '50%',
         }}
       >
         <Header />

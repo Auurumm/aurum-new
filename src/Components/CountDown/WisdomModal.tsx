@@ -83,6 +83,34 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({ isOpen, onClose, onCom
     }
   }, [isOpen]);
 
+  // 토스트 팝업이 뜰 때 자동 스크롤 처리
+  useEffect(() => {
+    if (popupType) {
+      // 버셀 환경에서도 작동하도록 더 안정적인 스크롤 처리
+      const scrollToTop = () => {
+        // 여러 방법 동시 적용으로 호환성 향상
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+        
+        // 스케일링된 환경에서도 작동하도록 추가 처리
+        const scaledContent = document.querySelector('.scaled-content');
+        if (scaledContent) {
+          scaledContent.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+          });
+        }
+      };
+
+      // 팝업이 완전히 렌더링된 후 스크롤 실행
+      setTimeout(scrollToTop, 100);
+      
+      // 버셀 환경에서 지연이 있을 수 있으므로 추가 시도
+      setTimeout(scrollToTop, 300);
+    }
+  }, [popupType]);
+
   if (!isOpen) return null;
 
   return (
@@ -261,16 +289,19 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({ isOpen, onClose, onCom
 
       {/* 팝업 */}
       {popupType === 'temporary' && (
-        <div 
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+        <div
+          className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm"
           onClick={closePopup}
         >
-          <div 
-            className="px-8 lg:px-16 xl:px-28 py-8 lg:py-12 xl:py-20 bg-neutral-900 outline outline-2 outline-offset-[-1px] outline-stone-500 inline-flex flex-col justify-start items-start gap-2.5 rounded-[20px] max-w-[600px] w-full"
+          <div
+            className="absolute left-1/2 -translate-x-1/2 top-[918px]
+                      inline-flex flex-col justify-start items-start gap-2.5
+                      px-28 py-20 bg-neutral-900 rounded-[20px]
+                      outline outline-2 outline-offset-[-1px] outline-CP-CPC"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex flex-col justify-center items-center gap-12">
-              <div className="text-white text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-8 lg:leading-10 text-center">
+            <div className="flex flex-col items-center gap-12">
+              <div className="text-white text-2xl lg:text-3xl font-bold leading-8 lg:leading-10 text-center">
                 임시저장이 완료 되었습니다<br/>작성 완료 버튼을 누르시고, 최종 제출을 완료하세요
               </div>
             </div>
@@ -278,16 +309,20 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({ isOpen, onClose, onCom
         </div>
       )}
 
+
       {popupType === 'complete' && (
-        <div 
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+        <div
+          className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm"
           onClick={closePopup}
         >
-          <div 
-            className="px-8 lg:px-16 xl:px-28 py-8 lg:py-12 xl:py-20 bg-neutral-900 outline outline-2 outline-offset-[-1px] outline-stone-500 inline-flex flex-col justify-start items-start gap-2.5 rounded-[20px] max-w-[500px] w-full"
+          <div
+            className="absolute left-1/2 -translate-x-1/2 top-[918px]
+                      w-fit rounded-[20px] bg-neutral-900
+                      outline outline-2 outline-offset-[-1px] outline-stone-500
+                      px-28 py-20 inline-flex flex-col justify-start items-start gap-2.5"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex flex-col justify-center items-center gap-12">
+            <div className="flex flex-col items-center gap-12">
               <div className="text-white text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-8 lg:leading-10 text-center">
                 위즈덤 작성이 완료 되었습니다 :) !
               </div>
@@ -295,6 +330,7 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({ isOpen, onClose, onCom
           </div>
         </div>
       )}
+
     </>
   );
 };
