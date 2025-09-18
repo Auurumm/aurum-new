@@ -135,56 +135,58 @@ export const ReactionCardsSection = (): JSX.Element => {
         ))}
       </div>
 
-      {/* 태블릿과 모바일: 반응형 그리드 레이아웃 */}
-      <div className="xl:hidden w-full flex flex-wrap justify-center items-center gap-6 sm:gap-8 lg:gap-12 max-w-6xl">
-        {reactionCards.map((card) => (
-          <div
-            key={card.id}
-            className={`w-60 sm:w-64 lg:w-72 h-80 sm:h-88 lg:h-96 px-6 lg:px-7 py-8 sm:py-10 lg:py-12 origin-top-left ${card.rotation} hover:rotate-0 bg-neutral-900 rounded-[20px] outline outline-1 outline-offset-[-1px] outline-stone-500 flex flex-col justify-start items-start gap-6 sm:gap-7 lg:gap-8 transition-transform duration-500 ease-in-out`}
-          >
-            <div className="w-full flex flex-col justify-start items-start gap-6 sm:gap-7 lg:gap-8">
-              
-              {/* 아이콘 - 모바일에서는 centered */}
-              <div className="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 relative bg-stone-700 rounded-[100px] shadow-[0px_8px_16px_0px_rgba(0,0,0,0.08)] overflow-hidden flex items-center justify-center">
-                <img
-                  className="w-20 h-20 sm:w-22 sm:h-22 lg:w-24 lg:h-24"
-                  alt={card.title}
-                  src={card.icon}
-                />
-              </div>
-              
-              {/* 텍스트 정보 */}
-              <div className="self-stretch flex flex-col justify-start items-start gap-3 sm:gap-3.5">
+      {/* 태블릿과 모바일: CSS Grid를 사용한 안정적인 반응형 레이아웃 */}
+      <div className="xl:hidden w-full max-w-7xl mx-auto">
+        {/* 모바일: 1열, 태블릿: 2열, 대형 태블릿: 2열 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 place-items-center">
+          {reactionCards.map((card) => (
+            <div
+              key={card.id}
+              className={`w-72 sm:w-80 md:w-72 lg:w-80 h-96 sm:h-[26rem] md:h-96 lg:h-[26rem] px-6 sm:px-7 py-8 sm:py-10 lg:py-12 origin-center ${card.rotation} hover:rotate-0 bg-neutral-900 rounded-[20px] outline outline-1 outline-offset-[-1px] outline-stone-500 flex flex-col justify-start items-start gap-6 sm:gap-8 transition-transform duration-500 ease-in-out cursor-pointer`}
+            >
+              <div className="w-full flex flex-col justify-start items-start gap-6 sm:gap-8">
                 
-                {/* 제목과 카운트 */}
-                <div className="self-stretch inline-flex justify-between items-center">
-                  <div className="flex justify-center items-center gap-2">
-                    <h4 className="text-white text-2xl sm:text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-tight lg:leading-10">
-                      {card.title}
-                    </h4>
-                    <span className="text-gray-400 text-base sm:text-lg lg:text-xl font-semibold font-['Pretendard'] leading-relaxed lg:leading-9">
-                      {card.subtitle}
-                    </span>
-                  </div>
-                  <span className="text-white text-base sm:text-lg lg:text-xl font-semibold font-['Pretendard'] leading-relaxed lg:leading-9">
-                    {card.count}
-                  </span>
+                {/* 아이콘 - 반응형 크기 조정 */}
+                <div className="w-28 h-28 sm:w-32 sm:h-32 relative bg-stone-700 rounded-[100px] shadow-[0px_8px_16px_0px_rgba(0,0,0,0.08)] overflow-hidden flex items-center justify-center">
+                  <img
+                    className="w-20 h-20 sm:w-24 sm:h-24"
+                    alt={card.title}
+                    src={card.icon}
+                  />
                 </div>
                 
-                {/* 설명 텍스트 */}
-                <div className="self-stretch justify-start">
-                  <span className="text-neutral-400 text-sm sm:text-base lg:text-lg font-normal font-['Pretendard'] leading-relaxed">
-                    {card.description}
-                    <br />
-                  </span>
-                  <span className="text-neutral-400 text-sm sm:text-base lg:text-lg font-bold font-['Pretendard'] leading-relaxed">
-                    {card.subDescription}
-                  </span>
+                {/* 텍스트 정보 */}
+                <div className="w-full flex flex-col justify-start items-start gap-3 sm:gap-3.5">
+                  
+                  {/* 제목과 카운트 */}
+                  <div className="w-full flex justify-between items-center">
+                    <div className="flex justify-start items-center gap-2">
+                      <h4 className="text-white text-2xl sm:text-3xl font-bold font-['Pretendard'] leading-tight sm:leading-10">
+                        {card.title}
+                      </h4>
+                      <span className="text-gray-400 text-lg sm:text-xl font-semibold font-['Pretendard'] leading-relaxed sm:leading-9">
+                        {card.subtitle}
+                      </span>
+                    </div>
+                    <span className="text-white text-lg sm:text-xl font-semibold font-['Pretendard'] leading-relaxed sm:leading-9 flex-shrink-0">
+                      {card.count}
+                    </span>
+                  </div>
+                  
+                  {/* 설명 텍스트 */}
+                  <div className="w-full text-left">
+                    <p className="text-neutral-400 text-sm sm:text-base lg:text-lg font-normal font-['Pretendard'] leading-relaxed">
+                      {card.description}
+                    </p>
+                    <p className="text-neutral-400 text-sm sm:text-base lg:text-lg font-bold font-['Pretendard'] leading-relaxed mt-1">
+                      {card.subDescription}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </section>
   );
