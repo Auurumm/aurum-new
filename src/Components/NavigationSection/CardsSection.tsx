@@ -15,12 +15,13 @@ interface WisdomCard {
 
 interface WisdomCardGridProps {
   isWisdomCompleted?: boolean;
+  onAllReactionsComplete?: () => void;
 }
 
-export const WisdomCardGrid = ({ isWisdomCompleted = false }: WisdomCardGridProps): JSX.Element => {
+export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComplete }: WisdomCardGridProps): JSX.Element => {
   const [selectedCard, setSelectedCard] = useState<WisdomCard | null>(null);
   const [selectedReaction, setSelectedReaction] = useState<string | null>(null);
-  const [reactionCount, setReactionCount] = useState(10); // 현재까지 보낸 표현행위 수
+  const [reactionCount, setReactionCount] = useState(0); // 0부터 시작하도록 변경
   const [showReactionPopup, setShowReactionPopup] = useState(false);
   const [isCompletePopup, setIsCompletePopup] = useState(false); // 12장 완료 팝업 구분
 
@@ -93,9 +94,10 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false }: WisdomCardGridProp
     const newCount = reactionCount + 1;
     setReactionCount(newCount);
     
-    // 12장 모두 완료했는지 확인
-    if (newCount >= 12) {
+    // 테스트를 위해 2번째에서 완료 팝업이 뜨도록 설정
+    if (newCount >= 2) {
       setIsCompletePopup(true);
+      console.log('완료 팝업 설정됨 - newCount:', newCount);
     } else {
       setIsCompletePopup(false);
     }
@@ -104,12 +106,44 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false }: WisdomCardGridProp
     
     // 3초 후 팝업 자동 닫기
     setTimeout(() => {
-      setShowReactionPopup(false);
+      console.log('3초 후 자동 닫기 - 콜백 호출 예정');
+      closeReactionPopup();
     }, 3000);
   };
 
   const closeReactionPopup = () => {
+    console.log('=== 팝업 닫기 시작 ===');
+    console.log('isCompletePopup:', isCompletePopup);
+    console.log('reactionCount:', reactionCount);
+    console.log('onAllReactionsComplete 존재:', !!onAllReactionsComplete);
+    
     setShowReactionPopup(false);
+    
+    // 테스트를 위해 2번째 완료 후 팝업을 닫을 때 상위 컴포넌트에 알림
+    if (isCompletePopup && reactionCount >= 2 && onAllReactionsComplete) {
+      console.log('🎉 2번째 완료 콜백 호출!');
+      
+      // 프로그레스 바로 스크롤 이동
+      setTimeout(() => {
+        const progressElement = document.querySelector('section[class*="py-12"]'); // ProgressSection 찾기
+        if (progressElement) {
+          progressElement.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'center'
+          });
+        }
+      }, 500); // 팝업이 사라진 후 스크롤
+      
+      onAllReactionsComplete();
+    } else {
+      console.log('콜백 호출 조건 미충족:', {
+        isCompletePopup,
+        countCheck: reactionCount >= 2,
+        callbackExists: !!onAllReactionsComplete
+      });
+    }
+    
+    console.log('=== 팝업 닫기 완료 ===');
   };
 
   return (

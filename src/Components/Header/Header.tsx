@@ -94,10 +94,10 @@ export const Header: React.FC = () => {
 
       {/* Main content area */}
       <div className="absolute left-1/2 top-1/2 lg:top-[280px] -translate-x-1/2 -translate-y-1/2 lg:translate-y-0 w-[90%] max-w-96 flex flex-col items-center z-10">
-        <h1 className="text-center text-white text-4xl sm:text-5xl lg:text-6xl font-bold font-['Chakra_Petch'] uppercase leading-tight lg:leading-[70px] mb-4">
+        <h1 className="text-center text-white text-6xl font-bold font-['Chakra_Petch'] uppercase leading-[70px] mb-4">
           WISDOM
         </h1>
-        <p className="text-center text-neutral-400 text-base sm:text-lg lg:text-xl font-semibold font-['Pretendard'] leading-relaxed lg:leading-9 px-4">
+        <p className="text-center text-neutral-400 text-xl font-semibold font-['Pretendard'] leading-9 px-4 whitespace-nowrap">
           영상을 보고, 위즈덤을 작성해서 활동을 완료해 주세요
         </p>
       </div>

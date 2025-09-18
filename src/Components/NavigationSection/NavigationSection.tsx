@@ -1,6 +1,13 @@
 import React from "react";
 
-export const NavigationSection = (): JSX.Element => {
+interface NavigationSectionProps {
+  isAllReactionsCompleted?: boolean;
+}
+
+export const NavigationSection = ({ isAllReactionsCompleted = false }: NavigationSectionProps): JSX.Element => {
+  // 완료 상태에 따른 색상 결정
+  const titleColor = isAllReactionsCompleted ? "#555555" : "#ADFF00";
+
   return (
     <section className="self-stretch pt-8 sm:pt-10 lg:pt-12 flex flex-col justify-center items-center gap-12 sm:gap-16 lg:gap-20 px-4 sm:px-6 lg:px-8">
       
@@ -9,7 +16,10 @@ export const NavigationSection = (): JSX.Element => {
         <div className="self-stretch flex flex-col justify-start items-center gap-8 sm:gap-10 lg:gap-12">
           <div className="w-full max-w-[628px] flex flex-col justify-start items-center px-4 sm:px-0">
             <div className="self-stretch flex flex-col justify-start items-center">
-              <div className="self-stretch text-center text-[#ADFF00] text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-['Pretendard'] leading-tight lg:leading-[96px]">
+              <div 
+                className="self-stretch text-center text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-['Pretendard'] leading-tight lg:leading-[96px]"
+                style={{ color: titleColor }}
+              >
                 2단계
               </div>
               <div className="self-stretch text-center text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-['Pretendard'] leading-tight lg:leading-[96px]">
