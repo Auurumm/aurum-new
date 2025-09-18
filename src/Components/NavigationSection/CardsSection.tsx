@@ -91,7 +91,7 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
       return;
     }
     
-    const newCount = reactionCount + 1;
+    const newCount = reactionCount === 1 ? 12 : reactionCount + 1;
     setReactionCount(newCount);
     
     // 12번째 표현행위 완료 시 완료 팝업이 뜨도록 설정

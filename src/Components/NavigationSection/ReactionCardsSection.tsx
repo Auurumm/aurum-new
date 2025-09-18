@@ -53,7 +53,7 @@ const reactionCards = [
 
 export const ReactionCardsSection = (): JSX.Element => {
   return (
-    <section className="w-full section-padding content-padding">
+    <section className="w-full my-[85px] content-padding">
       <div className="responsive-container">
         
         {/* 데스크톱 레이아웃: XL 이상에서만 표시 */}
