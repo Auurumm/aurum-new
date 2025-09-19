@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 interface WisdomCard {
   id: number;
@@ -24,6 +24,8 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
   const [reactionCount, setReactionCount] = useState(0);
   const [showReactionPopup, setShowReactionPopup] = useState(false);
   const [isCompletePopup, setIsCompletePopup] = useState(false);
+  const [modalTopPosition, setModalTopPosition] = useState<number>(0);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   // 카드 데이터 (12개)
   const wisdomCards: WisdomCard[] = Array(12).fill(null).map((_, index) => ({
@@ -68,17 +70,26 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
     { name: "김민지", gender: "여", age: 22, company: "카카오엔터테인먼트", reaction: "응원" }
   ];
 
-  const handleCardClick = (card: WisdomCard) => {
+  const handleCardClick = (card: WisdomCard, event: React.MouseEvent<HTMLElement>) => {
     if (!isWisdomCompleted) {
       alert("1단계를 먼저 완료해주세요!");
       return;
     }
+    
+    // 클릭한 요소의 위치 계산
+    const clickedElement = event.currentTarget;
+    const elementRect = clickedElement.getBoundingClientRect();
+    const elementTop = elementRect.top + window.pageYOffset;
+    
+    // 모달이 나타날 위치 설정 (클릭한 요소 위쪽 50px)
+    setModalTopPosition(Math.max(50, elementTop - 50));
     setSelectedCard(card);
   };
 
   const closeModal = () => {
     setSelectedCard(null);
     setSelectedReaction(null);
+    setModalTopPosition(0);
   };
 
   const handleReactionSelect = (reactionType: string) => {
@@ -96,9 +107,9 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
     setReactionCount(newCount);
     
     // 12번째 표현행위 완료 시 완료 팝업이 뜨도록 설정
-    if (newCount >= 12) {
+    // 2번째부터 완료 팝업(별 떨어지는 모션)이 뜨도록 설정
+    if (newCount >= 2) {
       setIsCompletePopup(true);
-      console.log('완료 팝업 설정됨 - newCount:', newCount);
     } else {
       setIsCompletePopup(false);
     }
@@ -107,23 +118,34 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
     
     // 3초 후 팝업 자동 닫기
     setTimeout(() => {
-      console.log('3초 후 자동 닫기 - 콜백 호출 예정');
       closeReactionPopup();
     }, 3000);
   };
 
+  // 모달이 열릴 때 스크롤 위치 조정
+  useEffect(() => {
+    if (selectedCard && modalTopPosition > 0) {
+      const scrollToModal = () => {
+        // 모달 위치를 기준으로 스크롤 조정
+        const targetScrollTop = modalTopPosition - 80; // 모달 위쪽 80px 여백
+        
+        window.scrollTo({ 
+          top: Math.max(0, targetScrollTop), 
+          behavior: 'smooth' 
+        });
+      };
+
+      // 모달이 완전히 렌더링된 후 스크롤 실행
+      setTimeout(scrollToModal, 150);
+    }
+  }, [selectedCard, modalTopPosition]);
+
   // 토스트 팝업이 뜰 때 자동 스크롤 처리
   useEffect(() => {
     if (showReactionPopup) {
-      // 토스트 팝업이 잘 보이도록 스크롤 위치 조정
       const scrollToToastPosition = () => {
-        // 현재 뷰포트의 높이를 구해서 중앙에서 약간 위쪽으로 스크롤
-        const viewportHeight = window.innerHeight;
-        const currentScrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        
-        // 토스트 팝업이 뷰포트 중앙에 잘 보이도록 스크롤 위치 계산
-        // 현재 스크롤 위치에서 뷰포트 높이의 1/4 정도 위로 이동
-        const targetScrollTop = Math.max(0, currentScrollTop + (viewportHeight * 0.25));
+        // 토스트 팝업이 표시되는 위치로 스크롤
+        const targetScrollTop = Math.max(0, modalTopPosition + 100);
         
         window.scrollTo({ 
           top: targetScrollTop, 
@@ -131,50 +153,30 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
         });
       };
 
-      // 팝업이 완전히 렌더링된 후 스크롤 실행
       setTimeout(scrollToToastPosition, 100);
-      
-      // 버셀 환경에서 지연이 있을 수 있으므로 추가 시도
       setTimeout(scrollToToastPosition, 300);
     }
   }, [showReactionPopup]);
 
   const closeReactionPopup = () => {
-    console.log('=== 팝업 닫기 시작 ===');
-    console.log('isCompletePopup:', isCompletePopup);
-    console.log('reactionCount:', reactionCount);
-    console.log('onAllReactionsComplete 존재:', !!onAllReactionsComplete);
-    
     setShowReactionPopup(false);
     
     // 12번째 완료 후 팝업을 닫을 때 상위 컴포넌트에 알림
     if (isCompletePopup && reactionCount >= 12 && onAllReactionsComplete) {
-      console.log('🎉 12번째 완료 콜백 호출!');
-      
       // 완료 팝업일 때는 카드 상세 모달도 함께 닫기
       setSelectedCard(null);
       setSelectedReaction(null);
       
-      // 최상단으로 스크롤 이동 (별 떨어지는 모션을 보기 위해)
+      // 최상단으로 스크롤 이동
       setTimeout(() => {
         window.scrollTo({ 
           top: 0, 
           behavior: 'smooth' 
         });
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-      }, 500); // 팝업이 사라진 후 스크롤
+      }, 500);
       
       onAllReactionsComplete();
-    } else {
-      console.log('콜백 호출 조건 미충족:', {
-        isCompletePopup,
-        countCheck: reactionCount >= 12,
-        callbackExists: !!onAllReactionsComplete
-      });
     }
-    
-    console.log('=== 팝업 닫기 완료 ===');
   };
   
   return (
@@ -183,8 +185,8 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
       <div className="w-full flex justify-center mb-[120px] content-padding">
         <div className="responsive-container">
           
-          {/* 데스크톱 레이아웃 (xl 이상) */}
-          <div className="hidden xl:block">
+          {/* 데스크톱 레이아웃 (lg 이상) */}
+          <div className="hidden lg:block">
             <div className="inline-flex flex-col justify-start items-center gap-3.5">
               {Array(4).fill(null).map((_, rowIndex) => (
                 <div key={rowIndex} className="self-stretch inline-flex justify-center items-center gap-3.5">
@@ -194,7 +196,7 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
                       className={`p-6 bg-stone-700 rounded-[20px] outline outline-1 outline-offset-[-0.50px] outline-neutral-900 inline-flex flex-col justify-start items-center gap-9 transition-opacity duration-300 ${
                         isWisdomCompleted ? 'opacity-100 cursor-pointer hover:bg-stone-600' : 'opacity-50 cursor-not-allowed'
                       }`}
-                      onClick={() => handleCardClick(card)}
+                      onClick={(e) => handleCardClick(card, e)}
                     >
                       <div className="self-stretch flex flex-col justify-start items-center gap-5">
                         
@@ -218,7 +220,7 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
                             {card.content.map((line, lineIndex) => (
                               <div 
                                 key={lineIndex}
-                                className="self-stretch justify-center text-white text-xl font-semibold font-['Pretendard'] leading-9 truncate"
+                                className="self-stretch justify-center text-white text-lg font-semibold font-['Pretendard'] leading-9 truncate"
                                 title={line}
                               >
                                 {line}
@@ -266,7 +268,7 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
                               : 'cursor-not-allowed'
                           }`}
                         >
-                          <div className="justify-start text-white text-xl font-semibold font-['Pretendard'] leading-9">
+                          <div className="justify-start text-white text-lg font-semibold font-['Pretendard'] leading-9">
                             자세히 보기
                           </div>
                         </button>
@@ -278,8 +280,8 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
             </div>
           </div>
 
-          {/* 모바일/태블릿 레이아웃 (xl 미만) */}
-          <div className="xl:hidden">
+          {/* 모바일/태블릿 레이아웃 (lg 미만) */}
+          <div className="lg:hidden">
             <div className="responsive-grid-2">
               {wisdomCards.map((card) => (
                 <div 
@@ -287,7 +289,7 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
                   className={`responsive-card transition-all duration-300 ${
                     isWisdomCompleted ? 'opacity-100 cursor-pointer hover:bg-stone-600' : 'opacity-50 cursor-not-allowed'
                   }`}
-                  onClick={() => handleCardClick(card)}
+                  onClick={(e) => handleCardClick(card, e)}
                 >
                   
                   {/* 모바일 프로필 */}
@@ -332,7 +334,7 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
                             src={reactionIcons[type as keyof typeof reactionIcons]}
                             alt={reactionLabels[type as keyof typeof reactionLabels]}
                           />
-                          <div className="text-center text-white text-lg sm:text-xl font-bold">
+                          <div className="text-center text-white text-lg sm:text-lg font-bold">
                             {value}
                           </div>
                           <div className="text-center text-gray-400 text-xs font-medium">
@@ -363,14 +365,19 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
         </div>
       </div>
 
-      {/* 상세 모달 - 모바일 최적화 */}
+      {/* 상세 모달 - 클릭한 위치 기준 */}
       {selectedCard && (
         <div 
-          className="modal-overlay"
+          className="modal-overlay flex items-start justify-center"
           onClick={closeModal}
         >
           <div 
-            className="modal-content mx-4 my-8 max-w-lg sm:max-w-2xl w-full max-h-[90vh] overflow-y-auto p-4 sm:p-7"
+            ref={modalRef}
+            className="modal-content mx-4 my-8 max-w-lg sm:max-w-2xl w-full max-h-[85vh] overflow-y-auto p-4 sm:p-7"
+            style={{ 
+              marginTop: `${modalTopPosition}px`,
+              marginBottom: '32px'
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-full flex flex-col gap-4 sm:gap-6">
@@ -498,7 +505,8 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
       {/* 표현행위 완료 토스트 팝업 - 모바일 최적화 */}
       {showReactionPopup && (
         <div 
-          className="fixed inset-0 z-[90] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-[90] flex items-start justify-center bg-black/70 backdrop-blur-sm p-4"
+          style={{ paddingTop: `${modalTopPosition + 200}px` }}
           onClick={closeReactionPopup}
         >
           <div 

@@ -12,7 +12,7 @@ export const Header: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <header className="w-full max-w-[1920px] h-72 sm:h-[350px] lg:h-[493px] relative mx-auto overflow-hidden">
+    <header className="w-full h-72 sm:h-[350px] lg:h-[493px] relative overflow-hidden">
       {/* Desktop Background */}
       <div 
         className="hidden sm:block absolute inset-0 bg-cover bg-center"

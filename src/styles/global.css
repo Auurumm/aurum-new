@@ -477,14 +477,21 @@ body::after {
   }
 }
 
-/* 중간 화면 최적화 */
-@media (min-width: 768px) and (max-width: 1919px) {
+/* 중간 화면 최적화 - 라인 안쪽 여백 적용 */
+@media (min-width: 768px) and (max-width: 1279px) {
   .responsive-container {
     max-width: 100%;
-    padding-left: clamp(1rem, 3vw, 3rem);
-    padding-right: clamp(1rem, 3vw, 3rem);
+    padding-left: clamp(calc(20px + 1.5rem), calc(4.74vw + 2rem), calc(91px + 2.5rem));
+    padding-right: clamp(calc(20px + 1.5rem), calc(4.74vw + 2rem), calc(91px + 2.5rem));
+  }
+  
+  .content-padding {
+    padding-left: clamp(calc(20px + 1.5rem), calc(4.74vw + 2rem), calc(91px + 2.5rem));
+    padding-right: clamp(calc(20px + 1.5rem), calc(4.74vw + 2rem), calc(91px + 2.5rem));
   }
 }
+
+
 
 /* 소형 화면 최적화 */
 @media (max-width: 767px) {
