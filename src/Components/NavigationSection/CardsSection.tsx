@@ -182,76 +182,82 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
   return (
     <>
       {/* 반응형 카드 그리드 - 모바일 최적화 */}
-      <div className="w-full flex justify-center mb-[120px] content-padding">
-        <div className="responsive-container">
+      <div className="w-full flex justify-center mb-[120px]">
+        <div className="w-full max-w-[1400px] px-4 sm:px-6 lg:px-8">
           
           {/* 데스크톱 레이아웃 (lg 이상) */}
           <div className="hidden lg:block">
-            <div className="inline-flex flex-col justify-start items-center gap-3.5">
+            <div className="inline-flex flex-col justify-start items-center gap-3.5 w-full">
               {Array(4).fill(null).map((_, rowIndex) => (
-                <div key={rowIndex} className="self-stretch inline-flex justify-center items-center gap-3.5">
+                <div key={rowIndex} className="w-full inline-flex justify-center items-center gap-3.5">
                   {wisdomCards.slice(rowIndex * 3, (rowIndex + 1) * 3).map((card) => (
                     <div 
                       key={card.id}
-                      className={`p-6 bg-stone-700 rounded-[20px] outline outline-1 outline-offset-[-0.50px] outline-neutral-900 inline-flex flex-col justify-start items-center gap-9 transition-opacity duration-300 ${
+                      className={`w-full max-w-[380px] p-4 bg-stone-700 rounded-[20px] outline outline-1 outline-offset-[-0.50px] outline-neutral-900 inline-flex flex-col justify-start items-center gap-9 transition-opacity duration-300 ${
                         isWisdomCompleted ? 'opacity-100 cursor-pointer hover:bg-stone-600' : 'opacity-50 cursor-not-allowed'
                       }`}
                       onClick={(e) => handleCardClick(card, e)}
                     >
-                      <div className="self-stretch flex flex-col justify-start items-center gap-5">
+                      <div className="w-full flex flex-col justify-start items-center gap-5">
                         
                         {/* 프로필 및 콘텐츠 섹션 */}
-                        <div className="flex flex-col justify-start items-start gap-4">
+                        <div className="w-full flex flex-col justify-start items-start gap-4">
                           
                           {/* 프로필 */}
-                          <div className="inline-flex justify-start items-center gap-3.5">
+                          <div className="w-full inline-flex justify-start items-center gap-3.5">
                             <img 
-                              className="w-12 h-12 rounded-full" 
+                              className="w-12 h-12 rounded-full flex-shrink-0" 
                               src="/images/boy.png"
                               alt="프로필 이미지"
                             />
-                            <div className="w-96 justify-start text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight">
+                            <div className="flex-1 min-w-0 text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight truncate">
                               {card.userInfo}
                             </div>
                           </div>
                           
                           {/* 콘텐츠 */}
-                          <div className="w-96 flex flex-col justify-start items-start gap-3.5">
+                          <div className="w-full flex flex-col justify-start items-start gap-3.5">
                             {card.content.map((line, lineIndex) => (
                               <div 
                                 key={lineIndex}
-                                className="self-stretch justify-center text-white text-lg font-semibold font-['Pretendard'] leading-9 truncate"
+                                className="w-full text-white text-lg font-semibold font-['Pretendard'] leading-9 break-words"
+                                style={{ 
+                                  display: '-webkit-box',
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: 'vertical',
+                                  overflow: 'hidden'
+                                }}
                                 title={line}
                               >
                                 {line}
                               </div>
                             ))}
-                            <div className="justify-center text-neutral-400 text-sm font-semibold font-['Pretendard'] capitalize leading-none">
+                            <div className="text-neutral-400 text-sm font-semibold font-['Pretendard'] capitalize leading-none">
                               {card.timestamp}
                             </div>
                           </div>
                         </div>
                         
                         {/* 구분선 */}
-                        <div className="w-96 h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-500"></div>
+                        <div className="w-full h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-500"></div>
                         
                         {/* 표현 행위 통계 */}
-                        <div className="self-stretch bg-neutral-900 rounded-[20px] inline-flex justify-center items-center">
+                        <div className="w-full bg-neutral-900 rounded-[20px] inline-flex justify-center items-center">
                           {Object.entries(card.stats).map(([type, value]) => (
                             <div 
                               key={type}
-                              className="w-28 p-3.5 bg-stone-700 inline-flex flex-col justify-center items-center gap-[5px]"
+                              className="flex-1 p-3.5 bg-stone-700 inline-flex flex-col justify-center items-center gap-[5px]"
                             >
                               <img 
                                 className="w-7 h-7" 
                                 src={reactionIcons[type as keyof typeof reactionIcons]}
                                 alt={reactionLabels[type as keyof typeof reactionLabels]}
                               />
-                              <div className="self-stretch flex flex-col justify-center items-center">
-                                <div className="text-center justify-start text-white text-3xl font-bold font-['Pretendard'] leading-10">
+                              <div className="w-full flex flex-col justify-center items-center">
+                                <div className="text-center text-white text-3xl font-bold font-['Pretendard'] leading-10">
                                   {value}
                                 </div>
-                                <div className="text-center justify-start text-gray-400 text-sm font-semibold font-['Pretendard'] capitalize leading-none">
+                                <div className="text-center text-gray-400 text-sm font-semibold font-['Pretendard'] capitalize leading-none">
                                   {reactionLabels[type as keyof typeof reactionLabels]}
                                 </div>
                               </div>
@@ -262,13 +268,13 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
                         {/* 자세히 보기 버튼 */}
                         <button
                           disabled={!isWisdomCompleted}
-                          className={`w-96 h-14 px-9 py-3 bg-stone-900/60 border-t border-b border-white/20 backdrop-blur-[6px] inline-flex justify-center items-center gap-2.5 transition-colors ${
+                          className={`w-full h-14 px-9 py-3 bg-stone-900/60 border-t border-b border-white/20 backdrop-blur-[6px] inline-flex justify-center items-center gap-2.5 transition-colors ${
                             isWisdomCompleted 
                               ? 'cursor-pointer hover:bg-stone-800/60' 
                               : 'cursor-not-allowed'
                           }`}
                         >
-                          <div className="justify-start text-white text-lg font-semibold font-['Pretendard'] leading-9">
+                          <div className="text-white text-lg font-semibold font-['Pretendard'] leading-9">
                             자세히 보기
                           </div>
                         </button>
@@ -282,11 +288,11 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
 
           {/* 모바일/태블릿 레이아웃 (lg 미만) */}
           <div className="lg:hidden">
-            <div className="responsive-grid-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               {wisdomCards.map((card) => (
                 <div 
                   key={card.id}
-                  className={`responsive-card transition-all duration-300 ${
+                  className={`w-full bg-neutral-900 rounded-[20px] outline outline-1 outline-offset-[-1px] outline-stone-500 p-4 sm:p-6 flex flex-col gap-4 sm:gap-6 transition-all duration-300 ${
                     isWisdomCompleted ? 'opacity-100 cursor-pointer hover:bg-stone-600' : 'opacity-50 cursor-not-allowed'
                   }`}
                   onClick={(e) => handleCardClick(card, e)}
@@ -300,10 +306,10 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
                       alt="프로필 이미지"
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="responsive-text text-xs sm:text-sm text-neutral-400 truncate">
+                      <div className="text-xs sm:text-sm text-neutral-400 truncate font-['Pretendard']">
                         {card.userInfo}
                       </div>
-                      <div className="responsive-text text-xs text-neutral-500 mt-1">
+                      <div className="text-xs text-neutral-500 mt-1 font-['Pretendard']">
                         {card.timestamp}
                       </div>
                     </div>
@@ -314,7 +320,14 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
                     {card.content.slice(0, 2).map((line, lineIndex) => (
                       <p 
                         key={lineIndex}
-                        className="responsive-text text-sm sm:text-base text-white mb-2 line-clamp-2"
+                        className="text-sm sm:text-base text-white mb-2 font-['Pretendard'] leading-relaxed"
+                        style={{
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          wordBreak: 'keep-all'
+                        }}
                       >
                         {line}
                       </p>
@@ -334,10 +347,10 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
                             src={reactionIcons[type as keyof typeof reactionIcons]}
                             alt={reactionLabels[type as keyof typeof reactionLabels]}
                           />
-                          <div className="text-center text-white text-lg sm:text-lg font-bold">
+                          <div className="text-center text-white text-lg font-bold font-['Pretendard']">
                             {value}
                           </div>
-                          <div className="text-center text-gray-400 text-xs font-medium">
+                          <div className="text-center text-gray-400 text-xs font-medium font-['Pretendard']">
                             {reactionLabels[type as keyof typeof reactionLabels]}
                           </div>
                         </div>
@@ -354,7 +367,7 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
                         : 'cursor-not-allowed'
                     }`}
                   >
-                    <div className="text-white text-base sm:text-lg font-semibold">
+                    <div className="text-white text-base sm:text-lg font-semibold font-['Pretendard']">
                       자세히 보기
                     </div>
                   </button>
@@ -368,12 +381,12 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
       {/* 상세 모달 - 클릭한 위치 기준 */}
       {selectedCard && (
         <div 
-          className="modal-overlay flex items-start justify-center"
+          className="fixed inset-0 z-50 flex items-start justify-center px-4 overflow-x-hidden bg-black/70 backdrop-blur-sm"
           onClick={closeModal}
         >
           <div 
             ref={modalRef}
-            className="modal-content mx-4 my-8 max-w-lg sm:max-w-2xl w-full max-h-[85vh] overflow-y-auto p-4 sm:p-7"
+            className="w-full max-w-lg sm:max-w-2xl bg-neutral-900 rounded-[20px] outline outline-1 outline-offset-[-1px] outline-stone-500 my-8 max-h-[85vh] overflow-y-auto p-4 sm:p-7"
             style={{ 
               marginTop: `${modalTopPosition}px`,
               marginBottom: '32px'
@@ -391,7 +404,7 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
                     alt="프로필 이미지"
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="text-neutral-400 text-xs sm:text-sm font-medium truncate">
+                    <div className="text-neutral-400 text-xs sm:text-sm font-medium font-['Pretendard'] truncate">
                       {selectedCard.userInfo}
                     </div>
                   </div>
@@ -409,13 +422,13 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
                 {selectedCard.content.map((line, index) => (
                   <div 
                     key={index}
-                    className="text-white text-base sm:text-xl font-semibold leading-relaxed mb-3"
-                    style={{ whiteSpace: 'pre-line' }}
+                    className="text-white text-base sm:text-xl font-semibold font-['Pretendard'] leading-relaxed mb-3"
+                    style={{ whiteSpace: 'pre-line', wordBreak: 'keep-all' }}
                   >
                     {line}
                   </div>
                 ))}
-                <div className="text-neutral-400 text-xs sm:text-sm font-medium mt-4">
+                <div className="text-neutral-400 text-xs sm:text-sm font-medium font-['Pretendard'] mt-4">
                   {selectedCard.timestamp}
                 </div>
               </div>
@@ -425,7 +438,7 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
               
               {/* 표현행위 선택 */}
               <div className="w-full bg-stone-700 rounded-[15px] sm:rounded-[20px] p-3 sm:p-4">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="grid grid-cols-4 gap-3">  
                   {Object.entries(selectedCard.stats).map(([type, value]) => (
                     <button
                       key={type}
@@ -441,10 +454,10 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
                         src={reactionIcons[type as keyof typeof reactionIcons]}
                         alt={reactionLabels[type as keyof typeof reactionLabels]}
                       />
-                      <div className="text-white text-lg sm:text-2xl font-bold">
+                      <div className="text-white text-lg sm:text-2xl font-bold font-['Pretendard']">
                         {value}
                       </div>
-                      <div className="text-gray-400 text-xs sm:text-sm font-semibold">
+                      <div className="text-gray-400 text-xs sm:text-sm font-semibold font-['Pretendard']">
                         {reactionLabels[type as keyof typeof reactionLabels]}
                       </div>
                     </button>
@@ -462,7 +475,7 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
                     : 'opacity-50 cursor-not-allowed'
                 }`}
               >
-                <div className={`text-base sm:text-xl font-semibold ${
+                <div className={`text-base sm:text-xl font-semibold font-['Pretendard'] ${
                   selectedReaction ? 'text-[#ADFF00]' : 'text-gray-500'
                 }`}>
                   표현행위 보내기
@@ -471,23 +484,23 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
 
               {/* 표현행위 히스토리 - 모바일에서는 간소화 */}
               <div className="w-full">
-                <h4 className="text-white text-base sm:text-lg font-semibold mb-3">최근 표현행위</h4>
+                <h4 className="text-white text-base sm:text-lg font-semibold font-['Pretendard'] mb-3">최근 표현행위</h4>
                 <div className="space-y-3">
                   {reactionHistory.slice(0, 3).map((item, index) => (
                     <div key={index} className="flex items-center gap-3">
                       <img 
-                        className="w-8 h-8 sm:w-10 sm:h-10 rounded-full" 
+                        className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex-shrink-0" 
                         src="/images/Ellipse 79.png"
                         alt="프로필 이미지"
                       />
-                      <div className="flex-1 text-white text-xs sm:text-sm">
+                      <div className="flex-1 text-white text-xs sm:text-sm font-['Pretendard'] truncate">
                         <span className="font-medium">{item.name}</span>
                         <span className="text-gray-400"> 님이 </span>
                         <span className="text-[#ADFF00]">{item.reaction}</span>
                         <span className="text-gray-400">을 부여</span>
                       </div>
                       <img 
-                        className="w-5 h-5 sm:w-6 sm:h-6" 
+                        className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" 
                         src={reactionIcons[Object.keys(reactionLabels).find(key => 
                           reactionLabels[key as keyof typeof reactionLabels] === item.reaction
                         ) as keyof typeof reactionIcons]}
@@ -510,26 +523,26 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
           onClick={closeReactionPopup}
         >
           <div 
-            className="w-full max-w-md sm:max-w-lg px-6 sm:px-28 py-8 sm:py-20 bg-neutral-900 outline outline-2 outline-offset-[-1px] outline-[#ADFF00] rounded-[20px] text-center"
+            className="w-full max-w-md sm:max-w-lg px-6 sm:px-8 py-8 sm:py-12 bg-neutral-900 outline outline-2 outline-offset-[-1px] outline-[#ADFF00] rounded-[20px] text-center"
             onClick={(e) => e.stopPropagation()}
           >
             {isCompletePopup ? (
               // 12장 모두 완료했을 때
               <div>
-                <div className="text-white text-xl sm:text-3xl font-bold font-['Pretendard'] leading-tight">
+                <div className="text-white text-lg sm:text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-tight">
                   모든 표현 보내기가 완료 되었습니다!
                 </div>
-                <div className="text-gray-400 text-lg sm:text-3xl font-bold font-['Pretendard'] leading-tight mt-2">
+                <div className="text-gray-400 text-base sm:text-lg lg:text-2xl font-bold font-['Pretendard'] leading-tight mt-2">
                   *수정이 어려워요
                 </div>
               </div>
             ) : (
               // 1~11번째일 때
               <div>
-                <div className="text-white text-xl sm:text-3xl font-bold font-['Pretendard'] leading-tight">
+                <div className="text-white text-lg sm:text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-tight">
                   {reactionCount}번째 표현 보내기가 완료 되었습니다.
                 </div>
-                <div className="text-[#ADFF00] text-lg sm:text-3xl font-bold font-['Pretendard'] leading-tight mt-2">
+                <div className="text-[#ADFF00] text-base sm:text-lg lg:text-2xl font-bold font-['Pretendard'] leading-tight mt-2">
                   {12 - reactionCount}번의 표현 보내기 완료 후<br/>자동으로 완료 처리 됩니다.
                 </div>
               </div>

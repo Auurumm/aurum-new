@@ -345,8 +345,24 @@ body::after {
   right: clamp(20px, 4.74vw, 91px);
 }
 
-/* 극소형 화면에서 라인 숨김 */
-@media (max-width: 375px) {
+/* 모바일과 태블릿에서 라인 숨김 - 더 넓은 범위 */
+@media (max-width: 768px) {
+  body::before,
+  body::after {
+    display: none;
+  }
+}
+
+/* 또는 더 보수적으로 모바일만 타겟하려면 */
+@media (max-width: 480px) {
+  body::before,
+  body::after {
+    display: none;
+  }
+}
+
+/* 또는 터치 디바이스에서만 숨기려면 */
+@media (hover: none) and (pointer: coarse) {
   body::before,
   body::after {
     display: none;

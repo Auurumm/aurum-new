@@ -296,8 +296,8 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({ isOpen, onClose, onCom
           onClick={closePopup}
         >
           <div
-            className="absolute left-1/2 -translate-x-1/2 px-28 py-20 bg-neutral-900 rounded-[20px] outline outline-2 outline-offset-[-1px] outline-stone-500 inline-flex flex-col justify-start items-start gap-2.5"
-            style={{ top: '50px' }}
+            className="absolute left-1/2 -translate-x-1/2 px-6 py-8 sm:px-28 sm:py-20 bg-neutral-900 rounded-[20px] outline outline-2 outline-offset-[-1px] outline-stone-500 inline-flex flex-col justify-start items-start gap-2.5 w-[90%] max-w-lg sm:w-auto"
+            style={{ top: '250px' }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex flex-col items-center gap-12">
@@ -316,8 +316,8 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({ isOpen, onClose, onCom
           onClick={closePopup}
         >
           <div
-            className="absolute left-1/2 -translate-x-1/2 px-28 py-20 bg-neutral-900 rounded-[20px] outline outline-2 outline-offset-[-1px] outline-stone-500 inline-flex flex-col justify-start items-start gap-2.5"
-            style={{ top: '50px' }}
+            className="absolute left-1/2 -translate-x-1/2 px-6 py-8 sm:px-28 sm:py-20 bg-neutral-900 rounded-[20px] outline outline-2 outline-offset-[-1px] outline-stone-500 inline-flex flex-col justify-start items-start gap-2.5 w-[90%] max-w-lg sm:w-auto"
+            style={{ top: '250px ' }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex flex-col items-center gap-12">
