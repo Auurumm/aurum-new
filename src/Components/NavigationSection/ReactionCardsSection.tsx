@@ -52,18 +52,11 @@ const reactionCards = [
 ];
 
 export const ReactionCardsSection = (): JSX.Element => {
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
 
   // 첫 카드 높이 → 모든 모바일 카드에 적용
   const [cardHeight, setCardHeight] = useState<number | null>(null);
   const firstCardRef = useRef<HTMLDivElement>(null);
-
-  // 모바일 스와이프 상태
-  const trackRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [deltaX, setDeltaX] = useState(0);
 
   // 브레이크포인트 및 첫 카드 높이 측정
   useEffect(() => {
@@ -87,74 +80,13 @@ export const ReactionCardsSection = (): JSX.Element => {
     }
   };
 
-  // 순환 이동
-  const goToPrev = () => {
-    setCurrentIndex((prev) =>
-      prev > 0 ? prev - 1 : reactionCards.length - 1
-    );
-  };
-  const goToNext = () => {
-    setCurrentIndex((prev) =>
-      prev < reactionCards.length - 1 ? prev + 1 : 0
-    );
-  };
-
-  // 스와이프 핸들러 (터치 + 마우스)
-  const getContainerWidth = () => trackRef.current?.clientWidth ?? 1;
-
-  const onPointerDown = (clientX: number) => {
-    setIsDragging(true);
-    setStartX(clientX);
-    setDeltaX(0);
-  };
-  const onPointerMove = (clientX: number) => {
-    if (!isDragging) return;
-    setDeltaX(clientX - startX);
-  };
-  const onPointerUp = () => {
-    if (!isDragging) return;
-    const threshold = getContainerWidth() * 0.15; // 15% 넘으면 페이지 전환
-    if (deltaX > threshold) {
-      goToPrev();
-    } else if (deltaX < -threshold) {
-      goToNext();
-    }
-    setIsDragging(false);
-    setDeltaX(0);
-  };
-
-  // 터치 이벤트 바인딩
-  const handleTouchStart: React.TouchEventHandler<HTMLDivElement> = (e) =>
-    onPointerDown(e.touches[0].clientX);
-  const handleTouchMove: React.TouchEventHandler<HTMLDivElement> = (e) =>
-    onPointerMove(e.touches[0].clientX);
-  const handleTouchEnd: React.TouchEventHandler<HTMLDivElement> = () =>
-    onPointerUp();
-
-  // 마우스 드래그도 지원(모바일 테스트 외 데스크에서도 확인 용)
-  const handleMouseDown: React.MouseEventHandler<HTMLDivElement> = (e) =>
-    onPointerDown(e.clientX);
-  const handleMouseMove: React.MouseEventHandler<HTMLDivElement> = (e) =>
-    onPointerMove(e.clientX);
-  const handleMouseUp: React.MouseEventHandler<HTMLDivElement> = () =>
-    onPointerUp();
-  const handleMouseLeave: React.MouseEventHandler<HTMLDivElement> = () => {
-    if (isDragging) onPointerUp();
-  };
-
-  // 드래그 중 추가 이동 퍼센트
-  const dragPercent =
-    isDragging && getContainerWidth() > 0
-      ? (-deltaX / getContainerWidth()) * 100
-      : 0;
-
   return (
     <section className="w-full my-[85px] content-padding">
       <div className="responsive-container">
         {/* ============================== */}
         {/* 데스크톱: 원본 유지 (절대 수정 금지) */}
         {/* ============================== */}
-        <div className="hidden md:flex md:justify-center md:items-center min-h-[500px]">
+        <div className="hidden md:flex justify-center items-center min-h-[500px]">
           <div
             className="relative"
             style={{ width: "1277.57px", height: "464.77px", minWidth: "1277.57px" }}
@@ -220,45 +152,39 @@ export const ReactionCardsSection = (): JSX.Element => {
         </div>
 
         {/* ============================== */}
-        {/* 모바일: 첫 카드 높이에 자동 맞춤 + 스와이프 */}
+        {/* 모바일: 한 번에 1장씩 + 수동 스크롤 */}
         {/* ============================== */}
-        <div className="md:hidden w-full overflow-hidden">
-          <div
-            ref={trackRef}
-            className={`flex ${isDragging ? "" : "transition-transform duration-300"}`}
-            style={{
-              transform: `translateX(calc(-${currentIndex * 100}% + ${dragPercent}%))`,
-              width: `${reactionCards.length * 100}%`,
-              touchAction: "pan-y",
-              userSelect: "none",
+        <div className="block md:hidden w-full">
+          {/* 수평 스크롤 컨테이너 */}
+          <div 
+            className="flex gap-4 overflow-x-auto px-4 py-6 snap-x snap-mandatory"
+            style={{ 
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+              WebkitOverflowScrolling: 'touch'
             }}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseLeave}
           >
             {reactionCards.map((card, index) => (
               <div
                 key={card.id}
-                // ✅ 폭 충돌 방지: 인라인 width 제거, 한 칸 = 화면 100%
-                className="min-w-full basis-full shrink-0 flex justify-center items-stretch px-4 py-6"
+                className="flex-shrink-0 w-[255px] snap-center"
               >
                 {/* 실제 카드: 첫 카드 높이를 모든 카드에 적용 */}
                 <div
                   ref={index === 0 ? firstCardRef : null}
                   className="
-                    w-[320px] max-w-full p-6
+                    w-full p-6
                     bg-neutral-900 rounded-[20px]
                     outline outline-1 outline-offset-[-1px] outline-stone-500
                     flex flex-col justify-start items-start gap-6
                   "
-                  style={{ height: cardHeight ?? "auto" }}
+                  style={{ 
+                    height: "350px",
+                    minHeight: index === 0 ? "auto" : "300px"  
+                  }}
                 >
                   {/* 아이콘 */}
-                  <div className="w-28 h-28 relative bg-stone-700 rounded-full shadow-lg overflow-hidden">
+                  <div className="w-28 h-28 relative bg-stone-700 rounded-full shadow-lg overflow-hidden flex-shrink-0">
                     <img
                       className="absolute w-20 h-20 object-contain"
                       style={{ left: "50%", top: "50%", transform: "translate(-50%, -50%)" }}
@@ -269,26 +195,26 @@ export const ReactionCardsSection = (): JSX.Element => {
                   </div>
 
                   {/* 텍스트 블록 */}
-                  <div className="w-full flex flex-col gap-3">
+                  <div className="w-full flex flex-col gap-3 flex-1">
                     <div className="w-full flex justify-between items-center">
                       <div className="flex items-center gap-2">
-                        <h4 className="text-white text-2xl font-bold leading-tight">
+                        <h4 className="text-white text-2xl font-bold font-['Pretendard'] leading-tight">
                           {card.title}
                         </h4>
-                        <span className="text-gray-400 text-base font-semibold leading-tight">
+                        <span className="text-gray-400 text-base font-semibold font-['Pretendard'] leading-tight">
                           {card.subtitle}
                         </span>
                       </div>
-                      <span className="text-white text-base font-semibold leading-tight">
+                      <span className="text-white text-base font-semibold font-['Pretendard'] leading-tight flex-shrink-0">
                         {card.count}
                       </span>
                     </div>
 
                     <div className="w-full space-y-2">
-                      <p className="text-neutral-400 text-sm leading-relaxed">
+                      <p className="text-neutral-400 text-sm font-normal font-['Pretendard'] leading-relaxed">
                         {card.description}
                       </p>
-                      <p className="text-neutral-400 text-sm font-bold leading-relaxed">
+                      <p className="text-neutral-400 text-sm font-bold font-['Pretendard'] leading-relaxed">
                         {card.subDescription}
                       </p>
                     </div>

@@ -44,7 +44,7 @@ export const NavigationSection = ({ isAllReactionsCompleted = false }: Navigatio
   ];
 
   return (
-    <section className="self-stretch pt-8 sm:pt-10 lg:pt-12 flex flex-col justify-center items-center gap-12 sm:gap-16 lg:gap-20 px-4 sm:px-6 lg:px-8">
+    <section className="self-stretch pt-8 sm:pt-10 lg:pt-12 flex flex-col justify-center items-center gap-6 sm:gap-16 lg:gap-20 px-4 sm:px-6 lg:px-8">
       
       {/* 데스크탑 레이아웃 (lg 이상) - 기존 유지 */}
       <div className="hidden lg:block self-stretch">
@@ -94,58 +94,6 @@ export const NavigationSection = ({ isAllReactionsCompleted = false }: Navigatio
             표현 행위 카드는 총 12장이며,<br/>
             각각의 의미를 확인하고 2단계를 완료하세요 !
           </div>
-        </div>
-
-        {/* 카드 영역 - 가로 스크롤 */}
-        <div className="self-stretch px-5 flex justify-start items-center gap-2 overflow-x-auto">
-          {cardData.map((card, index) => (
-            <div 
-              key={index}
-              className="w-56 p-5 bg-neutral-900 rounded-[20px] outline outline-1 outline-offset-[-1px] outline-stone-500 flex flex-col justify-center items-start gap-8 flex-shrink-0"
-            >
-              {/* 아이콘 영역 */}
-              <div className="w-16 h-14 relative bg-stone-700 rounded-[100px] shadow-[0px_8px_16px_0px_rgba(0,0,0,0.08)] overflow-hidden">
-                <img 
-                  className="w-10 h-10 left-[10px] top-[11px] absolute" 
-                  src={card.icon} 
-                  alt={card.title}
-                />
-              </div>
-
-              {/* 콘텐츠 영역 */}
-              <div className="self-stretch rounded-[10px] flex flex-col justify-start items-start gap-3.5">
-                
-                {/* 제목 행 */}
-                <div className="self-stretch flex justify-between items-center">
-                  <div className="flex justify-center items-center gap-2">
-                    <div className="text-white text-3xl font-bold font-['Pretendard'] leading-10">
-                      {card.title}
-                    </div>
-                    <div className="text-gray-400 text-lg font-normal font-['Pretendard'] leading-relaxed">
-                      {card.english}
-                    </div>
-                  </div>
-                  <div className="text-white text-xl font-semibold font-['Pretendard'] leading-9">
-                    {card.count}
-                  </div>
-                </div>
-
-                {/* 설명 텍스트 */}
-                <div className="self-stretch">
-                  {card.description && (
-                    <span className="text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight">
-                      {card.description}
-                    </span>
-                  )}
-                  {card.boldText && (
-                    <span className="text-neutral-400 text-sm font-bold font-['Pretendard'] leading-tight">
-                      {card.boldText}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
     </section>
