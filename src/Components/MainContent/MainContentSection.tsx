@@ -55,6 +55,37 @@ export const MainContentSection = (): JSX.Element => {
       userInfo: "홍길동 / 남 / 23 / 율도국 / 스키학과 / 3 / 미디어 / 웹툰 / 일반 / 구글",
       stats: { honor: 22, recommend: 8, respect: 10, hug: 2 },
       profileImage: "/images/profile1.png"
+    },
+    {
+      id: 6,
+      userInfo: "홍길동 / 남 / 23 / 율도국 / 스키학과 / 3 / 미디어 / 웹툰 / 일반 / 구글",
+      stats: { honor: 22, recommend: 8, respect: 10, hug: 2 },
+      profileImage: "/images/profile2.png"
+    },
+    {
+      id: 7,
+      userInfo: "홍길동 / 남 / 23 / 율도국 / 스키학과 / 3 / 미디어 / 웹툰 / 일반 / 구글",
+      stats: { honor: 22, recommend: 8, respect: 10, hug: 2 },
+      profileImage: "/images/profile1.png"
+    },
+    {
+      id: 8,
+      userInfo: "홍길동 / 남 / 23 / 율도국 / 스키학과 / 3 / 미디어 / 웹툰 / 일반 / 구글",
+      stats: { honor: 22, recommend: 8, respect: 10, hug: 2 },
+      profileImage: "/images/profile2.png"
+    },
+    
+    {
+      id: 9,
+      userInfo: "홍길동 / 남 / 23 / 율도국 / 스키학과 / 3 / 미디어 / 웹툰 / 일반 / 구글",
+      stats: { honor: 22, recommend: 8, respect: 10, hug: 2 },
+      profileImage: "/images/profile1.png"
+    },
+    {
+      id: 10,
+      userInfo: "홍길동 / 남 / 23 / 율도국 / 스키학과 / 3 / 미디어 / 웹툰 / 일반 / 구글",
+      stats: { honor: 22, recommend: 8, respect: 10, hug: 2 },
+      profileImage: "/images/profile2.png"
     }
   ];
 
@@ -92,13 +123,13 @@ export const MainContentSection = (): JSX.Element => {
     if (!isMobile) {
       const interval = setInterval(() => {
         setTranslateX(prev => {
-          const newX = prev - 1;
+          const newX = prev - 2;
           if (Math.abs(newX) >= originalSetWidth) {
             return 0;
           }
           return newX;
         });
-      }, 50);
+      }, 30);
 
       return () => clearInterval(interval);
     }
