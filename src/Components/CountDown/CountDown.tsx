@@ -200,8 +200,9 @@ export const CountDown: React.FC<CountDownProps> = ({ isCompleted = false, onCom
               <img 
                 src="/images/Polygon 1.png" 
                 alt="재생 버튼" 
-                className="w-6 sm:w-8 lg:w-10 h-6 sm:h-8 lg:h-10 object-contain group-hover:brightness-110"
+                className="w-6 sm:w-8 lg:w-10 h-6 sm:h-8 lg:h-10 object-contain group-hover:brightness-110 ml-0.5 sm:ml-1"
               />
+
             </button>
           </>
         ) : (
