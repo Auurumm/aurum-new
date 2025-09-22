@@ -103,10 +103,10 @@ export const CountDown: React.FC<CountDownProps> = ({ isCompleted = false, onCom
           <div className="w-full flex justify-center items-center gap-2 sm:gap-3 lg:gap-4">
             
             {/* 일 */}
-            <div className="w-16 sm:w-18 lg:w-20 inline-flex flex-col justify-start items-center gap-2.5">
-              <div className="self-stretch h-16 sm:h-18 lg:h-20 px-6 sm:px-7 lg:px-8 py-4 sm:py-4.5 lg:py-5 rounded-[32px] sm:rounded-[36px] lg:rounded-[42px] outline outline-1 outline-offset-[-1px] outline-white/20 backdrop-blur-[20px] flex flex-col justify-center items-center gap-2.5">
+            <div className="w-16 sm:w-18 lg:w-20 inline-flex flex-col justify-start items-center">
+              <div className="self-stretch h-16 sm:h-18 lg:h-20 rounded-[32px] sm:rounded-[36px] lg:rounded-[42px] outline outline-1 outline-offset-[-1px] outline-white/20 backdrop-blur-[20px] flex flex-col justify-center items-center ">
                 <div 
-                  className="text-center text-xl sm:text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-tight lg:leading-10"
+                  className="text-center text-xl sm:text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-none"
                   style={{ color: primaryColor }}
                 >
                   {formatTime(timeLeft.days)}
@@ -118,10 +118,10 @@ export const CountDown: React.FC<CountDownProps> = ({ isCompleted = false, onCom
             </div>
 
             {/* 시 */}
-            <div className="w-16 sm:w-18 lg:w-20 inline-flex flex-col justify-start items-center gap-2.5">
-              <div className="self-stretch h-16 sm:h-18 lg:h-20 px-5 sm:px-6 py-4 sm:py-4.5 lg:py-5 rounded-[32px] sm:rounded-[36px] lg:rounded-[42px] outline outline-1 outline-offset-[-1px] outline-white/20 backdrop-blur-[20px] flex flex-col justify-center items-center gap-2.5">
+            <div className="w-16 sm:w-18 lg:w-20 inline-flex flex-col justify-start items-center ">
+              <div className="self-stretch h-16 sm:h-18 lg:h-20 rounded-[32px] sm:rounded-[36px] lg:rounded-[42px] outline outline-1 outline-offset-[-1px] outline-white/20 backdrop-blur-[20px] flex flex-col justify-center items-center ">
                 <div 
-                  className="text-center text-xl sm:text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-tight lg:leading-10"
+                  className="text-center text-xl sm:text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-none"
                   style={{ color: primaryColor }}
                 >
                   {formatTime(timeLeft.hours)}
@@ -133,10 +133,10 @@ export const CountDown: React.FC<CountDownProps> = ({ isCompleted = false, onCom
             </div>
 
             {/* 분 */}
-            <div className="w-16 sm:w-18 lg:w-20 inline-flex flex-col justify-start items-center gap-2.5">
-              <div className="self-stretch h-16 sm:h-18 lg:h-20 px-5 sm:px-6 py-4 sm:py-4.5 lg:py-5 rounded-[32px] sm:rounded-[36px] lg:rounded-[42px] outline outline-1 outline-offset-[-1px] outline-white/20 backdrop-blur-[20px] flex flex-col justify-center items-center gap-2.5">
+            <div className="w-16 sm:w-18 lg:w-20 inline-flex flex-col justify-start items-center ">
+              <div className="self-stretch h-16 sm:h-18 lg:h-20 px-5 sm:px-6  rounded-[32px] sm:rounded-[36px] lg:rounded-[42px] outline outline-1 outline-offset-[-1px] outline-white/20 backdrop-blur-[20px] flex flex-col justify-center items-center ">
                 <div 
-                  className="text-center text-xl sm:text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-tight lg:leading-10"
+                  className="text-center text-xl sm:text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-none"
                   style={{ color: primaryColor }}
                 >
                   {formatTime(timeLeft.minutes)}
@@ -148,10 +148,10 @@ export const CountDown: React.FC<CountDownProps> = ({ isCompleted = false, onCom
             </div>
 
             {/* 초 */}
-            <div className="w-16 sm:w-18 lg:w-20 inline-flex flex-col justify-start items-center gap-2.5">
-              <div className="self-stretch h-16 sm:h-18 lg:h-20 px-5 sm:px-6 py-4 sm:py-4.5 lg:py-5 rounded-[32px] sm:rounded-[36px] lg:rounded-[42px] outline outline-1 outline-offset-[-1px] outline-white/20 backdrop-blur-[20px] flex flex-col justify-center items-center gap-2.5">
+            <div className="w-16 sm:w-18 lg:w-20 inline-flex flex-col justify-start items-center ">
+              <div className="self-stretch h-16 sm:h-18 lg:h-20 rounded-[32px] sm:rounded-[36px] lg:rounded-[42px] outline outline-1 outline-offset-[-1px] outline-white/20 backdrop-blur-[20px] flex flex-col justify-center items-center ">
                 <div 
-                  className="text-center text-xl sm:text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-tight lg:leading-10"
+                  className="text-center text-xl sm:text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-none"
                   style={{ color: primaryColor }}
                 >
                   {formatTime(timeLeft.seconds)}
