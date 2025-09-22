@@ -95,7 +95,7 @@ export const ReactionCardsSection = (): JSX.Element => {
               <div
                 key={card.id}
                 className={`
-                  absolute w-[345px] h-[495px] p-7 
+                  absolute w-[345px] h-[425px] p-7 
                   ${card.rotation} hover:rotate-0
                   bg-neutral-900 rounded-[20px] 
                   outline outline-1 outline-offset-[-1px] outline-stone-500
