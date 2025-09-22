@@ -290,43 +290,44 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({ isOpen, onClose, onCom
 
       {/* 토스트 팝업 - 페이지 최상단에 고정 위치 */}
       {popupType === 'temporary' && (
+      <div
+        className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm"
+        style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+        onClick={closePopup}
+      >
         <div
-          className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm"
-          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
-          onClick={closePopup}
+          className="absolute left-1/2 -translate-x-1/2 px-6 py-8 sm:px-16 lg:px-28 sm:py-12 lg:py-20 bg-neutral-900 outline outline-2 outline-offset-[-1px] inline-flex flex-col justify-start items-start gap-2.5 w-[90%] max-w-2xl"
+          style={{ top: '200px', outlineColor: '#ADFF00' }}
+          onClick={(e) => e.stopPropagation()}
         >
-          <div
-            className="absolute left-1/2 -translate-x-1/2 px-6 py-8 sm:px-28 sm:py-20 bg-neutral-900 rounded-[20px] outline outline-2 outline-offset-[-1px] outline-stone-500 inline-flex flex-col justify-start items-start gap-2.5 w-[90%] max-w-lg sm:w-auto"
-            style={{ top: '250px' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex flex-col items-center gap-12">
-              <div className="text-white text-2xl lg:text-3xl font-bold leading-8 lg:leading-10 text-center">
-                임시저장이 완료 되었습니다<br/>작성 완료 버튼을 누르시고, 최종 제출을 완료하세요
-              </div>
+          <div className="flex flex-col justify-center items-center gap-8 lg:gap-12 w-full">
+            <div className="text-center justify-start text-white text-lg sm:text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-6 sm:leading-8 lg:leading-10">
+              임시저장이 완료 되었습니다<br/>작성 완료 버튼을 누르시고, 최종 제출을 완료하세요
             </div>
           </div>
         </div>
-      )}
+      </div>
+    )}
 
-      {popupType === 'complete' && (
+    /* 작성완료 토스트 팝업 - 수정된 부분 */
+    {popupType === 'complete' && (
+      <div
+        className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm"
+        style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+        onClick={closePopup}
+      >
         <div
-          className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm"
-          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
-          onClick={closePopup}
+          className="absolute left-1/2 -translate-x-1/2 px-6 py-8 sm:px-16 lg:px-28 sm:py-12 lg:py-20 bg-neutral-900 outline outline-2 outline-offset-[-1px] inline-flex flex-col justify-start items-start gap-2.5 w-[90%] max-w-2xl"
+          style={{ top: '200px', outlineColor: '#ADFF00' }}
+          onClick={(e) => e.stopPropagation()}
         >
-          <div
-            className="absolute left-1/2 -translate-x-1/2 px-6 py-8 sm:px-28 sm:py-20 bg-neutral-900 rounded-[20px] outline outline-2 outline-offset-[-1px] outline-stone-500 inline-flex flex-col justify-start items-start gap-2.5 w-[90%] max-w-lg sm:w-auto"
-            style={{ top: '250px ' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex flex-col items-center gap-12">
-              <div className="text-white text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-8 lg:leading-10 text-center">
-                위즈덤 작성이 완료 되었습니다 :) !
-              </div>
+          <div className="flex flex-col justify-center items-center gap-8 lg:gap-12 w-full">
+            <div className="justify-start text-white text-lg sm:text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-6 sm:leading-8 lg:leading-10 text-center">
+              위즈덤 작성이 완료 되었습니다 :) !
             </div>
           </div>
         </div>
+      </div>
       )}
     </>
   );
