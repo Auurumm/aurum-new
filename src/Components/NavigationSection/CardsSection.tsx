@@ -405,101 +405,77 @@ export const WisdomCardGrid = ({
                   {dummyWisdomPosts.slice(rowIndex * 3, (rowIndex + 1) * 3).map((post) => {
                     const card = convertToDisplayCard(post);
                     return (
-                      <div 
+                      <div
                         key={post.id}
-                        className="w-96 p-6 bg-stone-700 rounded-[20px] outline outline-1 outline-offset-[-0.50px] outline-neutral-900 inline-flex flex-col justify-start items-center gap-9 opacity-100 cursor-pointer hover:bg-stone-600 transition-colors duration-300"
+                        className="w-[420px] h-[473px] p-[25px] bg-stone-700 rounded-[20px] outline outline-1 outline-offset-[-0.50px] outline-neutral-900 inline-flex flex-col justify-start items-center gap-[35px] opacity-100"
                         onClick={(e) => handleCardClick(post, e)}
                       >
                         <div className="self-stretch flex flex-col justify-start items-center gap-5">
-                          
-                          {/* 프로필 및 콘텐츠 섹션 */}
+                          {/* 프로필 & 콘텐츠 */}
                           <div className="flex flex-col justify-start items-start gap-4">
-                            
                             {/* 프로필 */}
                             <div className="inline-flex justify-start items-center gap-3.5">
-                              <img 
-                                className="w-12 h-12 rounded-full" 
-                                src="/images/boy.png"
-                                alt="프로필 이미지"
-                              />
-                              <div className="w-80 justify-start text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight truncate">
+                              <img className="w-12 h-12 rounded-full" src="/images/boy.png" alt="프로필 이미지" />
+                              <div className="w-[408px] text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight truncate">
                                 {card.userInfo}
                               </div>
                             </div>
-                            
-                            {/* 콘텐츠 */}
-                            <div className="w-96 flex flex-col justify-start items-start gap-3.5">
-                              <div className="self-stretch justify-center text-white text-xl font-semibold font-['Pretendard'] leading-9 truncate">
+
+                            {/* 콘텐츠 (본문 폭 408px 고정) */}
+                            <div className="w-[408px] flex flex-col justify-start items-start gap-3.5 overflow-hidden">
+                              <div className="self-stretch text-white text-xl font-semibold font-['Pretendard'] leading-9 truncate">
                                 - {post.request_a}
                               </div>
-                              <div className="self-stretch justify-center text-white text-xl font-semibold font-['Pretendard'] leading-9 truncate">
+                              <div className="self-stretch text-white text-xl font-semibold font-['Pretendard'] leading-9 truncate">
                                 - {post.request_b}
                               </div>
-                              <div className="self-stretch justify-center text-white text-xl font-semibold font-['Pretendard'] leading-9 truncate">
+                              <div className="self-stretch text-white text-xl font-semibold font-['Pretendard'] leading-9 truncate">
                                 - {post.request_c}
                               </div>
-                              <div className="justify-center text-neutral-400 text-sm font-semibold font-['Pretendard'] capitalize leading-none">
+                              <div className="text-neutral-400 text-sm font-semibold font-['Pretendard'] capitalize leading-none">
                                 {card.timestamp}
                               </div>
                             </div>
                           </div>
-                          
-                          {/* 구분선 */}
-                          <div className="w-96 h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-500"></div>
-                          
-                          {/* 표현 행위 통계 */}
+
+                          {/* 구분선 (카드 폭 420px) */}
+                          <div className="w-[420px] h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-500"></div>
+
+                          {/* 표현 행위 통계 (기존 그대로) */}
                           <div className="self-stretch bg-neutral-900 rounded-[20px] inline-flex justify-center items-center">
                             <div className="w-28 p-3.5 bg-stone-700 inline-flex flex-col justify-center items-center gap-[5px]">
                               <img className="w-7 h-7" src="/images/honor-icon.png" alt="경의" />
                               <div className="self-stretch flex flex-col justify-center items-center">
-                                <div className="text-center justify-start text-white text-3xl font-bold font-['Pretendard'] leading-10">
-                                  {post.honor_count}
-                                </div>
-                                <div className="text-center justify-start text-gray-400 text-sm font-semibold font-['Pretendard'] capitalize leading-none">
-                                  경의
-                                </div>
+                                <div className="text-center text-white text-3xl font-bold leading-10">{post.honor_count}</div>
+                                <div className="text-center text-gray-400 text-sm font-semibold leading-none">경의</div>
                               </div>
                             </div>
                             <div className="w-28 p-3.5 bg-stone-700 inline-flex flex-col justify-center items-center gap-[5px]">
                               <img className="w-7 h-7" src="/images/recommend-icon.png" alt="추천" />
                               <div className="self-stretch flex flex-col justify-center items-center">
-                                <div className="text-center justify-start text-white text-3xl font-bold font-['Pretendard'] leading-10">
-                                  {post.recommend_count}
-                                </div>
-                                <div className="text-center justify-start text-gray-400 text-sm font-semibold font-['Pretendard'] capitalize leading-none">
-                                  추천
-                                </div>
+                                <div className="text-center text-white text-3xl font-bold leading-10">{post.recommend_count}</div>
+                                <div className="text-center text-gray-400 text-sm font-semibold leading-none">추천</div>
                               </div>
                             </div>
                             <div className="w-28 p-3.5 bg-stone-700 inline-flex flex-col justify-center items-center gap-[5px]">
                               <img className="w-7 h-7" src="/images/respect-icon.png" alt="존중" />
                               <div className="self-stretch flex flex-col justify-center items-center">
-                                <div className="text-center justify-start text-white text-3xl font-bold font-['Pretendard'] leading-10">
-                                  {post.respect_count}
-                                </div>
-                                <div className="text-center justify-start text-gray-400 text-sm font-semibold font-['Pretendard'] capitalize leading-none">
-                                  존중
-                                </div>
+                                <div className="text-center text-white text-3xl font-bold leading-10">{post.respect_count}</div>
+                                <div className="text-center text-gray-400 text-sm font-semibold leading-none">존중</div>
                               </div>
                             </div>
                             <div className="w-28 p-3.5 bg-stone-700 inline-flex flex-col justify-center items-center gap-[5px]">
                               <img className="w-7 h-7" src="/images/hug-icon.png" alt="응원" />
                               <div className="self-stretch flex flex-col justify-center items-center">
-                                <div className="text-center justify-start text-white text-3xl font-bold font-['Pretendard'] leading-10">
-                                  {post.hug_count}
-                                </div>
-                                <div className="text-center justify-start text-gray-400 text-sm font-semibold font-['Pretendard'] capitalize leading-none">
-                                  응원
-                                </div>
+                                <div className="text-center text-white text-3xl font-bold leading-10">{post.hug_count}</div>
+                                <div className="text-center text-gray-400 text-sm font-semibold leading-none">응원</div>
                               </div>
                             </div>
                           </div>
-                          
-                          {/* 자세히 보기 버튼 */}
-                          <div className="w-96 h-14 px-9 py-3 bg-stone-900/60 border-t border-b border-white/20 backdrop-blur-[6px] inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-stone-800/60 transition-colors">
-                            <div className="justify-start text-white text-xl font-semibold font-['Pretendard'] leading-9">
-                              자세히 보기
-                            </div>
+
+                          {/* 자세히 보기 버튼 (카드 폭 420px) */}
+                          <div className="w-[420px] h-14 px-9 py-3 bg-stone-900/60 border-t border-b border-white/20 backdrop-blur-[6px] inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-stone-800/60 transition-colors -mt-4  ">
+                            <div className="text-white text-xl font-semibold leading-9">자세히 보기</div>
                           </div>
                         </div>
                       </div>
@@ -509,6 +485,7 @@ export const WisdomCardGrid = ({
               ))}
             </div>
           </div>
+
 
           {/* 모바일/태블릿 레이아웃 (lg 미만) - 1열 */}
           <div className="lg:hidden">
