@@ -16,7 +16,7 @@ export const FooterSection = (): JSX.Element => {
         <div className="hidden lg:block relative h-[350px] overflow-hidden">
           
           {/* 로고 및 브랜드 섹션 - 단일 이미지로 대체 */}
-          <div className="absolute top-0 left-0 w-[531px] h-[271px]">
+          <div className="absolute top-[50px] left-0 w-[531px] h-[271px]">
             <img 
               src="/images/Description.png" 
               alt="Footer Brand Section" 
@@ -36,7 +36,7 @@ export const FooterSection = (): JSX.Element => {
           </div>
 
           {/* Useful Links */}
-          <div className="absolute top-0 left-[min(678px,40%)] w-[152px] h-[274px] flex flex-col gap-[13px]">
+          <div className="absolute top-0 left-[min(1212px,40%)] w-[144px] h-[274px] flex flex-col gap-[13px]">
             <h3 className="text-white text-xl font-bold font-['Chakra_Petch'] uppercase leading-loose mb-4">
               Useful Links
             </h3>
@@ -52,7 +52,7 @@ export const FooterSection = (): JSX.Element => {
           </div>
 
           {/* Utility Pages */}
-          <div className="absolute top-0 left-[min(972px,60%)] w-[174px] h-[274px] flex flex-col gap-[13px]">
+          <div className="absolute top-0 right-[480px] w-[174px] h-[274px] flex flex-col gap-[13px]">
             <h3 className="text-white text-xl font-bold font-['Chakra_Petch'] uppercase leading-loose mb-4">
               Utility Pages
             </h3>

@@ -407,7 +407,9 @@ export const WisdomCardGrid = ({
                     return (
                       <div
                         key={post.id}
-                        className="w-[420px] h-[473px] p-[25px] bg-stone-700 rounded-[20px] outline outline-1 outline-offset-[-0.50px] outline-neutral-900 inline-flex flex-col justify-start items-center gap-[35px] opacity-100"
+                        className="w-[470px] h-[523px] p-[25px] bg-[#3B4236] 
+                                  rounded-[20px] border border-[#141612] 
+                                  inline-flex flex-col justify-start items-center gap-[35px]"
                         onClick={(e) => handleCardClick(post, e)}
                       >
                         <div className="self-stretch flex flex-col justify-start items-center gap-5">
@@ -443,28 +445,28 @@ export const WisdomCardGrid = ({
 
                           {/* 표현 행위 통계 (기존 그대로) */}
                           <div className="self-stretch bg-neutral-900 rounded-[20px] inline-flex justify-center items-center">
-                            <div className="w-28 p-3.5 bg-stone-700 inline-flex flex-col justify-center items-center gap-[5px]">
+                            <div className="w-28 p-3.5 bg-[#3B4236] inline-flex flex-col justify-center items-center gap-[5px]">
                               <img className="w-7 h-7" src="/images/honor-icon.png" alt="경의" />
                               <div className="self-stretch flex flex-col justify-center items-center">
                                 <div className="text-center text-white text-3xl font-bold leading-10">{post.honor_count}</div>
                                 <div className="text-center text-gray-400 text-sm font-semibold leading-none">경의</div>
                               </div>
                             </div>
-                            <div className="w-28 p-3.5 bg-stone-700 inline-flex flex-col justify-center items-center gap-[5px]">
+                            <div className="w-28 p-3.5 bg-[#3B4236] inline-flex flex-col justify-center items-center gap-[5px]">
                               <img className="w-7 h-7" src="/images/recommend-icon.png" alt="추천" />
                               <div className="self-stretch flex flex-col justify-center items-center">
                                 <div className="text-center text-white text-3xl font-bold leading-10">{post.recommend_count}</div>
                                 <div className="text-center text-gray-400 text-sm font-semibold leading-none">추천</div>
                               </div>
                             </div>
-                            <div className="w-28 p-3.5 bg-stone-700 inline-flex flex-col justify-center items-center gap-[5px]">
+                            <div className="w-28 p-3.5 bg-[#3B4236] inline-flex flex-col justify-center items-center gap-[5px]">
                               <img className="w-7 h-7" src="/images/respect-icon.png" alt="존중" />
                               <div className="self-stretch flex flex-col justify-center items-center">
                                 <div className="text-center text-white text-3xl font-bold leading-10">{post.respect_count}</div>
                                 <div className="text-center text-gray-400 text-sm font-semibold leading-none">존중</div>
                               </div>
                             </div>
-                            <div className="w-28 p-3.5 bg-stone-700 inline-flex flex-col justify-center items-center gap-[5px]">
+                            <div className="w-28 p-3.5 bg-[#3B4236] inline-flex flex-col justify-center items-center gap-[5px]">
                               <img className="w-7 h-7" src="/images/hug-icon.png" alt="응원" />
                               <div className="self-stretch flex flex-col justify-center items-center">
                                 <div className="text-center text-white text-3xl font-bold leading-10">{post.hug_count}</div>
@@ -474,8 +476,14 @@ export const WisdomCardGrid = ({
                           </div>
 
                           {/* 자세히 보기 버튼 (카드 폭 420px) */}
-                          <div className="w-[420px] h-14 px-9 py-3 bg-stone-900/60 border-t border-b border-white/20 backdrop-blur-[6px] inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-stone-800/60 transition-colors -mt-4  ">
-                            <div className="text-white text-xl font-semibold leading-9">자세히 보기</div>
+                          <div className="w-[420px] h-14 px-9 py-3 
+                                        bg-[#1C1F18]/60   /* 👈 Figma 색상 60% 적용 */
+                                        border-t border-b border-white/20 
+                                        inline-flex justify-center items-center gap-2.5 
+                                        cursor-pointer mt-[10px]">
+                            <div className="text-white text-xl font-semibold leading-9">
+                              자세히 보기
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -495,7 +503,7 @@ export const WisdomCardGrid = ({
                 return (
                   <div 
                     key={post.id}
-                    className="w-full bg-stone-700 rounded-[20px] outline outline-1 outline-offset-[-0.50px] outline-neutral-900 p-6 flex flex-col gap-9 opacity-100 cursor-pointer hover:bg-stone-600 transition-colors duration-300"
+                    className="w-full bg-[#3B4236] rounded-[20px] outline outline-1 outline-offset-[-0.50px] outline-neutral-900 p-6 flex flex-col gap-9 opacity-100 cursor-pointer hover:bg-stone-600 transition-colors duration-300"
                     onClick={(e) => handleCardClick(post, e)}
                   >
                     <div className="flex flex-col justify-start items-center gap-5">
@@ -600,59 +608,63 @@ export const WisdomCardGrid = ({
         >
           <div 
             ref={modalRef}
-            className="w-full max-w-lg sm:max-w-2xl bg-neutral-900 rounded-[20px] outline outline-1 outline-offset-[-1px] outline-stone-500 my-8 max-h-[85vh] overflow-y-auto p-4 sm:p-7"
+            className="w-[589px] h-[999px] bg-[#3B4236] rounded-[20px] 
+                        outline outline-1 outline-offset-[-1px] outline-stone-500 
+                        my-8 overflow-y-auto p-7"
             style={{ 
               marginTop: `${modalTopPosition}px`,
               marginBottom: '32px'
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-full flex flex-col gap-4 sm:gap-6">
-              
-              {/* 모달 헤더 */}
-              <div className="w-full flex justify-between items-start gap-4">
-                <div className="flex-1 flex items-start gap-3">
-                  <img 
-                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex-shrink-0" 
-                    src="/images/boy.png"
-                    alt="프로필 이미지"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-neutral-400 text-xs sm:text-sm font-medium font-['Pretendard'] truncate">
+            <div className="inline-flex flex-col justify-start items-center gap-6">
+              <div className="w-full flex flex-col justify-start items-start gap-6">
+                
+                {/* 모달 헤더 */}
+                <div className="self-stretch inline-flex justify-between items-center gap-2.5">
+                  <div className="flex-1 flex justify-start items-center gap-3.5">
+                    <img 
+                      className="w-12 h-12 rounded-full" 
+                      src="/images/boy.png"
+                      alt="프로필 이미지"
+                    />
+                    <div className="text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight">
                       {convertToDisplayCard(selectedCard).userInfo}
                     </div>
                   </div>
+                  <button 
+                    onClick={closeModal}
+                    className="w-6 h-6 relative overflow-hidden text-white hover:bg-[#3B4236] rounded flex items-center justify-center"
+                  >
+                    ✕
+                  </button>
                 </div>
-                <button 
-                  onClick={closeModal}
-                  className="w-8 h-8 flex items-center justify-center text-white hover:bg-stone-600 rounded"
-                >
-                  ✕
-                </button>
-              </div>
 
-              {/* 모달 콘텐츠 */}
-              <div className="w-full">
-                <div className="text-white text-base sm:text-xl font-semibold font-['Pretendard'] leading-relaxed mb-3">
-                  - {selectedCard.request_a}
-                </div>
-                <div className="text-white text-base sm:text-xl font-semibold font-['Pretendard'] leading-relaxed mb-3 whitespace-pre-line">
-                  - {selectedCard.request_b}
-                </div>
-                <div className="text-white text-base sm:text-xl font-semibold font-['Pretendard'] leading-relaxed mb-3">
-                  - {selectedCard.request_c}
-                </div>
-                <div className="text-neutral-400 text-xs sm:text-sm font-medium font-['Pretendard'] mt-4">
-                  {formatTimestamp(selectedCard.created_at)}
+                {/* 모달 콘텐츠 */}
+                <div className="self-stretch flex flex-col justify-start items-start gap-3">
+                  <div className="self-stretch flex flex-col justify-start items-start gap-3.5">
+                    <div className="self-stretch text-white text-xl font-semibold font-['Pretendard'] leading-9">
+                      - {selectedCard.request_a}
+                    </div>
+                    <div className="self-stretch text-white text-xl font-semibold font-['Pretendard'] leading-9 whitespace-pre-line">
+                      - {selectedCard.request_b}
+                    </div>
+                    <div className="self-stretch text-white text-xl font-semibold font-['Pretendard'] leading-9">
+                      - {selectedCard.request_c}
+                    </div>
+                  </div>
+                  <div className="self-stretch text-center text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight">
+                    {formatTimestamp(selectedCard.created_at)}
+                  </div>
                 </div>
               </div>
 
               {/* 구분선 */}
-              <div className="w-full h-0 border-t border-stone-500"></div>
+              <div className="w-full h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-500"></div>
               
               {/* 표현행위 선택 */}
-              <div className="w-full bg-stone-700 rounded-[15px] sm:rounded-[20px] p-3 sm:p-4">
-                <div className="grid grid-cols-4 gap-3">  
+              <div className="bg-[#3B4236] rounded-[20px] inline-flex justify-center items-center">
+                <div className="w-96 h-32 rounded-[20px] flex justify-center items-center">
                   {[
                     { type: 'honor', count: selectedCard.honor_count, icon: '/images/honor-icon.png' },
                     { type: 'recommend', count: selectedCard.recommend_count, icon: '/images/recommend-icon.png' },
@@ -662,22 +674,24 @@ export const WisdomCardGrid = ({
                     <button
                       key={type}
                       onClick={() => handleReactionSelect(type)}
-                      className={`p-3 flex flex-col items-center gap-2 transition-all duration-200 rounded-lg hover:bg-stone-600 ${
+                      className={`w-28 p-3.5 inline-flex flex-col justify-center items-center gap-[5px] transition-all duration-200 ${
                         selectedReaction === type 
-                          ? 'bg-[#ADFF00]/20 border-2 border-[#ADFF00]' 
-                          : 'bg-stone-700'
+                          ? 'bg-[#ADFF00]/20 border-2 border-[#ADFF00] rounded-lg' 
+                          : 'bg-[#3B4236] hover:bg-stone-600'
                       }`}
                     >
                       <img 
-                        className="w-6 h-6 sm:w-7 sm:h-7" 
+                        className="w-7 h-7" 
                         src={icon}
                         alt={reactionLabels[type as keyof typeof reactionLabels]}
                       />
-                      <div className="text-white text-lg sm:text-2xl font-bold font-['Pretendard']">
-                        {count}
-                      </div>
-                      <div className="text-gray-400 text-xs sm:text-sm font-semibold font-['Pretendard']">
-                        {reactionLabels[type as keyof typeof reactionLabels]}
+                      <div className="self-stretch flex flex-col justify-center items-center">
+                        <div className="text-center text-white text-3xl font-bold font-['Pretendard'] leading-10">
+                          {count}
+                        </div>
+                        <div className="text-center text-gray-400 text-sm font-semibold font-['Pretendard'] capitalize leading-none">
+                          {reactionLabels[type as keyof typeof reactionLabels]}
+                        </div>
                       </div>
                     </button>
                   ))}
@@ -688,38 +702,36 @@ export const WisdomCardGrid = ({
               <button 
                 onClick={handleSendReaction}
                 disabled={!selectedReaction}
-                className={`w-full h-12 sm:h-14 px-4 py-2 bg-stone-900/60 border border-white/20 backdrop-blur-[6px] rounded-lg transition-colors ${
+                className={`w-96 h-14 px-9 py-3 bg-stone-900/60 border-t border-b border-white/20 backdrop-blur-[6px] inline-flex justify-center items-center gap-2.5 transition-colors ${
                   selectedReaction 
                     ? 'hover:bg-stone-800/60 cursor-pointer' 
                     : 'opacity-50 cursor-not-allowed'
                 }`}
               >
-                <div className={`text-base sm:text-xl font-semibold font-['Pretendard'] ${
+                <div className={`text-xl font-semibold font-['Pretendard'] leading-9 ${
                   selectedReaction ? 'text-[#ADFF00]' : 'text-gray-500'
                 }`}>
                   표현행위 보내기
                 </div>
               </button>
 
-              {/* 표현행위 히스토리 - 모바일에서는 간소화 */}
-              <div className="w-full">
-                <h4 className="text-white text-base sm:text-lg font-semibold font-['Pretendard'] mb-3">최근 표현행위</h4>
-                <div className="space-y-3">
-                  {reactionHistory.slice(0, 3).map((item, index) => (
-                    <div key={index} className="flex items-center gap-3">
-                      <img 
-                        className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex-shrink-0" 
-                        src="/images/boy.png"
-                        alt="프로필 이미지"
-                      />
-                      <div className="flex-1 text-white text-xs sm:text-sm font-['Pretendard'] truncate">
-                        <span className="font-medium">{item.name}</span>
-                        <span className="text-gray-400"> 님이 </span>
-                        <span className="text-[#ADFF00]">{item.reaction}</span>
-                        <span className="text-gray-400">을 부여</span>
+              {/* 표현행위 히스토리 */}
+              <div className="px-5 relative flex flex-col justify-start items-start gap-3.5">
+                {reactionHistory.map((item, index) => (
+                  <div key={index} className="flex flex-col justify-start items-start gap-3.5">
+                    <div className="inline-flex justify-start items-center gap-3.5">
+                      <div className="w-96 flex justify-start items-center gap-2">
+                        <img 
+                          className="w-12 h-12 rounded-full" 
+                          src="/images/boy.png"
+                          alt="프로필 이미지"
+                        />
+                        <div className="text-white text-sm font-medium font-['Pretendard'] leading-tight">
+                          {item.name} ({item.gender} / {item.age} / {item.company}) 님이 {item.reaction}을 부여하였습니다
+                        </div>
                       </div>
                       <img 
-                        className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" 
+                        className="w-7 h-7" 
                         src={
                           item.reaction === "경의" ? "/images/honor-icon.png" :
                           item.reaction === "추천" ? "/images/recommend-icon.png" :
@@ -729,8 +741,11 @@ export const WisdomCardGrid = ({
                         alt={item.reaction}
                       />
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
+                {reactionHistory.length > 0 && (
+                  <div className="w-0.5 h-16 absolute bg-neutral-500 rounded-[20px] right-0 top-0"></div>
+                )}
               </div>
             </div>
           </div>
