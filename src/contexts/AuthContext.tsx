@@ -33,7 +33,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 프로필 정보 가져오기
+  // fetchProfile 함수 수정
   const fetchProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
@@ -42,69 +42,92 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('id', userId)
         .single();
 
-      if (error) {
-        console.log('프로필을 찾을 수 없어 새로 생성합니다.');
+      if (error && error.code !== 'PGRST116') {
+        console.error('프로필 조회 실패:', error);
         return null;
       }
 
       return data;
     } catch (error) {
-      console.error('프로필 가져오기 오류:', error);
+      console.error('프로필 조회 예외:', error);
       return null;
     }
   };
 
-  // 프로필 생성
+  // createProfile 함수 수정  
   const createProfile = async (user: User) => {
+    const profileData = {
+      id: user.id,
+      email: user.email,
+      full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
+      username: user.user_metadata?.preferred_username || user.user_metadata?.user_name || '',
+      avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
+    };
+
     try {
-      const profileData = {
-        id: user.id,
-        email: user.email,
-        full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
-        username: user.user_metadata?.preferred_username || user.user_metadata?.user_name || '',
-        avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
-      };
+      // 최대 3회까지만 시도
+      let attempts = 0;
+      const maxAttempts = 3;
+      
+      while (attempts < maxAttempts) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .upsert(profileData, { onConflict: 'id' })
+          .select()
+          .single();
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .upsert(profileData, { onConflict: 'id' })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('프로필 생성 오류:', error);
-        return null;
+        if (!error) {
+          return data;
+        }
+        
+        attempts++;
+        console.warn(`프로필 생성 실패 (${attempts}/${maxAttempts}):`, error);
+        
+        if (attempts >= maxAttempts) {
+          break;
+        }
+        
+        // 잠시 대기 후 재시도
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
-
-      return data;
+      
+      // 프로필 생성에 실패해도 기본 정보로 진행
+      console.warn('프로필 생성 최종 실패, 기본 정보 사용');
+      return profileData;
+      
     } catch (error) {
-      console.error('프로필 생성 중 오류:', error);
-      return null;
+      console.error('프로필 생성 예외:', error);
+      // 예외 발생 시에도 기본 정보로 진행
+      return profileData;
     }
   };
 
   // 세션 및 프로필 초기화
   const initializeAuth = async (session: Session | null) => {
     console.log('인증 초기화 시작:', session?.user?.email);
-    // initializeAuth 함수 시작 부분에 추가
-    console.log('=== 인증 초기화 디버깅 ===', {
-      hasUser: !!session?.user,
-      userId: session?.user?.id,
-      email: session?.user?.email
-    });
-        
+    
     if (session?.user) {
       setUser(session.user);
       setSession(session);
       
-      // 프로필 로드 또는 생성
-      let profileData = await fetchProfile(session.user.id);
-      if (!profileData) {
-        console.log('프로필이 없어 새로 생성합니다.');
-        profileData = await createProfile(session.user);
+      // 프로필 로드 또는 생성 (한 번만 시도)
+      try {
+        let profileData = await fetchProfile(session.user.id);
+        if (!profileData) {
+          console.log('프로필이 없어 새로 생성합니다.');
+          profileData = await createProfile(session.user);
+        }
+        setProfile(profileData);
+        console.log('인증 초기화 완료:', { user: session.user.email, profile: profileData?.full_name });
+      } catch (error) {
+        console.error('프로필 처리 실패:', error);
+        // 프로필 처리 실패해도 사용자 인증은 유지
+        setProfile({
+          id: session.user.id,
+          email: session.user.email,
+          full_name: session.user.user_metadata?.full_name || '',
+        });
       }
-      setProfile(profileData);
-      console.log('인증 초기화 완료:', { user: session.user.email, profile: profileData?.full_name });
     } else {
       setUser(null);
       setProfile(null);
@@ -146,10 +169,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔐 인증 상태 변경:', event, session?.user?.email);
+      console.log('인증 상태 변경:', event, session?.user?.email);
       
       if (mounted) {
-        // OAuth 리디렉션 후 토큰 교환 처리
+        // OAuth 리다이렉션 후 토큰 교환 처리
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           console.log('로그인/토큰 갱신 감지, 인증 상태 업데이트');
           await initializeAuth(session);
@@ -199,19 +222,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     try {
       setError(null);
-      console.log('🚪 Supabase 로그아웃 요청...');
+      console.log('Supabase 로그아웃 요청...');
       
-      // 로컬 스토리지 정리 (선택사항)
+      // 로컬 스토리지 정리
       localStorage.removeItem('supabase.auth.token');
       sessionStorage.clear();
       
       const { error } = await supabase.auth.signOut();
       
       if (error) {
-        console.error('❌ 로그아웃 오류:', error);
+        console.error('로그아웃 오류:', error);
         setError(error.message);
       } else {
-        console.log('✅ Supabase 로그아웃 성공');
+        console.log('Supabase 로그아웃 성공');
         
         // 상태 즉시 초기화
         setUser(null);
@@ -222,7 +245,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       return { error };
     } catch (error) {
-      console.error('❌ 로그아웃 예외:', error);
+      console.error('로그아웃 예외:', error);
       const errorMessage = '로그아웃 중 오류가 발생했습니다.';
       setError(errorMessage);
       

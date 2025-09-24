@@ -136,7 +136,11 @@ export class WisdomService {
           user_id: user.id,
           request_a: formData.requestA,
           request_b: formData.requestB,
-          request_c: formData.requestC
+          request_c: formData.requestC,
+          honor_count: 0,        // 추가
+          recommend_count: 0,    // 추가
+          respect_count: 0,      // 추가
+          hug_count: 0          // 추가
         })
         .select()
         .single();
