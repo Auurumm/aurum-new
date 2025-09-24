@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { WisdomService, WisdomFormData } from "../../services/WisdomService.ts";
+import { WisdomService, WisdomFormData } from "../services/WisdomService.ts";
 
 interface WisdomModalProps {
   isOpen: boolean;

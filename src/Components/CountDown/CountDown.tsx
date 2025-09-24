@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { WisdomModal } from "./WisdomModal.tsx"; 
+import { WisdomModal } from "../WisdomModal.tsx"; 
 
 interface TimeLeft {
   days: number;

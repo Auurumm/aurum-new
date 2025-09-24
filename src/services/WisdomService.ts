@@ -18,7 +18,6 @@ export interface WisdomPost {
   hug_count: number;
   created_at: string;
   updated_at: string;
-  // 프로필 정보는 나중에 join으로 추가
   profile?: {
     full_name?: string;
     username?: string;
@@ -66,7 +65,7 @@ export class WisdomService {
         return { error };
       }
 
-      console.log('✅ 임시 저장 완료');
+      console.log('임시 저장 완료');
       return { error: null };
 
     } catch (error) {
@@ -93,7 +92,6 @@ export class WisdomService {
         .single();
 
       if (error) {
-        // 임시저장이 없는 경우는 에러가 아님
         if (error.code === 'PGRST116') {
           return { data: null, error: null };
         }
@@ -154,7 +152,7 @@ export class WisdomService {
         .delete()
         .eq('user_id', user.id);
 
-      console.log('✅ 위즈덤 제출 완료:', post.id);
+      console.log('위즈덤 제출 완료:', post.id);
       return { data: post, error: null };
 
     } catch (error) {
@@ -170,14 +168,7 @@ export class WisdomService {
     try {
       const { data, error } = await supabase
         .from('wisdom_posts')
-        .select(`
-          *,
-          profiles!wisdom_posts_user_id_fkey (
-            full_name,
-            username,
-            avatar_url
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -185,61 +176,11 @@ export class WisdomService {
         return { data: [], error };
       }
 
-      // 프로필 정보를 포함한 형태로 변환
-      const postsWithProfile = data.map(post => ({
-        ...post,
-        profile: post.profiles ? {
-          full_name: post.profiles.full_name,
-          username: post.profiles.username,
-          avatar_url: post.profiles.avatar_url
-        } : undefined
-      }));
-
-      return { data: postsWithProfile, error: null };
+      return { data: data || [], error: null };
 
     } catch (error) {
       console.error('위즈덤 게시물 조회 예외:', error);
       return { data: [], error: { message: '위즈덤 게시물 조회 중 오류가 발생했습니다.' } };
-    }
-  }
-
-  /**
-   * 특정 사용자의 위즈덤 게시물 조회
-   */
-  static async getUserWisdomPosts(userId: string): Promise<{ data: WisdomPost[]; error: any }> {
-    try {
-      const { data, error } = await supabase
-        .from('wisdom_posts')
-        .select(`
-          *,
-          profiles!wisdom_posts_user_id_fkey (
-            full_name,
-            username,
-            avatar_url
-          )
-        `)
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('사용자 위즈덤 게시물 조회 오류:', error);
-        return { data: [], error };
-      }
-
-      const postsWithProfile = data.map(post => ({
-        ...post,
-        profile: post.profiles ? {
-          full_name: post.profiles.full_name,
-          username: post.profiles.username,
-          avatar_url: post.profiles.avatar_url
-        } : undefined
-      }));
-
-      return { data: postsWithProfile, error: null };
-
-    } catch (error) {
-      console.error('사용자 위즈덤 게시물 조회 예외:', error);
-      return { data: [], error: { message: '사용자 위즈덤 게시물 조회 중 오류가 발생했습니다.' } };
     }
   }
 
@@ -290,50 +231,12 @@ export class WisdomService {
         }
       }
 
-      console.log(`✅ 표현행위 완료: ${reactionType} for post ${postId}`);
+      console.log(`표현행위 완료: ${reactionType} for post ${postId}`);
       return { error: null };
 
     } catch (error) {
       console.error('표현행위 예외:', error);
       return { error: { message: '표현행위 중 오류가 발생했습니다.' } };
-    }
-  }
-
-  /**
-   * 사용자의 표현행위 내역 조회
-   */
-  static async getUserReactions(userId?: string): Promise<{ data: any[]; error: any }> {
-    try {
-      const targetUserId = userId || (await supabase.auth.getUser()).data.user?.id;
-      
-      if (!targetUserId) {
-        return { data: [], error: { message: '사용자 ID가 필요합니다.' } };
-      }
-
-      const { data, error } = await supabase
-        .from('reactions')
-        .select(`
-          *,
-          wisdom_posts (
-            id,
-            request_a,
-            request_b,
-            request_c
-          )
-        `)
-        .eq('user_id', targetUserId)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('표현행위 내역 조회 오류:', error);
-        return { data: [], error };
-      }
-
-      return { data: data || [], error: null };
-
-    } catch (error) {
-      console.error('표현행위 내역 조회 예외:', error);
-      return { data: [], error: { message: '표현행위 내역 조회 중 오류가 발생했습니다.' } };
     }
   }
 }
