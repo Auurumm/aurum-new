@@ -6,13 +6,15 @@ interface WisdomModalProps {
   onClose: () => void;
   onComplete?: () => void;
   onWisdomSubmitted?: (wisdomPost: any) => void; // 새로 제출된 위즈덤 전달
+  isLoggedIn?: boolean; // 로그인 상태를 props로 받음
 }
 
 export const WisdomModal: React.FC<WisdomModalProps> = ({ 
   isOpen, 
   onClose, 
   onComplete, 
-  onWisdomSubmitted 
+  onWisdomSubmitted,
+  isLoggedIn = true // 기본값을 true로 설정 (기존 동작 유지)
 }) => {
   const [formData, setFormData] = useState<WisdomFormData>({
     requestA: "",
@@ -25,10 +27,10 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({
 
   // 모달이 열릴 때 임시저장 내용 불러오기
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && isLoggedIn) {
       loadDraftData();
     }
-  }, [isOpen]);
+  }, [isOpen, isLoggedIn]);
 
   // 임시저장 내용 불러오기
   const loadDraftData = async () => {
@@ -81,6 +83,12 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({
     console.log('현재 formData:', formData);
     console.log('검증 결과:', validateForm());
     
+    // 비로그인 상태 체크 (폼 검증보다 먼저)
+    if (!isLoggedIn) {
+      alert('로그인 후 이용 가능한 기능입니다. 로그인하신 뒤 임시 저장을 진행해 주세요.');
+      return;
+    }
+    
     if (!validateForm()) {
       alert('모든 항목에 최소 10자 이상 입력해주세요.');
       return;
@@ -113,6 +121,12 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({
     console.log('작성 완료 버튼 클릭됨');
     console.log('현재 formData:', formData);
     console.log('검증 결과:', validateForm());
+    
+    // 비로그인 상태 체크 (폼 검증보다 먼저)
+    if (!isLoggedIn) {
+      alert('로그인 후 이용 가능한 기능입니다. 로그인하신 뒤 제출을 진행해 주세요.');
+      return;
+    }
     
     if (!validateForm()) {
       alert('모든 항목에 최소 10자 이상 입력해주세요.');

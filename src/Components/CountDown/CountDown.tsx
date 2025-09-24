@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { WisdomModal } from "../WisdomModal.tsx"; 
+import { WisdomService } from "../../services/WisdomService.ts"; // 추가
 
 interface TimeLeft {
   days: number;
@@ -19,6 +20,7 @@ export const CountDown: React.FC<CountDownProps> = ({ isCompleted = false, onCom
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isWisdomCompleted, setIsWisdomCompleted] = useState(isCompleted);
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // 추가
   
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({
     days: 2,
@@ -31,6 +33,22 @@ export const CountDown: React.FC<CountDownProps> = ({ isCompleted = false, onCom
   useEffect(() => {
     setIsWisdomCompleted(isCompleted);
   }, [isCompleted]);
+
+  // 인증 상태 확인 (추가)
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
+
+  // 인증 상태 확인 함수 (추가)
+  const checkAuthStatus = async () => {
+    try {
+      const authenticated = await WisdomService.isAuthenticated();
+      setIsLoggedIn(authenticated);
+    } catch (error) {
+      console.error('인증 상태 확인 실패:', error);
+      setIsLoggedIn(false);
+    }
+  };
 
   useEffect(() => {
     // 완료 상태일 때는 타이머를 실행하지 않음
@@ -71,6 +89,19 @@ export const CountDown: React.FC<CountDownProps> = ({ isCompleted = false, onCom
     if (onComplete) {
       onComplete();
     }
+  };
+
+  // 위즈덤 작성 버튼 클릭 핸들러 (수정)
+  const handleWisdomButtonClick = async () => {
+    // 모달을 열기 전에 인증 상태 재확인
+    await checkAuthStatus();
+    setIsModalOpen(true);
+  };
+
+  // 위즈덤 제출 완료 핸들러 (추가)
+  const handleWisdomSubmitted = (wisdomPost: any) => {
+    console.log('새 위즈덤 제출됨:', wisdomPost);
+    // 필요한 경우 추가 처리
   };
 
   // 완료 상태에 따른 색상 결정
@@ -187,7 +218,7 @@ export const CountDown: React.FC<CountDownProps> = ({ isCompleted = false, onCom
 
         {!isVideoPlaying ? (
           <>
-            {/* YouTube 인네일 배경 */}
+            {/* YouTube 썸네일 배경 */}
             <div 
               className="absolute inset-0 bg-cover bg-center"
               style={{
@@ -267,7 +298,7 @@ export const CountDown: React.FC<CountDownProps> = ({ isCompleted = false, onCom
             ) : (
               <button 
                 className="w-full h-12 sm:h-14 flex justify-center items-center hover:scale-[1.02] transition-transform"
-                onClick={() => setIsModalOpen(true)}
+                onClick={handleWisdomButtonClick} // 수정: 새로운 핸들러 사용
                 aria-label="위즈덤 작성하기"
               >
                 <img 
@@ -282,11 +313,13 @@ export const CountDown: React.FC<CountDownProps> = ({ isCompleted = false, onCom
       </div>
     </section>
 
-    {/* 위즈덤 작성 모달 */}
+    {/* 위즈덤 작성 모달 - isLoggedIn props 추가 */}
     <WisdomModal 
       isOpen={isModalOpen} 
       onClose={() => setIsModalOpen(false)}
       onComplete={handleWisdomComplete}
+      onWisdomSubmitted={handleWisdomSubmitted} // 추가
+      isLoggedIn={isLoggedIn} // 추가
     />
   </>
 );

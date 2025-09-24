@@ -49,17 +49,56 @@ export interface RankingUser {
   };
 }
 
+// 에러 타입 정의
+export interface ServiceError {
+  code: string;
+  message: string;
+  type?: 'AUTH' | 'VALIDATION' | 'SERVER' | 'NETWORK';
+}
+
 export class WisdomService {
   
   /**
+   * 현재 사용자 인증 상태 확인
+   */
+  private static async getCurrentUser() {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      return { user, error };
+    } catch (error) {
+      return { user: null, error };
+    }
+  }
+
+  /**
+   * 인증 상태를 먼저 체크하는 헬퍼 메서드
+   */
+  private static async checkAuth(): Promise<{ user: any; error: ServiceError | null }> {
+    const { user, error } = await this.getCurrentUser();
+    
+    if (error || !user) {
+      return { 
+        user: null, 
+        error: { 
+          code: 'UNAUTHORIZED', 
+          message: '로그인이 필요합니다.', 
+          type: 'AUTH' 
+        } 
+      };
+    }
+    
+    return { user, error: null };
+  }
+
+  /**
    * 임시 저장 - 사용자당 하나의 임시저장만 유지
    */
-  static async saveDraft(formData: WisdomFormData): Promise<{ error: any }> {
+  static async saveDraft(formData: WisdomFormData): Promise<{ error: ServiceError | null }> {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError || !user) {
-        return { error: { message: '인증이 필요합니다.' } };
+      // 인증 상태 체크
+      const { user, error: authError } = await this.checkAuth();
+      if (authError) {
+        return { error: authError };
       }
 
       const { error } = await supabase
@@ -76,7 +115,13 @@ export class WisdomService {
 
       if (error) {
         console.error('임시 저장 오류:', error);
-        return { error };
+        return { 
+          error: { 
+            code: 'SAVE_DRAFT_FAILED', 
+            message: '임시 저장 중 오류가 발생했습니다.', 
+            type: 'SERVER' 
+          } 
+        };
       }
 
       console.log('임시 저장 완료');
@@ -84,19 +129,26 @@ export class WisdomService {
 
     } catch (error) {
       console.error('임시 저장 예외:', error);
-      return { error: { message: '임시 저장 중 오류가 발생했습니다.' } };
+      return { 
+        error: { 
+          code: 'SAVE_DRAFT_EXCEPTION', 
+          message: '임시 저장 중 예상치 못한 오류가 발생했습니다.', 
+          type: 'NETWORK' 
+        } 
+      };
     }
   }
 
   /**
-   * 임시 저장된 내용 불러오기
+   * 임시저장된 내용 불러오기
    */
-  static async loadDraft(): Promise<{ data: WisdomDraft | null; error: any }> {
+  static async loadDraft(): Promise<{ data: WisdomDraft | null; error: ServiceError | null }> {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError || !user) {
-        return { data: null, error: { message: '인증이 필요합니다.' } };
+      // 인증 상태 체크
+      const { user, error: authError } = await this.checkAuth();
+      if (authError) {
+        // 비로그인 상태에서는 에러를 반환하지 않고 null 데이터만 반환
+        return { data: null, error: null };
       }
 
       const { data, error } = await supabase
@@ -106,41 +158,77 @@ export class WisdomService {
         .single();
 
       if (error) {
+        // 데이터가 없는 경우 (PGRST116)는 정상적인 상황
         if (error.code === 'PGRST116') {
           return { data: null, error: null };
         }
-        console.error('임시 저장 불러오기 오류:', error);
-        return { data: null, error };
+        console.error('임시저장 불러오기 오류:', error);
+        return { 
+          data: null, 
+          error: { 
+            code: 'LOAD_DRAFT_FAILED', 
+            message: '임시저장 불러오기 중 오류가 발생했습니다.', 
+            type: 'SERVER' 
+          } 
+        };
       }
 
       return { data, error: null };
 
     } catch (error) {
-      console.error('임시 저장 불러오기 예외:', error);
-      return { data: null, error: { message: '임시 저장 불러오기 중 오류가 발생했습니다.' } };
+      console.error('임시저장 불러오기 예외:', error);
+      return { 
+        data: null, 
+        error: { 
+          code: 'LOAD_DRAFT_EXCEPTION', 
+          message: '임시저장 불러오기 중 예상치 못한 오류가 발생했습니다.', 
+          type: 'NETWORK' 
+        } 
+      };
     }
   }
 
   /**
    * 위즈덤 최종 제출
    */
-  static async submitWisdom(formData: WisdomFormData): Promise<{ data: WisdomPost | null; error: any }> {
+  static async submitWisdom(formData: WisdomFormData): Promise<{ data: WisdomPost | null; error: ServiceError | null }> {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError || !user) {
-        return { data: null, error: { message: '인증이 필요합니다.' } };
+      // 인증 상태 체크
+      const { user, error: authError } = await this.checkAuth();
+      if (authError) {
+        return { data: null, error: authError };
       }
 
       // 입력 검증
       if (formData.requestA.length < 10 || formData.requestA.length > 40) {
-        return { data: null, error: { message: 'Request A는 10자 이상 40자 이하여야 합니다.' } };
+        return { 
+          data: null, 
+          error: { 
+            code: 'VALIDATION_REQUEST_A', 
+            message: 'Request A는 10자 이상 40자 이하여야 합니다.', 
+            type: 'VALIDATION' 
+          } 
+        };
       }
       if (formData.requestB.length < 10 || formData.requestB.length > 150) {
-        return { data: null, error: { message: 'Request B는 10자 이상 150자 이하여야 합니다.' } };
+        return { 
+          data: null, 
+          error: { 
+            code: 'VALIDATION_REQUEST_B', 
+            message: 'Request B는 10자 이상 150자 이하여야 합니다.', 
+            type: 'VALIDATION' 
+          } 
+        };
       }
       if (formData.requestC.length < 10 || formData.requestC.length > 40) {
-        return { data: null, error: { message: 'Request C는 10자 이상 40자 이하여야 합니다.' } };
+        return { 
+          data: null, 
+          error: { 
+            code: 'VALIDATION_REQUEST_C', 
+            message: 'Request C는 10자 이상 40자 이하여야 합니다.', 
+            type: 'VALIDATION' 
+          } 
+        };
       }
 
       // 위즈덤 게시물 생성
@@ -161,7 +249,14 @@ export class WisdomService {
 
       if (postError) {
         console.error('위즈덤 제출 오류:', postError);
-        return { data: null, error: postError };
+        return { 
+          data: null, 
+          error: { 
+            code: 'SUBMIT_WISDOM_FAILED', 
+            message: '위즈덤 제출 중 오류가 발생했습니다.', 
+            type: 'SERVER' 
+          } 
+        };
       }
 
       // 제출 완료 후 임시 저장 데이터 삭제
@@ -175,16 +270,35 @@ export class WisdomService {
 
     } catch (error) {
       console.error('위즈덤 제출 예외:', error);
-      return { data: null, error: { message: '위즈덤 제출 중 오류가 발생했습니다.' } };
+      return { 
+        data: null, 
+        error: { 
+          code: 'SUBMIT_WISDOM_EXCEPTION', 
+          message: '위즈덤 제출 중 예상치 못한 오류가 발생했습니다.', 
+          type: 'NETWORK' 
+        } 
+      };
+    }
+  }
+
+  /**
+   * 현재 로그인 상태 확인 (UI에서 사용)
+   */
+  static async isAuthenticated(): Promise<boolean> {
+    try {
+      const { user } = await this.getCurrentUser();
+      return !!user;
+    } catch (error) {
+      return false;
     }
   }
 
   /**
    * 모든 위즈덤 게시물 조회 (본인 제외, 최신순)
    */
-  static async getAllWisdomPosts(): Promise<{ data: WisdomPost[]; error: any }> {
+  static async getAllWisdomPosts(): Promise<{ data: WisdomPost[]; error: ServiceError | null }> {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      const { user } = await this.getCurrentUser();
       
       let query = supabase
         .from('wisdom_posts')
@@ -207,7 +321,14 @@ export class WisdomService {
 
       if (error) {
         console.error('위즈덤 게시물 조회 오류:', error);
-        return { data: [], error };
+        return { 
+          data: [], 
+          error: { 
+            code: 'GET_POSTS_FAILED', 
+            message: '위즈덤 게시물 조회 중 오류가 발생했습니다.', 
+            type: 'SERVER' 
+          } 
+        };
       }
 
       // 프로필 정보 매핑
@@ -220,14 +341,21 @@ export class WisdomService {
 
     } catch (error) {
       console.error('위즈덤 게시물 조회 예외:', error);
-      return { data: [], error: { message: '위즈덤 게시물 조회 중 오류가 발생했습니다.' } };
+      return { 
+        data: [], 
+        error: { 
+          code: 'GET_POSTS_EXCEPTION', 
+          message: '위즈덤 게시물 조회 중 예상치 못한 오류가 발생했습니다.', 
+          type: 'NETWORK' 
+        } 
+      };
     }
   }
 
   /**
    * 실시간 순위 조회
    */
-  static async getRankingData(): Promise<{ data: RankingUser[]; error: any }> {
+  static async getRankingData(): Promise<{ data: RankingUser[]; error: ServiceError | null }> {
     try {
       const { data, error } = await supabase
         .from('wisdom_posts')
@@ -246,7 +374,14 @@ export class WisdomService {
 
       if (error) {
         console.error('순위 데이터 조회 오류:', error);
-        return { data: [], error };
+        return { 
+          data: [], 
+          error: { 
+            code: 'GET_RANKING_FAILED', 
+            message: '순위 조회 중 오류가 발생했습니다.', 
+            type: 'SERVER' 
+          } 
+        };
       }
 
       // 사용자별로 통계 집계
@@ -288,19 +423,26 @@ export class WisdomService {
 
     } catch (error) {
       console.error('순위 조회 예외:', error);
-      return { data: [], error: { message: '순위 조회 중 오류가 발생했습니다.' } };
+      return { 
+        data: [], 
+        error: { 
+          code: 'GET_RANKING_EXCEPTION', 
+          message: '순위 조회 중 예상치 못한 오류가 발생했습니다.', 
+          type: 'NETWORK' 
+        } 
+      };
     }
   }
 
   /**
    * 표현행위 추가/변경
    */
-  static async addReaction(postId: string, reactionType: 'honor' | 'recommend' | 'respect' | 'hug'): Promise<{ error: any }> {
+  static async addReaction(postId: string, reactionType: 'honor' | 'recommend' | 'respect' | 'hug'): Promise<{ error: ServiceError | null }> {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError || !user) {
-        return { error: { message: '인증이 필요합니다.' } };
+      // 인증 상태 체크
+      const { user, error: authError } = await this.checkAuth();
+      if (authError) {
+        return { error: authError };
       }
 
       // 본인 게시물인지 확인
@@ -311,7 +453,13 @@ export class WisdomService {
         .single();
 
       if (post && post.user_id === user.id) {
-        return { error: { message: '본인의 게시물에는 표현행위를 할 수 없습니다.' } };
+        return { 
+          error: { 
+            code: 'SELF_REACTION_NOT_ALLOWED', 
+            message: '본인의 게시물에는 표현행위를 할 수 없습니다.', 
+            type: 'VALIDATION' 
+          } 
+        };
       }
 
       // 기존 반응 확인
@@ -332,7 +480,13 @@ export class WisdomService {
 
         if (error) {
           console.error('표현행위 업데이트 오류:', error);
-          return { error };
+          return { 
+            error: { 
+              code: 'UPDATE_REACTION_FAILED', 
+              message: '표현행위 업데이트 중 오류가 발생했습니다.', 
+              type: 'SERVER' 
+            } 
+          };
         }
       } else {
         // 새로운 반응 추가
@@ -346,7 +500,13 @@ export class WisdomService {
 
         if (error) {
           console.error('표현행위 추가 오류:', error);
-          return { error };
+          return { 
+            error: { 
+              code: 'ADD_REACTION_FAILED', 
+              message: '표현행위 추가 중 오류가 발생했습니다.', 
+              type: 'SERVER' 
+            } 
+          };
         }
       }
 
@@ -361,7 +521,13 @@ export class WisdomService {
 
     } catch (error) {
       console.error('표현행위 예외:', error);
-      return { error: { message: '표현행위 중 오류가 발생했습니다.' } };
+      return { 
+        error: { 
+          code: 'REACTION_EXCEPTION', 
+          message: '표현행위 중 예상치 못한 오류가 발생했습니다.', 
+          type: 'NETWORK' 
+        } 
+      };
     }
   }
 
