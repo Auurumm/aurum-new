@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useAuth } from "../../contexts/AuthContext.tsx";
 
 const navigationItems = [
   { label: "HOME", href: "#home" },
@@ -9,6 +10,7 @@ const navigationItems = [
 ];
 
 export const Header: React.FC = () => {
+  const { user, loading, signOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
@@ -59,6 +61,30 @@ export const Header: React.FC = () => {
               {item.label}
             </a>
           ))}
+        </div>
+
+        {/* 로그인/로그아웃 버튼 */}
+        <div className="absolute top-1/2 -translate-y-1/2 flex items-center gap-3 right-[135px]">
+          {loading ? (
+            <span className="text-white text-sm">로딩 중…</span>
+          ) : user ? (
+            <>
+              <span className="text-white text-sm">{user.email}</span>
+              <button
+                onClick={() => signOut()}
+                className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+              >
+                로그아웃
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => alert("로그인 모달 열기")} // AuthModal 연동 필요
+              className="px-4 py-2 bg-[#ADFF00] text-black rounded-lg hover:bg-[#9AE600] transition-colors font-medium"
+            >
+              로그인
+            </button>
+          )}
         </div>
 
         {/* Mobile Menu Button */}

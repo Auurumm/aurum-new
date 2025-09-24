@@ -293,42 +293,6 @@ const AppContent = () => {
         flexDirection: 'column',
       }}
     >
-      {/* 개선된 인증 헤더 */}
-      <div className="fixed top-6 right-20 z-50">
-        {loading ? (
-          <div className="flex items-center gap-3 px-4 py-2 bg-black/50 backdrop-blur-sm rounded-lg">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-            <span className="text-white text-sm">로딩중...</span>
-          </div>
-        ) : user ? (
-          <div className="flex items-center gap-3 px-4 py-2 bg-black/50 backdrop-blur-sm rounded-lg">
-            <div className="text-white text-sm">
-              {profile?.full_name || profile?.username || user?.email || '사용자'}님
-            </div>
-            <button 
-              onClick={handleSignOut}
-              disabled={isSigningOut}
-              className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-            >
-              {isSigningOut ? (
-                <>
-                  <div className="animate-spin rounded-full h-3 w-3 border-b border-white"></div>
-                  <span>로그아웃중...</span>
-                </>
-              ) : (
-                '로그아웃'
-              )}
-            </button>
-          </div>
-        ) : (
-          <button 
-            onClick={() => setShowAuthModal(true)}
-            className="px-4 py-2 bg-[#ADFF00] text-black rounded-lg hover:bg-[#9AE600] transition-colors font-medium"
-          >
-            로그인
-          </button>
-        )}
-      </div>
 
       {/* 반응형 컨테이너 - 스케일링 대신 자연스러운 반응형 레이아웃 사용 */}
       <div 
