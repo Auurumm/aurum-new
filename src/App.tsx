@@ -12,9 +12,12 @@ import { ReactionCardsSection } from './Components/NavigationSection/ReactionCar
 import { WisdomCardGrid } from './Components/NavigationSection/CardsSection.tsx';
 import { FooterSection } from './Components/Footer/FooterSection.tsx';
 import './styles/index.css';
+import { WisdomPost } from './services/WisdomService.ts';
 
 // 메인 앱 컴포넌트 - 실제 인증 로직 사용
 const AppContent = () => {
+  const [showWisdomModal, setShowWisdomModal] = useState(false);
+  const [newWisdomPost, setNewWisdomPost] = useState<WisdomPost | null>(null);
   // 실제 인증 시스템 사용
   const { user, profile, signOut, loading } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);

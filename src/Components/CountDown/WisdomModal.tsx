@@ -1,21 +1,59 @@
 import React, { useState, useEffect } from "react";
+import { WisdomService, WisdomFormData } from "../../services/WisdomService.ts";
 
 interface WisdomModalProps {
   isOpen: boolean;
   onClose: () => void;
   onComplete?: () => void;
+  onWisdomSubmitted?: (wisdomPost: any) => void; // 새로 제출된 위즈덤 전달
 }
 
-export const WisdomModal: React.FC<WisdomModalProps> = ({ isOpen, onClose, onComplete }) => {
-  const [formData, setFormData] = useState({
+export const WisdomModal: React.FC<WisdomModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  onComplete, 
+  onWisdomSubmitted 
+}) => {
+  const [formData, setFormData] = useState<WisdomFormData>({
     requestA: "",
     requestB: "",
     requestC: ""
   });
 
   const [popupType, setPopupType] = useState<'temporary' | 'complete' | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleInputChange = (field: string, value: string) => {
+  // 모달이 열릴 때 임시저장 내용 불러오기
+  useEffect(() => {
+    if (isOpen) {
+      loadDraftData();
+    }
+  }, [isOpen]);
+
+  // 임시저장 내용 불러오기
+  const loadDraftData = async () => {
+    try {
+      const { data: draft, error } = await WisdomService.loadDraft();
+      
+      if (error) {
+        console.error('임시저장 불러오기 실패:', error);
+        return;
+      }
+
+      if (draft) {
+        setFormData({
+          requestA: draft.request_a || "",
+          requestB: draft.request_b || "",
+          requestC: draft.request_c || ""
+        });
+        console.log('✅ 임시저장 내용 불러옴:', draft);
+      }
+    } catch (error) {
+      console.error('임시저장 불러오기 예외:', error);
+    }
+  };
+
+  const handleInputChange = (field: keyof WisdomFormData, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -29,14 +67,16 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({ isOpen, onClose, onCom
   const validateForm = () => {
     const { requestA, requestB, requestC } = formData;
     
-    if (requestA.length < 10) return false;
-    if (requestB.length < 10) return false;
-    if (requestC.length < 10) return false;
+    if (requestA.length < 10 || requestA.length > 40) return false;
+    if (requestB.length < 10 || requestB.length > 150) return false;
+    if (requestC.length < 10 || requestC.length > 40) return false;
     
     return true;
   };
 
-  const handleTemporarySave = () => {
+  const handleTemporarySave = async () => {
+    if (isLoading) return;
+    
     console.log('임시 저장 버튼 클릭됨');
     console.log('현재 formData:', formData);
     console.log('검증 결과:', validateForm());
@@ -45,11 +85,31 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({ isOpen, onClose, onCom
       alert('모든 항목에 최소 10자 이상 입력해주세요.');
       return;
     }
-    console.log('팝업 표시 - temporary');
-    setPopupType('temporary');
+
+    setIsLoading(true);
+    
+    try {
+      const { error } = await WisdomService.saveDraft(formData);
+      
+      if (error) {
+        console.error('임시 저장 실패:', error);
+        alert('임시 저장 중 오류가 발생했습니다. 다시 시도해주세요.');
+        return;
+      }
+      
+      console.log('팝업 표시 - temporary');
+      setPopupType('temporary');
+    } catch (error) {
+      console.error('임시 저장 예외:', error);
+      alert('임시 저장 중 예상치 못한 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
+    if (isLoading) return;
+    
     console.log('작성 완료 버튼 클릭됨');
     console.log('현재 formData:', formData);
     console.log('검증 결과:', validateForm());
@@ -58,13 +118,47 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({ isOpen, onClose, onCom
       alert('모든 항목에 최소 10자 이상 입력해주세요.');
       return;
     }
-    console.log('팝업 표시 - complete');
-    setPopupType('complete');
+
+    setIsLoading(true);
+    
+    try {
+      const { data: wisdomPost, error } = await WisdomService.submitWisdom(formData);
+      
+      if (error) {
+        console.error('작성 완료 실패:', error);
+        alert('위즈덤 제출 중 오류가 발생했습니다. 다시 시도해주세요.');
+        return;
+      }
+      
+      if (wisdomPost) {
+        console.log('✅ 위즈덤 제출 성공:', wisdomPost);
+        
+        // 상위 컴포넌트에 새로 제출된 위즈덤 전달
+        if (onWisdomSubmitted) {
+          onWisdomSubmitted(wisdomPost);
+        }
+        
+        console.log('팝업 표시 - complete');
+        setPopupType('complete');
+      }
+    } catch (error) {
+      console.error('작성 완료 예외:', error);
+      alert('위즈덤 제출 중 예상치 못한 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const closePopup = () => {
     setPopupType(null);
     if (popupType === 'complete') {
+      // 작성 완료 시 폼 데이터 초기화
+      setFormData({
+        requestA: "",
+        requestB: "",
+        requestC: ""
+      });
+      
       if (onComplete) {
         onComplete();
       }
@@ -75,23 +169,20 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({ isOpen, onClose, onCom
   // 모달이 열릴 때 모달 최상단으로 스크롤
   useEffect(() => {
     if (isOpen) {
-      // 스케일링을 고려한 정확한 스크롤 계산
       setTimeout(() => {
         const scaledContent = document.querySelector('.scaled-content');
         const modalElement = document.querySelector('[data-modal="wisdom"]');
         
         if (scaledContent && modalElement) {
-          // 모달의 실제 위치 계산
           const modalRect = modalElement.getBoundingClientRect();
           const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
           const modalTop = modalRect.top + scrollTop;
           
           window.scrollTo({
-            top: modalTop - 50, // 50px 여유 공간
+            top: modalTop - 50,
             behavior: 'smooth'
           });
         } else {
-          // 대체 방법: 페이지 최상단으로 스크롤
           window.scrollTo({
             top: 0,
             behavior: 'smooth'
@@ -267,19 +358,21 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({ isOpen, onClose, onCom
               <div className="self-stretch flex flex-col sm:flex-row justify-center sm:justify-start items-center gap-4 sm:gap-20">
                 <button 
                   onClick={handleTemporarySave}
-                  className="w-full sm:w-96 h-14 px-9 py-3 bg-stone-900/60 border-t border-b border-white/20 backdrop-blur-[6px] flex justify-center items-center gap-2.5 hover:bg-stone-800/60 transition-colors"
+                  disabled={isLoading}
+                  className="w-full sm:w-96 h-14 px-9 py-3 bg-stone-900/60 border-t border-b border-white/20 backdrop-blur-[6px] flex justify-center items-center gap-2.5 hover:bg-stone-800/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className="justify-start text-white text-xl font-semibold font-['Pretendard'] leading-9">
-                    임시 저장
+                    {isLoading ? '저장중...' : '임시 저장'}
                   </div>
                 </button>
                 
                 <button 
                   onClick={handleComplete}
-                  className="w-full sm:w-96 h-14 px-9 py-3 bg-stone-900/60 border-t border-b border-white/20 backdrop-blur-[6px] flex justify-center items-center gap-2.5 hover:bg-stone-800/60 transition-colors"
+                  disabled={isLoading}
+                  className="w-full sm:w-96 h-14 px-9 py-3 bg-stone-900/60 border-t border-b border-white/20 backdrop-blur-[6px] flex justify-center items-center gap-2.5 hover:bg-stone-800/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className="justify-start text-lime-400 text-xl font-semibold font-['Pretendard'] leading-9">
-                    작성 완료
+                    {isLoading ? '제출중...' : '작성 완료'}
                   </div>
                 </button>
               </div>
@@ -288,46 +381,45 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({ isOpen, onClose, onCom
         </div>
       </div>
 
-      {/* 토스트 팝업 - 페이지 최상단에 고정 위치 */}
+      {/* 토스트 팝업들 */}
       {popupType === 'temporary' && (
-      <div
-        className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm"
-        style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
-        onClick={closePopup}
-      >
         <div
-          className="absolute left-1/2 -translate-x-1/2 px-6 py-8 sm:px-16 lg:px-28 sm:py-12 lg:py-20 bg-neutral-900 outline outline-2 outline-offset-[-1px] inline-flex flex-col justify-start items-start gap-2.5 w-[90%] max-w-2xl"
-          style={{ top: '200px', outlineColor: '#ADFF00' }}
-          onClick={(e) => e.stopPropagation()}
+          className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm"
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+          onClick={closePopup}
         >
-          <div className="flex flex-col justify-center items-center gap-8 lg:gap-12 w-full">
-            <div className="text-center justify-start text-white text-lg sm:text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-6 sm:leading-8 lg:leading-10">
-              임시저장이 완료 되었습니다<br/>작성 완료 버튼을 누르시고, 최종 제출을 완료하세요
+          <div
+            className="absolute left-1/2 -translate-x-1/2 px-6 py-8 sm:px-16 lg:px-28 sm:py-12 lg:py-20 bg-neutral-900 outline outline-2 outline-offset-[-1px] inline-flex flex-col justify-start items-start gap-2.5 w-[90%] max-w-2xl"
+            style={{ top: '200px', outlineColor: '#ADFF00' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex flex-col justify-center items-center gap-8 lg:gap-12 w-full">
+              <div className="text-center justify-start text-white text-lg sm:text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-6 sm:leading-8 lg:leading-10">
+                임시저장이 완료 되었습니다<br/>작성 완료 버튼을 누르시고, 최종 제출을 완료하세요
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    )}
+      )}
 
-    /* 작성완료 토스트 팝업 - 수정된 부분 */
-    {popupType === 'complete' && (
-      <div
-        className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm"
-        style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
-        onClick={closePopup}
-      >
+      {popupType === 'complete' && (
         <div
-          className="absolute left-1/2 -translate-x-1/2 px-6 py-8 sm:px-16 lg:px-28 sm:py-12 lg:py-20 bg-neutral-900 outline outline-2 outline-offset-[-1px] inline-flex flex-col justify-start items-start gap-2.5 w-[90%] max-w-2xl"
-          style={{ top: '200px', outlineColor: '#ADFF00' }}
-          onClick={(e) => e.stopPropagation()}
+          className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm"
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+          onClick={closePopup}
         >
-          <div className="flex flex-col justify-center items-center gap-8 lg:gap-12 w-full">
-            <div className="justify-start text-white text-lg sm:text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-6 sm:leading-8 lg:leading-10 text-center">
-              위즈덤 작성이 완료 되었습니다 :) !
+          <div
+            className="absolute left-1/2 -translate-x-1/2 px-6 py-8 sm:px-16 lg:px-28 sm:py-12 lg:py-20 bg-neutral-900 outline outline-2 outline-offset-[-1px] inline-flex flex-col justify-start items-start gap-2.5 w-[90%] max-w-2xl"
+            style={{ top: '200px', outlineColor: '#ADFF00' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex flex-col justify-center items-center gap-8 lg:gap-12 w-full">
+              <div className="justify-start text-white text-lg sm:text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-6 sm:leading-8 lg:leading-10 text-center">
+                위즈덤 작성이 완료 되었습니다 :) !
+              </div>
             </div>
           </div>
         </div>
-      </div>
       )}
     </>
   );
