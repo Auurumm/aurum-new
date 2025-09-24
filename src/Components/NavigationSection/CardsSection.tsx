@@ -6,7 +6,7 @@ interface WisdomCardGridProps {
   onAllReactionsComplete?: () => void;
   requireAuth?: boolean;
   onAuthRequired?: () => boolean;
-  newWisdomPost?: WisdomPost | null; // 새로 제출된 위즈덤
+  newWisdomPost?: WisdomPost | null;
 }
 
 export const WisdomCardGrid = ({ 
@@ -22,8 +22,6 @@ export const WisdomCardGrid = ({
   const [showReactionPopup, setShowReactionPopup] = useState(false);
   const [isCompletePopup, setIsCompletePopup] = useState(false);
   const [modalTopPosition, setModalTopPosition] = useState<number>(0);
-  const [wisdomPosts, setWisdomPosts] = useState<WisdomPost[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const modalRef = useRef<HTMLDivElement>(null);
 
   // 표현 행위 아이콘 매핑
@@ -42,7 +40,7 @@ export const WisdomCardGrid = ({
     hug: "응원"
   };
 
-  // 더미 반응 히스토리 (나중에 실제 데이터로 교체)
+  // 더미 반응 히스토리
   const reactionHistory = [
     { name: "윤하린", gender: "여", age: 24, company: "미래에셋대우증권주식회사", reaction: "경의" },
     { name: "정현우", gender: "남", age: 26, company: "카카오", reaction: "추천" },
@@ -51,38 +49,201 @@ export const WisdomCardGrid = ({
     { name: "김민지", gender: "여", age: 22, company: "카카오엔터테인먼트", reaction: "응원" }
   ];
 
-  // 위즈덤 게시물 불러오기
-  const loadWisdomPosts = async () => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await WisdomService.getAllWisdomPosts();
-      
-      if (error) {
-        console.error('위즈덤 게시물 로드 실패:', error);
-        return;
+  // 더미 위즈덤 데이터 (12개)
+  const dummyWisdomPosts: WisdomPost[] = [
+    {
+      id: "1",
+      user_id: "user1",
+      request_a: "미니 보험은 1만 원 이하의 적은 보험료로 1년 미만의 짧은 보험을 말한다. 해당",
+      request_b: "2030세대 라이프스타일을 반영한 미니보험에 '게임화(게이미피케이션) 요소'를 보험 가입 및",
+      request_c: "최근 미니보험은 생활 밀착형 콘셉트로 2030 세대의 눈길을 사로잡고 있다.",
+      honor_count: 22,
+      recommend_count: 8,
+      respect_count: 10,
+      hug_count: 2,
+      created_at: "2025-09-09T19:18:00Z",
+      updated_at: "2025-09-09T19:18:00Z",
+      profile: {
+        full_name: "홍길동"
       }
-
-      setWisdomPosts(data || []);
-      console.log('위즈덤 게시물 로드 완료:', data?.length || 0, '개');
-    } catch (error) {
-      console.error('위즈덤 게시물 로드 예외:', error);
-    } finally {
-      setIsLoading(false);
+    },
+    {
+      id: "2",
+      user_id: "user2",
+      request_a: "소액으로 시작하는 미니 보험, 일상 속 작은 안전망이 되어줍니다.",
+      request_b: "미니 보험은 소액으로 가입할 수 있어 누구나 부담 없이 이용 가능합니다. 일상 속 돌발 상황에 대비할 수 있고, 건강·여행·반려동물 등 테마별 보장으로 생활 전반에 안전망을 제공합니다.\n간단한 절차와 저렴한 비용이 강점입니다.",
+      request_c: "소액으로 시작하는 미니 보험, 일상 속 작은 안전망이 되어줍니다.",
+      honor_count: 15,
+      recommend_count: 12,
+      respect_count: 8,
+      hug_count: 5,
+      created_at: "2025-09-08T14:30:00Z",
+      updated_at: "2025-09-08T14:30:00Z",
+      profile: {
+        full_name: "김민수"
+      }
+    },
+    {
+      id: "3",
+      user_id: "user3",
+      request_a: "디지털 네이티브 세대를 위한 맞춤형 금융 서비스 제안",
+      request_b: "Z세대와 밀레니얼 세대는 기존 금융 서비스보다 간편하고 직관적인 서비스를 선호합니다. 모바일 우선 설계와 게임화 요소를 통해 금융에 대한 진입장벽을 낮추고 있습니다.",
+      request_c: "개인 맞춤형 추천 시스템과 실시간 알림으로 효율적인 자산 관리를 지원합니다.",
+      honor_count: 18,
+      recommend_count: 9,
+      respect_count: 14,
+      hug_count: 7,
+      created_at: "2025-09-07T11:45:00Z",
+      updated_at: "2025-09-07T11:45:00Z",
+      profile: {
+        full_name: "이서연"
+      }
+    },
+    {
+      id: "4",
+      user_id: "user4",
+      request_a: "ESG 투자의 새로운 패러다임과 미래 전망",
+      request_b: "환경, 사회, 지배구조를 고려한 ESG 투자가 주류가 되고 있습니다. 기업의 지속가능성을 평가하는 새로운 기준으로 자리잡고 있으며, 장기적 수익성과 사회적 가치 창출을 동시에 추구합니다.",
+      request_c: "ESG 평가 기준의 표준화와 투명성 확보가 향후 과제로 남아있습니다.",
+      honor_count: 25,
+      recommend_count: 16,
+      respect_count: 19,
+      hug_count: 3,
+      created_at: "2025-09-06T09:20:00Z",
+      updated_at: "2025-09-06T09:20:00Z",
+      profile: {
+        full_name: "박준혁"
+      }
+    },
+    {
+      id: "5",
+      user_id: "user5",
+      request_a: "인공지능 기반 개인 자산관리 서비스의 혁신",
+      request_b: "AI 로보어드바이저가 개인의 투자 성향과 목표를 분석하여 맞춤형 포트폴리오를 제안합니다. 시장 변동성에 실시간으로 대응하며 리밸런싱을 자동화합니다.",
+      request_c: "개인화된 금융 상품 추천과 위험 관리를 통해 투자의 민주화를 실현합니다.",
+      honor_count: 20,
+      recommend_count: 13,
+      respect_count: 11,
+      hug_count: 9,
+      created_at: "2025-09-05T16:15:00Z",
+      updated_at: "2025-09-05T16:15:00Z",
+      profile: {
+        full_name: "정다은"
+      }
+    },
+    {
+      id: "6",
+      user_id: "user6",
+      request_a: "블록체인 기술을 활용한 투명한 금융 생태계 구축",
+      request_b: "분산원장 기술로 금융 거래의 투명성과 보안성을 크게 향상시킬 수 있습니다. 스마트 계약을 통한 자동화된 금융 서비스와 중개 수수료 절감이 가능합니다.",
+      request_c: "규제 환경 정비와 기술적 안정성 확보가 대중화의 핵심 요소입니다.",
+      honor_count: 17,
+      recommend_count: 11,
+      respect_count: 13,
+      hug_count: 6,
+      created_at: "2025-09-04T13:40:00Z",
+      updated_at: "2025-09-04T13:40:00Z",
+      profile: {
+        full_name: "최영준"
+      }
+    },
+    {
+      id: "7",
+      user_id: "user7",
+      request_a: "구독 경제 모델의 금융 서비스 적용 가능성",
+      request_b: "Netflix, Spotify와 같은 구독 모델을 금융 서비스에 적용하면 고객의 예측 가능한 비용 지출과 서비스 제공자의 안정적 수익을 보장할 수 있습니다.",
+      request_c: "개인화된 금융 패키지 서비스로 고객 만족도와 충성도를 높일 수 있습니다.",
+      honor_count: 14,
+      recommend_count: 8,
+      respect_count: 12,
+      hug_count: 4,
+      created_at: "2025-09-03T10:25:00Z",
+      updated_at: "2025-09-03T10:25:00Z",
+      profile: {
+        full_name: "강민아"
+      }
+    },
+    {
+      id: "8",
+      user_id: "user8",
+      request_a: "오픈뱅킹과 핀테크 생태계의 상생 발전 방안",
+      request_b: "오픈뱅킹 API를 통해 핀테크 스타트업들이 혁신적인 금융 서비스를 개발할 수 있는 환경이 조성되었습니다. 기존 은행과 핀테크 기업 간의 협력이 새로운 가치를 창출합니다.",
+      request_c: "데이터 보안과 개인정보 보호를 위한 강화된 규제 체계가 필요합니다.",
+      honor_count: 21,
+      recommend_count: 15,
+      respect_count: 16,
+      hug_count: 8,
+      created_at: "2025-09-02T15:50:00Z",
+      updated_at: "2025-09-02T15:50:00Z",
+      profile: {
+        full_name: "윤태민"
+      }
+    },
+    {
+      id: "9",
+      user_id: "user9",
+      request_a: "마이크로 투자와 소액 분산투자의 대중화",
+      request_b: "소액으로도 다양한 자산에 투자할 수 있는 마이크로 투자 플랫폼이 투자의 문턱을 낮추고 있습니다. 잔돈 모으기, 목표 기반 저축 등 일상과 밀착된 투자 방식을 제공합니다.",
+      request_c: "투자 교육과 리스크 인식 개선을 통해 건전한 투자 문화를 조성해야 합니다.",
+      honor_count: 16,
+      recommend_count: 10,
+      respect_count: 9,
+      hug_count: 11,
+      created_at: "2025-09-01T12:30:00Z",
+      updated_at: "2025-09-01T12:30:00Z",
+      profile: {
+        full_name: "손지혜"
+      }
+    },
+    {
+      id: "10",
+      user_id: "user10",
+      request_a: "디지털 자산과 전통 금융의 융합 서비스",
+      request_b: "암호화폐와 같은 디지털 자산을 기존 금융 시스템에 통합하는 하이브리드 서비스가 등장하고 있습니다. 디지털 자산을 담보로 한 대출, 스테이킹 서비스 등이 새로운 수익 모델을 제시합니다.",
+      request_c: "규제 불확실성 해소와 기술적 표준화가 시장 확산의 관건입니다.",
+      honor_count: 19,
+      recommend_count: 14,
+      respect_count: 15,
+      hug_count: 5,
+      created_at: "2025-08-31T08:15:00Z",
+      updated_at: "2025-08-31T08:15:00Z",
+      profile: {
+        full_name: "임수빈"
+      }
+    },
+    {
+      id: "11",
+      user_id: "user11",
+      request_a: "초개인화 금융 서비스와 고객 경험 혁신",
+      request_b: "빅데이터와 AI 분석을 통해 개인의 소비 패턴, 라이프스타일, 금융 목표를 종합 분석하여 완전히 개인화된 금융 상품과 서비스를 제공합니다.",
+      request_c: "실시간 맞춤형 알림과 추천으로 고객의 금융 의사결정을 지원합니다.",
+      honor_count: 12,
+      recommend_count: 7,
+      respect_count: 10,
+      hug_count: 13,
+      created_at: "2025-08-30T17:45:00Z",
+      updated_at: "2025-08-30T17:45:00Z",
+      profile: {
+        full_name: "배성호"
+      }
+    },
+    {
+      id: "12",
+      user_id: "user12",
+      request_a: "지속가능한 금융과 임팩트 투자의 확산",
+      request_b: "사회적 가치 창출과 수익성을 동시에 추구하는 임팩트 투자가 주목받고 있습니다. 환경 보호, 사회 문제 해결 등에 기여하는 기업과 프로젝트에 대한 투자를 통해 지속가능한 성장을 도모합니다.",
+      request_c: "임팩트 측정과 평가 기준의 표준화가 시장 발전의 핵심 과제입니다.",
+      honor_count: 23,
+      recommend_count: 18,
+      respect_count: 17,
+      hug_count: 6,
+      created_at: "2025-08-29T14:20:00Z",
+      updated_at: "2025-08-29T14:20:00Z",
+      profile: {
+        full_name: "조은진"
+      }
     }
-  };
-
-  // 컴포넌트 마운트 시 데이터 로드
-  useEffect(() => {
-    loadWisdomPosts();
-  }, []);
-
-  // 새 위즈덤 게시물이 추가되었을 때 목록 업데이트
-  useEffect(() => {
-    if (newWisdomPost) {
-      setWisdomPosts(prev => [newWisdomPost, ...prev]);
-      console.log('새 위즈덤 게시물 추가됨:', newWisdomPost.id);
-    }
-  }, [newWisdomPost]);
+  ];
 
   // 타임스탬프 포맷팅 함수
   const formatTimestamp = (timestamp: string) => {
@@ -98,11 +259,11 @@ export const WisdomCardGrid = ({
     return `${year}. ${month}. ${day}(${dayName}) ${hours}:${minutes}`;
   };
 
-  // 카드를 WisdomPost 형식으로 변환
+  // 카드를 표시용으로 변환
   const convertToDisplayCard = (post: WisdomPost) => {
     const userInfo = post.profile 
-      ? `${post.profile.full_name || '사용자'} / 미상 / 미상 / 미상대 / 미상학과 / 미상 / 미상 / 미상 / 일반 / 미상`
-      : "사용자 / 미상 / 미상 / 미상대 / 미상학과 / 미상 / 미상 / 미상 / 일반 / 미상";
+      ? `${post.profile.full_name || '사용자'} / 남 / 23 / 한국대 / 표범학과 / 3 / 미디어 / 웹툰 / 일반 / 구글`
+      : "사용자 / 남 / 23 / 한국대 / 표범학과 / 3 / 미디어 / 웹툰 / 일반 / 구글";
     
     return {
       ...post,
@@ -123,11 +284,6 @@ export const WisdomCardGrid = ({
   };
 
   const handleCardClick = (post: WisdomPost, event: React.MouseEvent<HTMLElement>) => {
-    if (!isWisdomCompleted) {
-      alert("1단계를 먼저 완료해주세요!");
-      return;
-    }
-    
     const clickedElement = event.currentTarget;
     const elementRect = clickedElement.getBoundingClientRect();
     const elementTop = elementRect.top + window.pageYOffset;
@@ -147,6 +303,11 @@ export const WisdomCardGrid = ({
   };
 
   const handleSendReaction = async () => {
+    if (!isWisdomCompleted) {
+      alert("1단계를 먼저 완료해주세요!");
+      return;
+    }
+    
     if (!selectedReaction || !selectedCard) {
       alert("표현행위를 선택해주세요!");
       return;
@@ -158,35 +319,7 @@ export const WisdomCardGrid = ({
     }
     
     try {
-      const { error } = await WisdomService.addReaction(
-        selectedCard.id, 
-        selectedReaction as 'honor' | 'recommend' | 'respect' | 'hug'
-      );
-      
-      if (error) {
-        console.error('표현행위 실패:', error);
-        alert('표현행위 중 오류가 발생했습니다. 다시 시도해주세요.');
-        return;
-      }
-      
-      // 로컬 상태 업데이트
-      setWisdomPosts(prev => prev.map(post => {
-        if (post.id === selectedCard.id) {
-          const updatedPost = { ...post };
-          const reactionKey = `${selectedReaction}_count` as keyof WisdomPost;
-          (updatedPost as any)[reactionKey] = ((post as any)[reactionKey] || 0) + 1;
-          return updatedPost;
-        }
-        return post;
-      }));
-      
-      // 선택된 카드도 업데이트
-      const updatedCard = { ...selectedCard };
-      const reactionKey = `${selectedReaction}_count` as keyof WisdomPost;
-      (updatedCard as any)[reactionKey] = ((selectedCard as any)[reactionKey] || 0) + 1;
-      setSelectedCard(updatedCard);
-    
-      // 테스트용: 2번째 반응에서 바로 12번째로 건너뛰기
+      // 실제 API 호출 대신 로컬 상태만 업데이트
       const newCount = reactionCount === 1 ? 12 : reactionCount + 1;
       setReactionCount(newCount);
       
@@ -258,139 +391,116 @@ export const WisdomCardGrid = ({
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="w-full flex justify-center items-center py-20">
-        <div className="flex items-center gap-3">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#ADFF00]"></div>
-          <span className="text-white text-lg">위즈덤 불러오는 중...</span>
-        </div>
-      </div>
-    );
-  }
-
-  // 표시할 카드들 (실제 데이터 + 더미 데이터로 12개 맞추기)
-  const displayCards = [...wisdomPosts];
-  
-  // 12개보다 적으면 더미 데이터로 채우기
-  while (displayCards.length < 12) {
-    const dummyPost: WisdomPost = {
-      id: `dummy-${displayCards.length}`,
-      user_id: 'dummy-user',
-      request_a: "소액으로 시작하는 미니 보험, 일상 속 작은 안전망이 되어줍니다.",
-      request_b: "미니 보험은 소액으로 가입할 수 있어 누구나 부담 없이 이용 가능합니다. 일상 속 돌발 상황에 대비할 수 있고, 건강·여행·반려동물 등 테마별 보장으로 생활 전반에 안전망을 제공합니다.\n간단한 절차와 저렴한 비용이 강점입니다.",
-      request_c: "소액으로 시작하는 미니 보험, 일상 속 작은 안전망이 되어줍니다.",
-      honor_count: Math.floor(Math.random() * 30),
-      recommend_count: Math.floor(Math.random() * 20),
-      respect_count: Math.floor(Math.random() * 25),
-      hug_count: Math.floor(Math.random() * 15),
-      created_at: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    displayCards.push(dummyPost);
-  }
-
   return (
     <>
       {/* 반응형 카드 그리드 */}
       <div className="w-full flex justify-center mb-[120px]">
         <div className="w-full max-w-[1400px] px-4 sm:px-6 lg:px-8">
           
-          {/* 데스크톱 레이아웃 (lg 이상) */}
+          {/* 데스크톱 레이아웃 (lg 이상) - 4행 3열 */}
           <div className="hidden lg:block">
             <div className="inline-flex flex-col justify-start items-center gap-3.5 w-full">
               {Array(4).fill(null).map((_, rowIndex) => (
                 <div key={rowIndex} className="w-full inline-flex justify-center items-center gap-3.5">
-                  {displayCards.slice(rowIndex * 3, (rowIndex + 1) * 3).map((post) => {
+                  {dummyWisdomPosts.slice(rowIndex * 3, (rowIndex + 1) * 3).map((post) => {
                     const card = convertToDisplayCard(post);
                     return (
                       <div 
                         key={post.id}
-                        className={`w-full max-w-[380px] p-4 bg-stone-700 rounded-[20px] outline outline-1 outline-offset-[-0.50px] outline-neutral-900 inline-flex flex-col justify-start items-center gap-9 transition-opacity duration-300 ${
-                          isWisdomCompleted ? 'opacity-100 cursor-pointer hover:bg-stone-600' : 'opacity-50 cursor-not-allowed'
-                        }`}
+                        className="w-96 p-6 bg-stone-700 rounded-[20px] outline outline-1 outline-offset-[-0.50px] outline-neutral-900 inline-flex flex-col justify-start items-center gap-9 opacity-100 cursor-pointer hover:bg-stone-600 transition-colors duration-300"
                         onClick={(e) => handleCardClick(post, e)}
                       >
-                        <div className="w-full flex flex-col justify-start items-center gap-5">
+                        <div className="self-stretch flex flex-col justify-start items-center gap-5">
                           
                           {/* 프로필 및 콘텐츠 섹션 */}
-                          <div className="w-full flex flex-col justify-start items-start gap-4">
+                          <div className="flex flex-col justify-start items-start gap-4">
                             
                             {/* 프로필 */}
-                            <div className="w-full inline-flex justify-start items-center gap-3.5">
+                            <div className="inline-flex justify-start items-center gap-3.5">
                               <img 
-                                className="w-12 h-12 rounded-full flex-shrink-0" 
+                                className="w-12 h-12 rounded-full" 
                                 src="/images/boy.png"
                                 alt="프로필 이미지"
                               />
-                              <div className="flex-1 min-w-0 text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight truncate">
+                              <div className="w-80 justify-start text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight truncate">
                                 {card.userInfo}
                               </div>
                             </div>
                             
                             {/* 콘텐츠 */}
-                            <div className="w-full flex flex-col justify-start items-start gap-3.5">
-                              {card.content.map((line, lineIndex) => (
-                                <div 
-                                  key={lineIndex}
-                                  className="w-full text-white text-lg font-semibold font-['Pretendard'] leading-9 break-words"
-                                  style={{ 
-                                    display: '-webkit-box',
-                                    WebkitLineClamp: 2,
-                                    WebkitBoxOrient: 'vertical',
-                                    overflow: 'hidden'
-                                  }}
-                                  title={line}
-                                >
-                                  {line}
-                                </div>
-                              ))}
-                              <div className="text-neutral-400 text-sm font-semibold font-['Pretendard'] capitalize leading-none">
+                            <div className="w-96 flex flex-col justify-start items-start gap-3.5">
+                              <div className="self-stretch justify-center text-white text-xl font-semibold font-['Pretendard'] leading-9 truncate">
+                                - {post.request_a}
+                              </div>
+                              <div className="self-stretch justify-center text-white text-xl font-semibold font-['Pretendard'] leading-9 truncate">
+                                - {post.request_b}
+                              </div>
+                              <div className="self-stretch justify-center text-white text-xl font-semibold font-['Pretendard'] leading-9 truncate">
+                                - {post.request_c}
+                              </div>
+                              <div className="justify-center text-neutral-400 text-sm font-semibold font-['Pretendard'] capitalize leading-none">
                                 {card.timestamp}
                               </div>
                             </div>
                           </div>
                           
                           {/* 구분선 */}
-                          <div className="w-full h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-500"></div>
+                          <div className="w-96 h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-500"></div>
                           
                           {/* 표현 행위 통계 */}
-                          <div className="w-full bg-neutral-900 rounded-[20px] inline-flex justify-center items-center">
-                            {Object.entries(card.stats).map(([type, value]) => (
-                              <div 
-                                key={type}
-                                className="flex-1 p-3.5 bg-stone-700 inline-flex flex-col justify-center items-center gap-[5px]"
-                              >
-                                <img 
-                                  className="w-7 h-7" 
-                                  src={reactionIcons[type as keyof typeof reactionIcons]}
-                                  alt={reactionLabels[type as keyof typeof reactionLabels]}
-                                />
-                                <div className="w-full flex flex-col justify-center items-center">
-                                  <div className="text-center text-white text-3xl font-bold font-['Pretendard'] leading-10">
-                                    {value as number}
-                                  </div>
-                                  <div className="text-center text-gray-400 text-sm font-semibold font-['Pretendard'] capitalize leading-none">
-                                    {reactionLabels[type as keyof typeof reactionLabels]}
-                                  </div>
+                          <div className="self-stretch bg-neutral-900 rounded-[20px] inline-flex justify-center items-center">
+                            <div className="w-28 p-3.5 bg-stone-700 inline-flex flex-col justify-center items-center gap-[5px]">
+                              <img className="w-7 h-7" src="/images/honor-icon.png" alt="경의" />
+                              <div className="self-stretch flex flex-col justify-center items-center">
+                                <div className="text-center justify-start text-white text-3xl font-bold font-['Pretendard'] leading-10">
+                                  {post.honor_count}
+                                </div>
+                                <div className="text-center justify-start text-gray-400 text-sm font-semibold font-['Pretendard'] capitalize leading-none">
+                                  경의
                                 </div>
                               </div>
-                            ))}
+                            </div>
+                            <div className="w-28 p-3.5 bg-stone-700 inline-flex flex-col justify-center items-center gap-[5px]">
+                              <img className="w-7 h-7" src="/images/recommend-icon.png" alt="추천" />
+                              <div className="self-stretch flex flex-col justify-center items-center">
+                                <div className="text-center justify-start text-white text-3xl font-bold font-['Pretendard'] leading-10">
+                                  {post.recommend_count}
+                                </div>
+                                <div className="text-center justify-start text-gray-400 text-sm font-semibold font-['Pretendard'] capitalize leading-none">
+                                  추천
+                                </div>
+                              </div>
+                            </div>
+                            <div className="w-28 p-3.5 bg-stone-700 inline-flex flex-col justify-center items-center gap-[5px]">
+                              <img className="w-7 h-7" src="/images/respect-icon.png" alt="존중" />
+                              <div className="self-stretch flex flex-col justify-center items-center">
+                                <div className="text-center justify-start text-white text-3xl font-bold font-['Pretendard'] leading-10">
+                                  {post.respect_count}
+                                </div>
+                                <div className="text-center justify-start text-gray-400 text-sm font-semibold font-['Pretendard'] capitalize leading-none">
+                                  존중
+                                </div>
+                              </div>
+                            </div>
+                            <div className="w-28 p-3.5 bg-stone-700 inline-flex flex-col justify-center items-center gap-[5px]">
+                              <img className="w-7 h-7" src="/images/hug-icon.png" alt="응원" />
+                              <div className="self-stretch flex flex-col justify-center items-center">
+                                <div className="text-center justify-start text-white text-3xl font-bold font-['Pretendard'] leading-10">
+                                  {post.hug_count}
+                                </div>
+                                <div className="text-center justify-start text-gray-400 text-sm font-semibold font-['Pretendard'] capitalize leading-none">
+                                  응원
+                                </div>
+                              </div>
+                            </div>
                           </div>
                           
                           {/* 자세히 보기 버튼 */}
-                          <button
-                            disabled={!isWisdomCompleted}
-                            className={`w-full h-14 px-9 py-3 bg-stone-900/60 border-t border-b border-white/20 backdrop-blur-[6px] inline-flex justify-center items-center gap-2.5 transition-colors ${
-                              isWisdomCompleted 
-                                ? 'cursor-pointer hover:bg-stone-800/60' 
-                                : 'cursor-not-allowed'
-                            }`}
-                          >
-                            <div className="text-white text-lg font-semibold font-['Pretendard'] leading-9">
+                          <div className="w-96 h-14 px-9 py-3 bg-stone-900/60 border-t border-b border-white/20 backdrop-blur-[6px] inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-stone-800/60 transition-colors">
+                            <div className="justify-start text-white text-xl font-semibold font-['Pretendard'] leading-9">
                               자세히 보기
                             </div>
-                          </button>
+                          </div>
                         </div>
                       </div>
                     );
@@ -400,93 +510,103 @@ export const WisdomCardGrid = ({
             </div>
           </div>
 
-          {/* 모바일/태블릿 레이아웃 (lg 미만) */}
+          {/* 모바일/태블릿 레이아웃 (lg 미만) - 1열 */}
           <div className="lg:hidden">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              {displayCards.map((post) => {
+            <div className="grid grid-cols-1 gap-6">
+              {dummyWisdomPosts.map((post) => {
                 const card = convertToDisplayCard(post);
                 return (
                   <div 
                     key={post.id}
-                    className={`w-full bg-neutral-900 rounded-[20px] outline outline-1 outline-offset-[-1px] outline-stone-500 p-4 sm:p-6 flex flex-col gap-4 sm:gap-6 transition-all duration-300 ${
-                      isWisdomCompleted ? 'opacity-100 cursor-pointer hover:bg-stone-600' : 'opacity-50 cursor-not-allowed'
-                    }`}
+                    className="w-full bg-stone-700 rounded-[20px] outline outline-1 outline-offset-[-0.50px] outline-neutral-900 p-6 flex flex-col gap-9 opacity-100 cursor-pointer hover:bg-stone-600 transition-colors duration-300"
                     onClick={(e) => handleCardClick(post, e)}
                   >
-                    
-                    {/* 모바일 프로필 */}
-                    <div className="w-full flex items-start gap-3">
-                      <img 
-                        className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex-shrink-0" 
-                        src="/images/boy.png"
-                        alt="프로필 이미지"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs sm:text-sm text-neutral-400 truncate font-['Pretendard']">
-                          {card.userInfo}
+                    <div className="flex flex-col justify-start items-center gap-5">
+                      
+                      {/* 모바일 프로필 및 콘텐츠 */}
+                      <div className="w-full flex flex-col justify-start items-start gap-4">
+                        
+                        {/* 프로필 */}
+                        <div className="w-full inline-flex justify-start items-center gap-3.5">
+                          <img 
+                            className="w-12 h-12 rounded-full flex-shrink-0" 
+                            src="/images/boy.png"
+                            alt="프로필 이미지"
+                          />
+                          <div className="flex-1 min-w-0 text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight truncate">
+                            {card.userInfo}
+                          </div>
                         </div>
-                        <div className="text-xs text-neutral-500 mt-1 font-['Pretendard']">
-                          {card.timestamp}
+                        
+                        {/* 콘텐츠 */}
+                        <div className="w-full flex flex-col justify-start items-start gap-3.5">
+                          <div className="w-full text-white text-xl font-semibold font-['Pretendard'] leading-9">
+                            - {post.request_a}
+                          </div>
+                          <div className="w-full text-white text-xl font-semibold font-['Pretendard'] leading-9">
+                            - {post.request_b}
+                          </div>
+                          <div className="w-full text-white text-xl font-semibold font-['Pretendard'] leading-9">
+                            - {post.request_c}
+                          </div>
+                          <div className="text-neutral-400 text-sm font-semibold font-['Pretendard'] capitalize leading-none">
+                            {card.timestamp}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    
-                    {/* 모바일 콘텐츠 */}
-                    <div className="w-full">
-                      {card.content.slice(0, 2).map((line, lineIndex) => (
-                        <p 
-                          key={lineIndex}
-                          className="text-sm sm:text-base text-white mb-2 font-['Pretendard'] leading-relaxed"
-                          style={{
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden',
-                            wordBreak: 'keep-all'
-                          }}
-                        >
-                          {line}
-                        </p>
-                      ))}
-                    </div>
-                    
-                    {/* 모바일 통계 */}
-                    <div className="w-full bg-neutral-900 rounded-[15px] p-3">
-                      <div className="grid grid-cols-4 gap-2">
-                        {Object.entries(card.stats).map(([type, value]) => (
-                          <div 
-                            key={type}
-                            className="flex flex-col items-center gap-1"
-                          >
-                            <img 
-                              className="w-5 h-5 sm:w-6 sm:h-6" 
-                              src={reactionIcons[type as keyof typeof reactionIcons]}
-                              alt={reactionLabels[type as keyof typeof reactionLabels]}
-                            />
-                            <div className="text-center text-white text-lg font-bold font-['Pretendard']">
-                              {value as number}
+                      
+                      {/* 구분선 */}
+                      <div className="w-full h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-500"></div>
+                      
+                      {/* 모바일 통계 */}
+                      <div className="w-full bg-neutral-900 rounded-[20px] p-4">
+                        <div className="grid grid-cols-4 gap-2">
+                          <div className="flex flex-col items-center gap-1">
+                            <img className="w-7 h-7" src="/images/honor-icon.png" alt="경의" />
+                            <div className="text-center text-white text-3xl font-bold font-['Pretendard'] leading-10">
+                              {post.honor_count}
                             </div>
-                            <div className="text-center text-gray-400 text-xs font-medium font-['Pretendard']">
-                              {reactionLabels[type as keyof typeof reactionLabels]}
+                            <div className="text-center text-gray-400 text-sm font-semibold font-['Pretendard'] capitalize leading-none">
+                              경의
                             </div>
                           </div>
-                        ))}
+                          <div className="flex flex-col items-center gap-1">
+                            <img className="w-7 h-7" src="/images/recommend-icon.png" alt="추천" />
+                            <div className="text-center text-white text-3xl font-bold font-['Pretendard'] leading-10">
+                              {post.recommend_count}
+                            </div>
+                            <div className="text-center text-gray-400 text-sm font-semibold font-['Pretendard'] capitalize leading-none">
+                              추천
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-center gap-1">
+                            <img className="w-7 h-7" src="/images/respect-icon.png" alt="존중" />
+                            <div className="text-center text-white text-3xl font-bold font-['Pretendard'] leading-10">
+                              {post.respect_count}
+                            </div>
+                            <div className="text-center text-gray-400 text-sm font-semibold font-['Pretendard'] capitalize leading-none">
+                              존중
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-center gap-1">
+                            <img className="w-7 h-7" src="/images/hug-icon.png" alt="응원" />
+                            <div className="text-center text-white text-3xl font-bold font-['Pretendard'] leading-10">
+                              {post.hug_count}
+                            </div>
+                            <div className="text-center text-gray-400 text-sm font-semibold font-['Pretendard'] capitalize leading-none">
+                              응원
+                            </div>
+                          </div>
+                        </div>
                       </div>
+                      
+                      {/* 모바일 버튼 */}
+                      <button className="w-full h-14 px-9 py-3 bg-stone-900/60 border-t border-b border-white/20 backdrop-blur-[6px] inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-stone-800/60 transition-colors">
+                        <div className="text-white text-xl font-semibold font-['Pretendard'] leading-9">
+                          자세히 보기
+                        </div>
+                      </button>
                     </div>
-                    
-                    {/* 모바일 버튼 */}
-                    <button
-                      disabled={!isWisdomCompleted}
-                      className={`w-full h-12 px-4 py-2 bg-stone-900/60 border border-white/20 backdrop-blur-[6px] rounded-lg inline-flex justify-center items-center transition-colors ${
-                        isWisdomCompleted 
-                          ? 'cursor-pointer hover:bg-stone-800/60' 
-                          : 'cursor-not-allowed'
-                      }`}
-                    >
-                      <div className="text-white text-base sm:text-lg font-semibold font-['Pretendard']">
-                        자세히 보기
-                      </div>
-                    </button>
                   </div>
                 );
               })}
@@ -537,13 +657,13 @@ export const WisdomCardGrid = ({
               {/* 모달 콘텐츠 */}
               <div className="w-full">
                 <div className="text-white text-base sm:text-xl font-semibold font-['Pretendard'] leading-relaxed mb-3">
-                  {selectedCard.request_a}
+                  - {selectedCard.request_a}
                 </div>
                 <div className="text-white text-base sm:text-xl font-semibold font-['Pretendard'] leading-relaxed mb-3 whitespace-pre-line">
-                  {selectedCard.request_b}
+                  - {selectedCard.request_b}
                 </div>
                 <div className="text-white text-base sm:text-xl font-semibold font-['Pretendard'] leading-relaxed mb-3">
-                  {selectedCard.request_c}
+                  - {selectedCard.request_c}
                 </div>
                 <div className="text-neutral-400 text-xs sm:text-sm font-medium font-['Pretendard'] mt-4">
                   {formatTimestamp(selectedCard.created_at)}
@@ -557,11 +677,11 @@ export const WisdomCardGrid = ({
               <div className="w-full bg-stone-700 rounded-[15px] sm:rounded-[20px] p-3 sm:p-4">
                 <div className="grid grid-cols-4 gap-3">  
                   {[
-                    { type: 'honor', count: selectedCard.honor_count },
-                    { type: 'recommend', count: selectedCard.recommend_count },
-                    { type: 'respect', count: selectedCard.respect_count },
-                    { type: 'hug', count: selectedCard.hug_count }
-                  ].map(({ type, count }) => (
+                    { type: 'honor', count: selectedCard.honor_count, icon: '/images/honor-icon.png' },
+                    { type: 'recommend', count: selectedCard.recommend_count, icon: '/images/recommend-icon.png' },
+                    { type: 'respect', count: selectedCard.respect_count, icon: '/images/respect-icon.png' },
+                    { type: 'hug', count: selectedCard.hug_count, icon: '/images/hug-icon.png' }
+                  ].map(({ type, count, icon }) => (
                     <button
                       key={type}
                       onClick={() => handleReactionSelect(type)}
@@ -573,7 +693,7 @@ export const WisdomCardGrid = ({
                     >
                       <img 
                         className="w-6 h-6 sm:w-7 sm:h-7" 
-                        src={reactionIcons[type as keyof typeof reactionIcons]}
+                        src={icon}
                         alt={reactionLabels[type as keyof typeof reactionLabels]}
                       />
                       <div className="text-white text-lg sm:text-2xl font-bold font-['Pretendard']">
@@ -612,7 +732,7 @@ export const WisdomCardGrid = ({
                     <div key={index} className="flex items-center gap-3">
                       <img 
                         className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex-shrink-0" 
-                        src="/images/Ellipse 79.png"
+                        src="/images/boy.png"
                         alt="프로필 이미지"
                       />
                       <div className="flex-1 text-white text-xs sm:text-sm font-['Pretendard'] truncate">
@@ -623,9 +743,12 @@ export const WisdomCardGrid = ({
                       </div>
                       <img 
                         className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" 
-                        src={reactionIcons[Object.keys(reactionLabels).find(key => 
-                          reactionLabels[key as keyof typeof reactionLabels] === item.reaction
-                        ) as keyof typeof reactionIcons]}
+                        src={
+                          item.reaction === "경의" ? "/images/honor-icon.png" :
+                          item.reaction === "추천" ? "/images/recommend-icon.png" :
+                          item.reaction === "존중" ? "/images/respect-icon.png" :
+                          "/images/hug-icon.png"
+                        }
                         alt={item.reaction}
                       />
                     </div>
