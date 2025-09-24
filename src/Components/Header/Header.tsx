@@ -11,6 +11,10 @@ const navigationItems = [
 
 export const Header: React.FC = () => {
   const { user, loading, signOut } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  <button disabled={loading} onClick={user ? signOut : () => setShowAuthModal(true)}>
+    {loading ? '로딩 중…' : user ? '로그아웃' : '로그인'}
+  </button>
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (

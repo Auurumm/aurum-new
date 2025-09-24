@@ -141,53 +141,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // 세션 변경 감지
   useEffect(() => {
     let mounted = true;
-
-    // 초기 세션 가져오기
-    const getInitialSession = async () => {
+  
+    const hardStop = setTimeout(() => mounted && setLoading(false), 5000); // 최후 안전장치
+  
+    (async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) {
-          console.error('세션 가져오기 오류:', error);
-          setError(error.message);
-        }
-        
-        if (mounted) {
-          await initializeAuth(session);
-        }
-      } catch (error) {
-        console.error('초기 세션 로드 오류:', error);
-        if (mounted) {
-          setError('인증 초기화에 실패했습니다.');
-          setLoading(false);
-        }
+        const { data, error } = await supabase.auth.getSession();
+        if (error) console.error('getSession error:', error);
+        if (!mounted) return;
+        setUser(data?.session?.user ?? null);
+      } catch (e) {
+        console.error('getSession catch:', e);
+      } finally {
+        if (mounted) setLoading(false); // ✅ 어떤 경우에도 로딩 해제
       }
-    };
-
-    getInitialSession();
-
-    // 인증 상태 변경 리스너
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('인증 상태 변경:', event, session?.user?.email);
-      
-      if (mounted) {
-        // OAuth 리다이렉션 후 토큰 교환 처리
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          console.log('로그인/토큰 갱신 감지, 인증 상태 업데이트');
-          await initializeAuth(session);
-        } else if (event === 'SIGNED_OUT') {
-          console.log('로그아웃 감지');
-          await initializeAuth(null);
-        }
-      }
+    })();
+  
+    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
+      if (!mounted) return;
+      setUser(session?.user ?? null);
+      setLoading(false); // ✅ 이벤트 들어오면 즉시 해제
     });
-
+  
     return () => {
       mounted = false;
-      subscription.unsubscribe();
+      clearTimeout(hardStop);
+      sub?.subscription?.unsubscribe?.();
     };
   }, []);
+  
 
   // Google 로그인
   const signInWithGoogle = async () => {
