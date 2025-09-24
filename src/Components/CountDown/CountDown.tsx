@@ -136,14 +136,19 @@ export const CountDown: React.FC<CountDownProps> = ({ isCompleted = false, onCom
 
             {/* 분 */}
             <div className="w-16 sm:w-18 lg:w-20 inline-flex flex-col justify-start items-center ">
-              <div className="self-stretch h-16 sm:h-18 lg:h-20 px-5 sm:px-6  rounded-[32px] sm:rounded-[36px] lg:rounded-[42px] outline outline-1 outline-offset-[-1px] outline-white/20 backdrop-blur-[20px] flex flex-col justify-center items-center ">
-                <div 
+              <div className="self-stretch h-16 sm:h-18 lg:h-20 
+                  rounded-[32px] sm:rounded-[36px] lg:rounded-[42px] 
+                  outline outline-1 outline-offset-[-1px] outline-white/20 
+                  backdrop-blur-[20px] 
+                  flex items-center justify-center">
+                <span 
                   className="text-center text-xl sm:text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-none"
                   style={{ color: primaryColor }}
                 >
                   {formatTime(timeLeft.minutes)}
-                </div>
+                </span>
               </div>
+
               <div className="self-stretch text-center text-neutral-400 text-xs sm:text-sm font-medium font-['Pretendard'] leading-tight">
                 분
               </div>
