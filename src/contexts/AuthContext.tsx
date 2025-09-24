@@ -193,16 +193,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     try {
       setError(null);
+      console.log('🚪 Supabase 로그아웃 요청...');
+      
+      // 로컬 스토리지 정리 (선택사항)
+      localStorage.removeItem('supabase.auth.token');
+      sessionStorage.clear();
+      
       const { error } = await supabase.auth.signOut();
+      
       if (error) {
-        console.error('로그아웃 오류:', error);
+        console.error('❌ 로그아웃 오류:', error);
         setError(error.message);
+      } else {
+        console.log('✅ Supabase 로그아웃 성공');
+        
+        // 상태 즉시 초기화
+        setUser(null);
+        setProfile(null);
+        setSession(null);
+        setLoading(false);
       }
+      
       return { error };
     } catch (error) {
-      console.error('로그아웃 예외:', error);
+      console.error('❌ 로그아웃 예외:', error);
       const errorMessage = '로그아웃 중 오류가 발생했습니다.';
       setError(errorMessage);
+      
+      // 예외 발생 시에도 상태 초기화 (강제)
+      setUser(null);
+      setProfile(null);
+      setSession(null);
+      setLoading(false);
+      
       return { error: { message: errorMessage } };
     }
   };

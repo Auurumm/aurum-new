@@ -16,8 +16,9 @@ import './styles/index.css';
 // 메인 앱 컴포넌트 - 실제 인증 로직 사용
 const AppContent = () => {
   // 실제 인증 시스템 사용
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, loading } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   // 기존 상태들
   const [isWisdomCompleted, setIsWisdomCompleted] = useState(false);
@@ -71,13 +72,40 @@ const AppContent = () => {
     return true;
   };
 
-  // 로그아웃 처리
-  const handleSignOut = async () => {
-    const { error } = await signOut();
-    if (error) {
-      console.error('로그아웃 실패:', error);
-    }
-  };
+    // 개선된 로그아웃 처리
+    const handleSignOut = async () => {
+      if (isSigningOut) return; // 중복 실행 방지
+      
+      setIsSigningOut(true);
+      console.log('🚪 로그아웃 시작...');
+      
+      try {
+        const { error } = await signOut();
+        
+        if (error) {
+          console.error('❌ 로그아웃 실패:', error);
+          alert('로그아웃 중 오류가 발생했습니다. 다시 시도해주세요.');
+        } else {
+          console.log('✅ 로그아웃 성공');
+          
+          // 상태 초기화 (필요시)
+          setShowAuthModal(false);
+          setIsWisdomCompleted(false);
+          setIsAllReactionsCompleted(false);
+          setShowMotionEffect(false);
+          
+          // 페이지 새로고침으로 확실한 상태 초기화
+          setTimeout(() => {
+            window.location.reload();
+          }, 500);
+        }
+      } catch (error) {
+        console.error('❌ 로그아웃 예외:', error);
+        alert('로그아웃 중 예상치 못한 오류가 발생했습니다.');
+      } finally {
+        setIsSigningOut(false);
+      }
+    };
 
   // 컴포넌트가 마운트될 때 CSS 스타일 추가
   useEffect(() => {
@@ -262,18 +290,31 @@ const AppContent = () => {
         flexDirection: 'column',
       }}
     >
-      {/* 실제 인증 헤더 - 우상단 고정 */}
+      {/* 개선된 인증 헤더 */}
       <div className="fixed top-6 right-20 z-50">
-        {user ? (
+        {loading ? (
+          <div className="flex items-center gap-3 px-4 py-2 bg-black/50 backdrop-blur-sm rounded-lg">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            <span className="text-white text-sm">로딩중...</span>
+          </div>
+        ) : user ? (
           <div className="flex items-center gap-3 px-4 py-2 bg-black/50 backdrop-blur-sm rounded-lg">
             <div className="text-white text-sm">
               {profile?.full_name || profile?.username || user?.email || '사용자'}님
             </div>
             <button 
               onClick={handleSignOut}
-              className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+              disabled={isSigningOut}
+              className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
             >
-              로그아웃
+              {isSigningOut ? (
+                <>
+                  <div className="animate-spin rounded-full h-3 w-3 border-b border-white"></div>
+                  <span>로그아웃중...</span>
+                </>
+              ) : (
+                '로그아웃'
+              )}
             </button>
           </div>
         ) : (
