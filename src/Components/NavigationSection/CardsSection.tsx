@@ -716,14 +716,15 @@ export const WisdomCardGrid = ({
               </button>
 
               {/* 표현행위 히스토리 */}
-              <div className="px-5 relative flex flex-col justify-start items-start gap-3.5">
+              <div className="px-5 relative flex flex-col justify-start items-start gap-3.5 
+                              max-h-[200px] overflow-y-auto">
                 {reactionHistory.map((item, index) => (
                   <div key={index} className="flex flex-col justify-start items-start gap-3.5">
                     <div className="inline-flex justify-start items-center gap-3.5">
                       <div className="w-96 flex justify-start items-center gap-2">
                         <img 
                           className="w-12 h-12 rounded-full" 
-                          src="/images/boy.png"
+                          src="/images/Ellipse 79.png" 
                           alt="프로필 이미지"
                         />
                         <div className="text-white text-sm font-medium font-['Pretendard'] leading-tight">
@@ -743,9 +744,6 @@ export const WisdomCardGrid = ({
                     </div>
                   </div>
                 ))}
-                {reactionHistory.length > 0 && (
-                  <div className="w-0.5 h-16 absolute bg-neutral-500 rounded-[20px] right-0 top-0"></div>
-                )}
               </div>
             </div>
           </div>
