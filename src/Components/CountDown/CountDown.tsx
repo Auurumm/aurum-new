@@ -11,9 +11,11 @@ interface TimeLeft {
 interface CountDownProps {
   isCompleted?: boolean;
   onComplete?: () => void;
+  requireAuth?: boolean;
+  onAuthRequired?: () => boolean;
 }
 
-export const CountDown: React.FC<CountDownProps> = ({ isCompleted = false, onComplete }) => {
+export const CountDown: React.FC<CountDownProps> = ({ isCompleted = false, onComplete, requireAuth = false, onAuthRequired }) => {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isWisdomCompleted, setIsWisdomCompleted] = useState(isCompleted);

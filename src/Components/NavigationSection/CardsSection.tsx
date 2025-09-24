@@ -16,9 +16,11 @@ interface WisdomCard {
 interface WisdomCardGridProps {
   isWisdomCompleted?: boolean;
   onAllReactionsComplete?: () => void;
+  requireAuth?: boolean;
+  onAuthRequired?: () => boolean;
 }
 
-export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComplete }: WisdomCardGridProps): JSX.Element => {
+export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComplete, requireAuth = false, onAuthRequired }: WisdomCardGridProps): JSX.Element => {
   const [selectedCard, setSelectedCard] = useState<WisdomCard | null>(null);
   const [selectedReaction, setSelectedReaction] = useState<string | null>(null);
   const [reactionCount, setReactionCount] = useState(0);

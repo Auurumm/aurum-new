@@ -121,7 +121,7 @@ export const Header: React.FC = () => {
         <h1 className="text-center text-white font-bold font-['Chakra_Petch'] uppercase leading-tight mb-2 sm:mb-4 text-3xl sm:text-5xl lg:text-6xl">
           WISDOM
         </h1>
-        <p className="text-center text-neutral-400 font-semibold font-['Pretendard'] leading-snug sm:leading-relaxed text-xs sm:text-lg lg:text-xl lg:leading-9 break-keep max-w-80 sm:max-w-none">
+        <p className="text-center text-neutral-400 font-semibold font-['Pretendard'] leading-snug sm:leading-relaxed text-xs sm:text-lg lg:text-xl lg:leading-9 break-keep max-w-80 sm:max-w-none whitespace-nowrap">
           영상을 보고, 위즈덤을 작성해서 활동을 완료해 주세요
         </p>
       </div>

@@ -1,3 +1,7 @@
+// 실제 인증 시스템 연결 - 주석 해제
+import { AuthProvider, useAuth } from './contexts/AuthContext.tsx';
+import { AuthModal } from './Components/AuthModal.tsx'; 
+
 import React, { useState, useEffect } from 'react';
 import { Header } from './Components/Header/Header.tsx';
 import { ProgressSection } from './Components/ProgressSection/ProgressSection.tsx';
@@ -9,7 +13,13 @@ import { WisdomCardGrid } from './Components/NavigationSection/CardsSection.tsx'
 import { FooterSection } from './Components/Footer/FooterSection.tsx';
 import './styles/index.css';
 
-const App = () => {
+// 메인 앱 컴포넌트 - 실제 인증 로직 사용
+const AppContent = () => {
+  // 실제 인증 시스템 사용
+  const { user, profile, signOut } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // 기존 상태들
   const [isWisdomCompleted, setIsWisdomCompleted] = useState(false);
   const [isAllReactionsCompleted, setIsAllReactionsCompleted] = useState(false);
   const [showMotionEffect, setShowMotionEffect] = useState(false);
@@ -50,6 +60,23 @@ const App = () => {
       console.log('10초 후 모션 효과 제거');
       setShowMotionEffect(false);
     }, 10000);
+  };
+
+  // 인증이 필요한 액션 처리
+  const handleAuthRequired = () => {
+    if (!user) {
+      setShowAuthModal(true);
+      return false;
+    }
+    return true;
+  };
+
+  // 로그아웃 처리
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+    if (error) {
+      console.error('로그아웃 실패:', error);
+    }
   };
 
   // 컴포넌트가 마운트될 때 CSS 스타일 추가
@@ -235,6 +262,30 @@ const App = () => {
         flexDirection: 'column',
       }}
     >
+      {/* 실제 인증 헤더 - 우상단 고정 */}
+      <div className="fixed top-4 right-4 z-50">
+        {user ? (
+          <div className="flex items-center gap-3 px-4 py-2 bg-black/50 backdrop-blur-sm rounded-lg">
+            <div className="text-white text-sm">
+              {profile?.full_name || profile?.username || user?.email || '사용자'}님
+            </div>
+            <button 
+              onClick={handleSignOut}
+              className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+            >
+              로그아웃
+            </button>
+          </div>
+        ) : (
+          <button 
+            onClick={() => setShowAuthModal(true)}
+            className="px-4 py-2 bg-[#ADFF00] text-black rounded-lg hover:bg-[#9AE600] transition-colors font-medium"
+          >
+            로그인
+          </button>
+        )}
+      </div>
+
       {/* 반응형 컨테이너 - 스케일링 대신 자연스러운 반응형 레이아웃 사용 */}
       <div 
         className="w-full flex-1 flex flex-col"
@@ -258,7 +309,7 @@ const App = () => {
           <div id="countdown-section" className="w-full">
             <CountDown 
               isCompleted={isWisdomCompleted}
-              onComplete={() => setIsWisdomCompleted(true)} 
+              onComplete={() => setIsWisdomCompleted(true)}
             />
           </div>
 
@@ -281,7 +332,22 @@ const App = () => {
           <FooterSection />
         </div>
       </div>
+
+      {/* 실제 인증 모달 */}
+      <AuthModal 
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
     </div>
+  );
+};
+
+// 실제 AuthProvider로 감싸기
+const App = () => {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 };
 
