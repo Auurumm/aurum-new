@@ -97,7 +97,7 @@ export const FooterSection = (): JSX.Element => {
       <div className="w-full h-px bg-white/20 mt-8 lg:mt-16"></div>
 
       {/* 하단 그룹 */}
-      <div className="w-full">
+      <div className="w-full mt-6 lg:mt-10"> 
         <div className="max-w-[1440px]  mx-auto h-10 px-4 lg:px-0">
           {/* 3열 그리드: 좌측 링크 | 가운데 카피라이트 | 우측 SNS */}
           <div className="grid grid-cols-3 items-center h-10">
@@ -126,7 +126,7 @@ export const FooterSection = (): JSX.Element => {
               <img
                 src="/images/footer-group.png"
                 alt="SNS links"
-                className="w-255 h-39 object-contain outline outline-1 outline-offset-[-1px] outline-white/20 overflow-hidden"
+                className="w-255 h-39 object-contain"
               />
             </div>
           </div>
