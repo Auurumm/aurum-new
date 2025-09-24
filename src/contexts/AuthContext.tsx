@@ -86,7 +86,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // 세션 및 프로필 초기화
   const initializeAuth = async (session: Session | null) => {
     console.log('인증 초기화 시작:', session?.user?.email);
-    
+    // initializeAuth 함수 시작 부분에 추가
+    console.log('=== 인증 초기화 디버깅 ===', {
+      hasUser: !!session?.user,
+      userId: session?.user?.id,
+      email: session?.user?.email
+    });
+        
     if (session?.user) {
       setUser(session.user);
       setSession(session);
