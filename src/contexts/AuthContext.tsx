@@ -83,62 +83,91 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // 세션 및 프로필 초기화
+  const initializeAuth = async (session: Session | null) => {
+    console.log('인증 초기화 시작:', session?.user?.email);
+    
+    if (session?.user) {
+      setUser(session.user);
+      setSession(session);
+      
+      // 프로필 로드 또는 생성
+      let profileData = await fetchProfile(session.user.id);
+      if (!profileData) {
+        console.log('프로필이 없어 새로 생성합니다.');
+        profileData = await createProfile(session.user);
+      }
+      setProfile(profileData);
+      console.log('인증 초기화 완료:', { user: session.user.email, profile: profileData?.full_name });
+    } else {
+      setUser(null);
+      setProfile(null);
+      setSession(null);
+      console.log('인증 초기화: 로그아웃 상태');
+    }
+    
+    setLoading(false);
+  };
+
   // 세션 변경 감지
   useEffect(() => {
-    // 현재 세션 가져오기
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        // 프로필 정보 로드
-        fetchProfile(session.user.id).then(async (profile) => {
-          if (!profile) {
-            // 프로필이 없으면 생성
-            profile = await createProfile(session.user);
-          }
-          setProfile(profile);
-        });
-      } else {
-        setProfile(null);
+    let mounted = true;
+
+    // 초기 세션 가져오기
+    const getInitialSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('세션 가져오기 오류:', error);
+          setError(error.message);
+        }
+        
+        if (mounted) {
+          await initializeAuth(session);
+        }
+      } catch (error) {
+        console.error('초기 세션 로드 오류:', error);
+        if (mounted) {
+          setError('인증 초기화에 실패했습니다.');
+          setLoading(false);
+        }
       }
-      
-      setLoading(false);
-    });
+    };
+
+    getInitialSession();
 
     // 인증 상태 변경 리스너
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('인증 상태 변경:', event, session?.user?.email);
+      console.log('🔐 인증 상태 변경:', event, session?.user?.email);
       
-      setSession(session);
-      setUser(session?.user ?? null);
-
-      if (session?.user) {
-        // 프로필 정보 로드 또는 생성
-        let profile = await fetchProfile(session.user.id);
-        if (!profile) {
-          profile = await createProfile(session.user);
+      if (mounted) {
+        // OAuth 리디렉션 후 토큰 교환 처리
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          console.log('로그인/토큰 갱신 감지, 인증 상태 업데이트');
+          await initializeAuth(session);
+        } else if (event === 'SIGNED_OUT') {
+          console.log('로그아웃 감지');
+          await initializeAuth(null);
         }
-        setProfile(profile);
-      } else {
-        setProfile(null);
       }
-      
-      setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Google 로그인
   const signInWithGoogle = async () => {
     try {
+      setError(null);
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin,
+          redirectTo: `${window.location.origin}`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -146,21 +175,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
 
+      if (error) {
+        console.error('Google 로그인 오류:', error);
+        setError(error.message);
+      }
+
       return { error };
     } catch (error) {
-      console.error('Google 로그인 오류:', error);
-      return { error };
+      console.error('Google 로그인 예외:', error);
+      const errorMessage = 'Google 로그인 중 오류가 발생했습니다.';
+      setError(errorMessage);
+      return { error: { message: errorMessage } };
     }
   };
 
   // 로그아웃
   const signOut = async () => {
     try {
+      setError(null);
       const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('로그아웃 오류:', error);
+        setError(error.message);
+      }
       return { error };
     } catch (error) {
-      console.error('로그아웃 오류:', error);
-      return { error };
+      console.error('로그아웃 예외:', error);
+      const errorMessage = '로그아웃 중 오류가 발생했습니다.';
+      setError(errorMessage);
+      return { error: { message: errorMessage } };
     }
   };
 

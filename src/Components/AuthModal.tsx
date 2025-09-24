@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext.tsx';
 
 interface AuthModalProps {
@@ -7,26 +7,41 @@ interface AuthModalProps {
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
-  const { signInWithGoogle, loading } = useAuth();
+  const { signInWithGoogle, loading, user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+
+  // 사용자가 로그인되면 모달 자동 닫기
+  useEffect(() => {
+    if (user && isOpen) {
+      console.log('사용자 로그인 감지, 모달 닫기');
+      setIsLoading(false); // 로딩 상태 초기화
+      onClose();
+    }
+  }, [user, isOpen, onClose]);
+
+  // 모달이 열릴 때마다 로딩 상태 초기화
+  useEffect(() => {
+    if (isOpen) {
+      setIsLoading(false);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     try {
+      console.log('Google 로그인 시작');
       const { error } = await signInWithGoogle();
       if (error) {
         console.error('로그인 오류:', error.message);
         alert('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
-      } else {
-        // 로그인 성공 시 모달 닫기
-        onClose();
+        setIsLoading(false);
       }
+      // 성공 시에는 useEffect에서 모달을 닫을 것임
     } catch (error) {
       console.error('예상치 못한 오류:', error);
       alert('예상치 못한 오류가 발생했습니다.');
-    } finally {
       setIsLoading(false);
     }
   };
@@ -36,7 +51,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       <div className="bg-neutral-900 rounded-lg p-8 max-w-md w-full relative border border-neutral-700">
         {/* 닫기 버튼 */}
         <button
-          onClick={onClose}
+          onClick={() => {
+            setIsLoading(false);
+            onClose();
+          }}
           className="absolute top-4 right-4 text-neutral-400 hover:text-white transition-colors"
           disabled={isLoading}
         >
