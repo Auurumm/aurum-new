@@ -32,7 +32,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-32 bg-black/70 backdrop-blur-sm p-4">
       <div className="bg-neutral-900 rounded-lg p-8 max-w-md w-full relative border border-neutral-700">
         {/* 닫기 버튼 */}
         <button
@@ -91,14 +91,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         {/* 추가 정보 */}
         <div className="mt-6 text-center">
           <p className="text-sm text-neutral-500">
-            로그인하면 서비스 이용약관 및 개인정보처리방침에 동의하는 것으로 간주됩니다.
-          </p>
-        </div>
-
-        {/* 개발 중 알림 (선택사항) */}
-        <div className="mt-4 p-3 bg-yellow-900/30 border border-yellow-700 rounded-lg">
-          <p className="text-sm text-yellow-400 text-center">
-            ⚠️ 개발 중인 기능입니다. Supabase 설정 완료 후 정상 작동합니다.
+            로그인하면 서비스 이용약관 및 <br/> 개인정보처리방침에 동의하는 것으로 간주됩니다.
           </p>
         </div>
       </div>

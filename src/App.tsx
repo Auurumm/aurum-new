@@ -263,7 +263,7 @@ const AppContent = () => {
       }}
     >
       {/* 실제 인증 헤더 - 우상단 고정 */}
-      <div className="fixed top-4 right-4 z-50">
+      <div className="fixed top-6 right-20 z-50">
         {user ? (
           <div className="flex items-center gap-3 px-4 py-2 bg-black/50 backdrop-blur-sm rounded-lg">
             <div className="text-white text-sm">
