@@ -73,11 +73,7 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
   ];
 
   const handleCardClick = (card: WisdomCard, event: React.MouseEvent<HTMLElement>) => {
-    if (!isWisdomCompleted) {
-      alert("1단계를 먼저 완료해주세요!");
-      return;
-    }
-    
+    // 카드 클릭은 항상 가능하도록 수정
     // 클릭한 요소의 위치 계산
     const clickedElement = event.currentTarget;
     const elementRect = clickedElement.getBoundingClientRect();
@@ -95,10 +91,19 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
   };
 
   const handleReactionSelect = (reactionType: string) => {
+    // 1단계가 완료되지 않으면 반응 선택 불가
+    if (!isWisdomCompleted) {
+      return;
+    }
     setSelectedReaction(reactionType);
   };
 
   const handleSendReaction = () => {
+    if (!isWisdomCompleted) {
+      alert("1단계를 먼저 완료해주세요!");
+      return;
+    }
+    
     if (!selectedReaction) {
       alert("표현행위를 선택해주세요!");
       return;
@@ -195,9 +200,7 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
                   {wisdomCards.slice(rowIndex * 3, (rowIndex + 1) * 3).map((card) => (
                     <div 
                       key={card.id}
-                      className={`w-full max-w-[380px] p-4 bg-stone-700 rounded-[20px] outline outline-1 outline-offset-[-0.50px] outline-neutral-900 inline-flex flex-col justify-start items-center gap-9 transition-opacity duration-300 ${
-                        isWisdomCompleted ? 'opacity-100 cursor-pointer hover:bg-stone-600' : 'opacity-50 cursor-not-allowed'
-                      }`}
+                      className="w-full max-w-[380px] p-4 bg-stone-700 rounded-[20px] outline outline-1 outline-offset-[-0.50px] outline-neutral-900 inline-flex flex-col justify-start items-center gap-9 transition-opacity duration-300 opacity-100 cursor-pointer hover:bg-stone-600"
                       onClick={(e) => handleCardClick(card, e)}
                     >
                       <div className="w-full flex flex-col justify-start items-center gap-5">
@@ -269,12 +272,7 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
                         
                         {/* 자세히 보기 버튼 */}
                         <button
-                          disabled={!isWisdomCompleted}
-                          className={`w-full h-14 px-9 py-3 bg-stone-900/60 border-t border-b border-white/20 backdrop-blur-[6px] inline-flex justify-center items-center gap-2.5 transition-colors ${
-                            isWisdomCompleted 
-                              ? 'cursor-pointer hover:bg-stone-800/60' 
-                              : 'cursor-not-allowed'
-                          }`}
+                          className="w-full h-14 px-9 py-3 bg-stone-900/60 border-t border-b border-white/20 backdrop-blur-[6px] inline-flex justify-center items-center gap-2.5 transition-colors cursor-pointer hover:bg-stone-800/60"
                         >
                           <div className="text-white text-lg font-semibold font-['Pretendard'] leading-9">
                             자세히 보기
@@ -294,9 +292,7 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
               {wisdomCards.map((card) => (
                 <div 
                   key={card.id}
-                  className={`w-full bg-neutral-900 rounded-[20px] outline outline-1 outline-offset-[-1px] outline-stone-500 p-4 sm:p-6 flex flex-col gap-4 sm:gap-6 transition-all duration-300 ${
-                    isWisdomCompleted ? 'opacity-100 cursor-pointer hover:bg-stone-600' : 'opacity-50 cursor-not-allowed'
-                  }`}
+                  className="w-full bg-neutral-900 rounded-[20px] outline outline-1 outline-offset-[-1px] outline-stone-500 p-4 sm:p-6 flex flex-col gap-4 sm:gap-6 transition-all duration-300 opacity-100 cursor-pointer hover:bg-stone-600"
                   onClick={(e) => handleCardClick(card, e)}
                 >
                   
@@ -362,12 +358,7 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
                   
                   {/* 모바일 버튼 */}
                   <button
-                    disabled={!isWisdomCompleted}
-                    className={`w-full h-12 px-4 py-2 bg-stone-900/60 border border-white/20 backdrop-blur-[6px] rounded-lg inline-flex justify-center items-center transition-colors ${
-                      isWisdomCompleted 
-                        ? 'cursor-pointer hover:bg-stone-800/60' 
-                        : 'cursor-not-allowed'
-                    }`}
+                    className="w-full h-12 px-4 py-2 bg-stone-900/60 border border-white/20 backdrop-blur-[6px] rounded-lg inline-flex justify-center items-center transition-colors cursor-pointer hover:bg-stone-800/60"
                   >
                     <div className="text-white text-base sm:text-lg font-semibold font-['Pretendard']">
                       자세히 보기
@@ -445,8 +436,13 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
                     <button
                       key={type}
                       onClick={() => handleReactionSelect(type)}
-                      className={`p-3 flex flex-col items-center gap-2 transition-all duration-200 rounded-lg hover:bg-stone-600 ${
-                        selectedReaction === type 
+                      disabled={!isWisdomCompleted}
+                      className={`p-3 flex flex-col items-center gap-2 transition-all duration-200 rounded-lg ${
+                        !isWisdomCompleted 
+                          ? 'cursor-not-allowed opacity-50' 
+                          : 'hover:bg-stone-600 cursor-pointer'
+                      } ${
+                        selectedReaction === type && isWisdomCompleted
                           ? 'bg-[#ADFF00]/20 border-2 border-[#ADFF00]' 
                           : 'bg-stone-700'
                       }`}
@@ -470,17 +466,17 @@ export const WisdomCardGrid = ({ isWisdomCompleted = false, onAllReactionsComple
               {/* 표현행위 보내기 버튼 */}
               <button 
                 onClick={handleSendReaction}
-                disabled={!selectedReaction}
+                disabled={!selectedReaction || !isWisdomCompleted}
                 className={`w-full h-12 sm:h-14 px-4 py-2 bg-stone-900/60 border border-white/20 backdrop-blur-[6px] rounded-lg transition-colors ${
-                  selectedReaction 
+                  selectedReaction && isWisdomCompleted
                     ? 'hover:bg-stone-800/60 cursor-pointer' 
                     : 'opacity-50 cursor-not-allowed'
                 }`}
               >
                 <div className={`text-base sm:text-xl font-semibold font-['Pretendard'] ${
-                  selectedReaction ? 'text-[#ADFF00]' : 'text-gray-500'
+                  selectedReaction && isWisdomCompleted ? 'text-[#ADFF00]' : 'text-gray-500'
                 }`}>
-                  표현행위 보내기
+                  {!isWisdomCompleted ? '1단계를 먼저 완료해주세요' : '표현행위 보내기'}
                 </div>
               </button>
 
