@@ -304,7 +304,10 @@ const AppContent = () => {
       >
         {/* 헤더 */}
         <div className="w-full relative z-20">
-          <Header />
+          <Header 
+            onLoginClick={() => setShowAuthModal(true)}   // ✅ 로그인 모달 열기
+            onLogoutClick={handleSignOut}                 // ✅ App의 커스텀 로그아웃 로직 사용
+          />
         </div>
         
         {/* 메인 콘텐츠 영역 */}

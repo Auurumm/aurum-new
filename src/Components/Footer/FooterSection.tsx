@@ -95,6 +95,44 @@ export const FooterSection = (): JSX.Element => {
 
       {/* 하단 구분선 */}
       <div className="w-full h-px bg-white/20 mt-8 lg:mt-16"></div>
+
+      {/* 하단 그룹 */}
+      <div className="w-full">
+        <div className="max-w-[1440px]  mx-auto h-10 px-4 lg:px-0">
+          {/* 3열 그리드: 좌측 링크 | 가운데 카피라이트 | 우측 SNS */}
+          <div className="grid grid-cols-3 items-center h-10">
+            
+            {/* 왼쪽: 링크 그룹 */}
+            <div className="flex items-center gap-7">
+              <div className="justify-start text-zinc-400 text-base font-normal font-['Sora'] leading-relaxed">
+                Privacy policy
+              </div>
+              {/* 세로 구분선 – 시안 방식(rotate+outline) 그대로 */}
+              <div className="w-4 h-0 origin-top-left rotate-90 outline outline-1 outline-offset-[-0.50px] outline-white/20"></div>
+              <div className="justify-start text-zinc-400 text-base font-normal font-['Sora'] leading-relaxed">
+                Terms & Conditions
+              </div>
+            </div>
+
+            {/* 가운데: 카피라이트 */}
+            <div className="flex justify-center">
+              <div className="justify-start text-zinc-400 text-base font-normal font-['Sora'] leading-relaxed">
+                ©Designthemes all rights Reserved
+              </div>
+            </div>
+
+            {/* 오른쪽: SNS 이미지 */}
+            <div className="flex justify-end">
+              <img
+                src="/images/footer-group.png"
+                alt="SNS links"
+                className="w-255 h-39 object-contain outline outline-1 outline-offset-[-1px] outline-white/20 overflow-hidden"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
     </footer>
   );
 };

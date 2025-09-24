@@ -9,7 +9,12 @@ const navigationItems = [
   { label: "SHOP", href: "#shop" },
 ];
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+  onLoginClick?: () => void;
+  onLogoutClick?: () => void;
+}
+
+export const Header: React.FC<HeaderProps> = ({ onLoginClick, onLogoutClick }) => {
   const { user, loading, signOut } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   <button disabled={loading} onClick={user ? signOut : () => setShowAuthModal(true)}>
@@ -75,7 +80,7 @@ export const Header: React.FC = () => {
             <>
               <span className="text-white text-sm">{user.email}</span>
               <button
-                onClick={() => signOut()}
+                onClick={onLogoutClick || (() => signOut())}
                 className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
               >
                 로그아웃
@@ -83,7 +88,7 @@ export const Header: React.FC = () => {
             </>
           ) : (
             <button
-              onClick={() => alert("로그인 모달 열기")} // AuthModal 연동 필요
+              onClick={onLoginClick}
               className="px-4 py-2 bg-[#ADFF00] text-black rounded-lg hover:bg-[#9AE600] transition-colors font-medium"
             >
               로그인
