@@ -99,8 +99,9 @@ const AppContent = () => {
           
           // 페이지 새로고침으로 확실한 상태 초기화
           setTimeout(() => {
-            window.location.reload();
-          }, 500);
+            window.location.replace(window.location.origin); // ← 해시 없이 도메인 루트로
+            // 또는: window.location.href = '/';
+          }, 200);
         }
       } catch (error) {
         console.error('❌ 로그아웃 예외:', error);
