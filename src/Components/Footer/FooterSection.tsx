@@ -10,10 +10,10 @@ export const FooterSection = (): JSX.Element => {
       {/* 상단 구분선 */}
       <div className="w-full h-px bg-white/20 mb-8 lg:mb-16"></div>
       
-      <div className="max-w-[1920px] mx-auto px-[240px] relative">
+      <div className="max-w-[1920px] mx-auto px-4 md:px-8 lg:px-16 xl:px-[240px] relative">
         
-        {/* 데스크톱 레이아웃 (lg 이상) */}
-        <div className="hidden lg:block relative h-[350px] overflow-hidden">
+        {/* 데스크톱 레이아웃 (xl 이상) - 최소 너비 보장 */}
+        <div className="hidden xl:block relative h-[350px] overflow-hidden min-w-[1200px]">
           
           {/* 로고 및 브랜드 섹션 - 단일 이미지로 대체 */}
           <div className="absolute top-[50px] left-0 w-[531px] h-[271px]">
@@ -84,6 +84,80 @@ export const FooterSection = (): JSX.Element => {
           </div>
         </div>
 
+        {/* 중간 크기 화면 레이아웃 (lg ~ xl) */}
+        <div className="hidden lg:block xl:hidden">
+          <div className="flex flex-col lg:flex-row gap-8 lg:gap-16">
+            {/* 로고 섹션 */}
+            <div className="flex-shrink-0">
+              <img 
+                src="/images/Description.png" 
+                alt="Footer Brand Section" 
+                className="w-full max-w-[400px] h-auto object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  (e.currentTarget.nextElementSibling as HTMLElement)!.style.display = 'block';
+                }}
+              />
+              <div className="hidden bg-neutral-800 border border-white/20 rounded flex items-center justify-center h-[200px]">
+                <div className="text-center text-[#bababa]">
+                  <div className="text-xl font-bold mb-2">Brand Section</div>
+                </div>
+              </div>
+            </div>
+
+            {/* 메뉴 섹션 */}
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-8">
+              {/* Useful Links */}
+              <div className="flex flex-col gap-[13px]">
+                <h3 className="text-white text-xl font-bold font-['Chakra_Petch'] uppercase leading-loose mb-4">
+                  Useful Links
+                </h3>
+                <ul className="text-[#bababa] text-base font-normal font-['Sora'] leading-10 space-y-2">
+                  {usefulLinks.map((link, index) => (
+                    <li key={index}>
+                      <a href="#" className="hover:text-white transition-colors duration-200">
+                        {link}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Utility Pages */}
+              <div className="flex flex-col gap-[13px]">
+                <h3 className="text-white text-xl font-bold font-['Chakra_Petch'] uppercase leading-loose mb-4">
+                  Utility Pages
+                </h3>
+                <ul className="text-[#bababa] text-base font-normal font-['Sora'] leading-10 space-y-2">
+                  {utilityPages.map((page, index) => (
+                    <li key={index}>
+                      <a href="#" className="hover:text-white transition-colors duration-200">
+                        {page}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Miscellaneous */}
+              <div className="flex flex-col gap-[13px]">
+                <h3 className="text-white text-xl font-bold font-['Chakra_Petch'] uppercase leading-loose mb-4">
+                  Miscellaneous
+                </h3>
+                <ul className="text-[#bababa] text-base font-normal font-['Sora'] leading-10 space-y-2">
+                  {miscellaneous.map((item, index) => (
+                    <li key={index}>
+                      <a href="#" className="hover:text-white transition-colors duration-200">
+                        {item}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* 모바일 레이아웃 (lg 미만) */}
         <div className="lg:hidden flex flex-col items-center gap-6">
           {/* 로고 */}
@@ -96,37 +170,37 @@ export const FooterSection = (): JSX.Element => {
       {/* 하단 구분선 */}
       <div className="w-full h-px bg-white/20 mt-8 lg:mt-16"></div>
 
-      {/* 하단 그룹 */}
+      {/* 하단 그룹 - 반응형 패딩 적용 */}
       <div className="w-full mt-6 lg:mt-10"> 
-        <div className="max-w-[1440px]  mx-auto h-10 px-4 lg:px-0">
+        <div className="max-w-[1440px] mx-auto h-10 px-4 lg:px-8 xl:px-0">
           {/* 3열 그리드: 좌측 링크 | 가운데 카피라이트 | 우측 SNS */}
-          <div className="grid grid-cols-3 items-center h-10">
+          <div className="grid grid-cols-1 md:grid-cols-3 items-center h-auto md:h-10 gap-4 md:gap-0">
             
             {/* 왼쪽: 링크 그룹 */}
-            <div className="flex items-center gap-7">
-              <div className="justify-start text-zinc-400 text-base font-normal font-['Sora'] leading-relaxed">
+            <div className="flex flex-col md:flex-row items-center md:items-center gap-2 md:gap-7 justify-center md:justify-start">
+              <div className="text-zinc-400 text-sm md:text-base font-normal font-['Sora'] leading-relaxed">
                 Privacy policy
               </div>
-              {/* 세로 구분선 – 시안 방식(rotate+outline) 그대로 */}
-              <div className="w-4 h-0 origin-top-left rotate-90 outline outline-1 outline-offset-[-0.50px] outline-white/20"></div>
-              <div className="justify-start text-zinc-400 text-base font-normal font-['Sora'] leading-relaxed">
+              {/* 세로 구분선 – 데스크톱에서만 표시 */}
+              <div className="hidden md:block w-4 h-0 origin-top-left rotate-90 outline outline-1 outline-offset-[-0.50px] outline-white/20"></div>
+              <div className="text-zinc-400 text-sm md:text-base font-normal font-['Sora'] leading-relaxed">
                 Terms & Conditions
               </div>
             </div>
 
             {/* 가운데: 카피라이트 */}
-            <div className="flex justify-center">
-              <div className="justify-start text-zinc-400 text-base font-normal font-['Sora'] leading-relaxed">
+            <div className="flex justify-center order-3 md:order-2">
+              <div className="text-zinc-400 text-sm md:text-base font-normal font-['Sora'] leading-relaxed text-center">
                 ©Designthemes all rights Reserved
               </div>
             </div>
 
             {/* 오른쪽: SNS 이미지 */}
-            <div className="flex justify-end">
+            <div className="flex justify-center md:justify-end order-2 md:order-3">
               <img
                 src="/images/footer-group.png"
                 alt="SNS links"
-                className="w-255 h-39 object-contain"
+                className="w-255 h-39 object-contain max-w-full h-auto"
               />
             </div>
           </div>
