@@ -610,14 +610,14 @@ export const WisdomCardGrid = ({
             ref={modalRef}
             className="w-[589px] h-[999px] bg-[#3B4236] rounded-[20px] 
                         outline outline-1 outline-offset-[-1px] outline-stone-500 
-                        my-8 overflow-y-auto p-7"
+                        my-8 p-[45px]"
             style={{ 
               marginTop: `${modalTopPosition}px`,
-              marginBottom: '32px'
+              marginBottom: '10px'
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="inline-flex flex-col justify-start items-center gap-6">
+            <div className="inline-flex flex-col justify-start items-center gap-[10px]">
               <div className="w-full flex flex-col justify-start items-start gap-6">
                 
                 {/* 모달 헤더 */}
@@ -653,14 +653,14 @@ export const WisdomCardGrid = ({
                       - {selectedCard.request_c}
                     </div>
                   </div>
-                  <div className="self-stretch text-center text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight">
+                  <div className="self-stretch text-left text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight">
                     {formatTimestamp(selectedCard.created_at)}
                   </div>
                 </div>
               </div>
 
               {/* 구분선 */}
-              <div className="w-full h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-500"></div>
+              <div className="w-full h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-500 my-[25px]"></div>
               
               {/* 표현행위 선택 */}
               <div className="bg-[#3B4236] rounded-[20px] inline-flex justify-center items-center">
@@ -702,7 +702,7 @@ export const WisdomCardGrid = ({
               <button 
                 onClick={handleSendReaction}
                 disabled={!selectedReaction}
-                className={`w-96 h-14 px-9 py-3 bg-stone-900/60 border-t border-b border-white/20 backdrop-blur-[6px] inline-flex justify-center items-center gap-2.5 transition-colors ${
+                className={`w-96 h-14 px-9 py-3 bg-stone-900/60 border-t border-b border-white/20 backdrop-blur-[6px] inline-flex justify-center items-center gap-2.5 transition-colors my-[15px] ${
                   selectedReaction 
                     ? 'hover:bg-stone-800/60 cursor-pointer' 
                     : 'opacity-50 cursor-not-allowed'
@@ -716,18 +716,18 @@ export const WisdomCardGrid = ({
               </button>
 
               {/* 표현행위 히스토리 */}
-              <div className="px-5 relative flex flex-col justify-start items-start gap-3.5 
-                              max-h-[200px] overflow-y-auto">
+              <div className="custom-scrollbar relative flex flex-col justify-start items-start gap-[15px] 
+                              w-full h-[310px] overflow-y-auto">
                 {reactionHistory.map((item, index) => (
-                  <div key={index} className="flex flex-col justify-start items-start gap-3.5">
-                    <div className="inline-flex justify-start items-center gap-3.5">
-                      <div className="w-96 flex justify-start items-center gap-2">
+                  <div key={index} className="w-full flex flex-col justify-start items-start">
+                    <div className="w-full inline-flex justify-start items-center gap-3.5">
+                      <div className="flex-1 h-[50px] flex justify-start items-center gap-2">
                         <img 
                           className="w-12 h-12 rounded-full" 
                           src="/images/Ellipse 79.png" 
                           alt="프로필 이미지"
                         />
-                        <div className="text-white text-sm font-medium font-['Pretendard'] leading-tight">
+                        <div className="flex-1 text-white text-sm font-medium font-['Pretendard'] leading-tight">
                           {item.name} ({item.gender} / {item.age} / {item.company}) 님이 {item.reaction}을 부여하였습니다
                         </div>
                       </div>

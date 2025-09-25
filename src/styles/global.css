@@ -525,3 +525,25 @@ body::after {
     gap: 1rem;
   }
 }
+
+
+/* styles.css 또는 해당 CSS 파일 */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-image: url("../assets/images/Rectangle-34625613.png");
+  background-size: contain;
+  background-repeat: repeat-y;
+  border-radius: 4px;
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
