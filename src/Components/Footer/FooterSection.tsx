@@ -10,7 +10,7 @@ export const FooterSection = (): JSX.Element => {
       {/* 상단 구분선 */}
       <div className="w-full h-px bg-white/20 mb-8 lg:mb-16"></div>
       
-      <div className="max-w-[1920px] mx-auto content-padding relative">
+      <div className="max-w-[1920px] mx-auto px-[240px] relative">
         
         {/* 데스크톱 레이아웃 (lg 이상) */}
         <div className="hidden lg:block relative h-[350px] overflow-hidden">
@@ -36,7 +36,7 @@ export const FooterSection = (): JSX.Element => {
           </div>
 
           {/* Useful Links */}
-          <div className="absolute top-0 left-[min(1212px,40%)] w-[144px] h-[274px] flex flex-col gap-[13px]">
+          <div className="absolute top-0 left-[50%] w-[174px] h-[274px] flex flex-col gap-[13px]">
             <h3 className="text-white text-xl font-bold font-['Chakra_Petch'] uppercase leading-loose mb-4">
               Useful Links
             </h3>
@@ -52,7 +52,7 @@ export const FooterSection = (): JSX.Element => {
           </div>
 
           {/* Utility Pages */}
-          <div className="absolute top-0 right-[480px] w-[174px] h-[274px] flex flex-col gap-[13px]">
+          <div className="absolute top-0 left-[76%] transform -translate-x-1/2 w-[224px] h-[274px] flex flex-col gap-[13px]">
             <h3 className="text-white text-xl font-bold font-['Chakra_Petch'] uppercase leading-loose mb-4">
               Utility Pages
             </h3>
