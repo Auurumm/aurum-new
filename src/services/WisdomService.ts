@@ -635,28 +635,24 @@ export class WisdomService {
           reaction_type: reactionType
         });
   
+      
       if (insertError) {
         console.error('❌ wisdom_reactions 삽입 실패:', insertError);
         return { error: new Error('표현행위 저장에 실패했습니다.') };
       }
       console.log('✅ wisdom_reactions 삽입 성공');
   
+      // 기존 코드 (206-216줄)를 다음으로 교체:
       console.log('🔵 6. 카운트 업데이트 시작');
-      const countField = `${reactionType}_count`;
-      const currentCount = post[countField] || 0;
-      const newCount = currentCount + 1;
-  
-      console.log(`📊 ${countField}: ${currentCount} → ${newCount}`);
-  
-      const { data: updateData, error: updateError } = await supabase
-        .from('wisdom_posts')
-        .update({ [countField]: newCount })
-        .eq('id', wisdomPostId)
-        .select();
-  
-      console.log('업데이트 결과:', updateData);
+
+      const { error: updateError } = await supabase
+        .rpc('increment_reaction_count', {
+          post_id: wisdomPostId,
+          reaction_type: reactionType
+        });
+
       console.log('업데이트 에러:', updateError);
-  
+
       if (updateError) {
         console.error('❌ 카운트 업데이트 실패:', updateError);
         
@@ -670,7 +666,7 @@ export class WisdomService {
         
         return { error: new Error('카운트 업데이트에 실패했습니다.') };
       }
-  
+
       console.log(`✅ 표현행위 완료: ${reactionType}`);
       return { error: null };
   

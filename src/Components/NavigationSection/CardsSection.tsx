@@ -62,6 +62,15 @@ export const WisdomCardGrid = ({
     hug: "응원"
   };
 
+  // 추가: 한글 -> 영문 키 변환용
+  const reactionKeyMap: { [key: string]: keyof typeof reactionIcons } = {
+    "경의": "honor",
+    "추천": "recommend",
+    "존중": "respect",
+    "응원": "hug"
+  };
+
+  
   // 초기 위즈덤 포스트 로드
   useEffect(() => {
     const loadWisdomPosts = async () => {
@@ -703,7 +712,6 @@ export const WisdomCardGrid = ({
                             src={item.avatar_url}
                             alt="프로필 이미지"
                             onError={(e) => {
-                              // 이미지 로드 실패 시 기본 이미지로 대체
                               e.currentTarget.src = '/images/Ellipse 79.png';
                             }}
                           />
@@ -713,12 +721,8 @@ export const WisdomCardGrid = ({
                         </div>
                         <img 
                           className="w-7 h-7" 
-                          src={reactionIcons[item.reaction as keyof typeof reactionIcons]}
+                          src={reactionIcons[reactionKeyMap[item.reaction]]}
                           alt={item.reaction}
-                          onError={(e) => {
-                            console.error('아이콘 로드 실패:', item.reaction);
-                            // 아이콘 로드 실패 시 기본 처리
-                          }}
                         />
                       </div>
                     </div>
