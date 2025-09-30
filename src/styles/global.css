@@ -527,23 +527,20 @@ body::after {
 }
 
 
-/* styles.css 또는 해당 CSS 파일 */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
+/* global.css */
+.history-scrollbar::-webkit-scrollbar {
+  width: 4px;
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
+.history-scrollbar::-webkit-scrollbar-track {
+  background: transparent;  /* 배경 투명 */
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background-image: url("../assets/images/Rectangle-34625613.png");
-  background-size: contain;
-  background-repeat: repeat-y;
-  border-radius: 4px;
+.history-scrollbar::-webkit-scrollbar-thumb {
+  background: #777777;
+  border-radius: 2px;  /* 둥글게 (선택사항) */
 }
 
-.custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: transparent transparent;
+.history-scrollbar::-webkit-scrollbar-button {
+  display: none;  /* 위아래 삼각형 버튼 제거 */
 }

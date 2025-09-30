@@ -10,6 +10,18 @@ interface WisdomCardGridProps {
   newWisdomPost?: WisdomPost | null;
 }
 
+// 히스토리 아이템 인터페이스
+interface ReactionHistoryItem {
+  id: string;
+  name: string;
+  gender: string;
+  age: number;
+  company: string;
+  avatar_url: string;
+  reaction: string;
+  created_at: string;
+}
+
 export const WisdomCardGrid = ({ 
   isWisdomCompleted = false, 
   onAllReactionsComplete, 
@@ -17,6 +29,7 @@ export const WisdomCardGrid = ({
   onAuthRequired,
   newWisdomPost 
 }: WisdomCardGridProps): JSX.Element => {
+  // 카드 상태
   const [selectedCard, setSelectedCard] = useState<WisdomPost | null>(null);
   const [selectedReaction, setSelectedReaction] = useState<string | null>(null);
   const [reactionCount, setReactionCount] = useState(0);
@@ -24,6 +37,14 @@ export const WisdomCardGrid = ({
   const [isCompletePopup, setIsCompletePopup] = useState(false);
   const [modalTopPosition, setModalTopPosition] = useState<number>(0);
   const modalRef = useRef<HTMLDivElement>(null);
+
+  // 위즈덤 포스트 상태
+  const [wisdomPosts, setWisdomPosts] = useState<WisdomPost[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // 히스토리 상태
+  const [reactionHistory, setReactionHistory] = useState<ReactionHistoryItem[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   // 표현 행위 아이콘 매핑
   const reactionIcons = {
@@ -41,21 +62,7 @@ export const WisdomCardGrid = ({
     hug: "응원"
   };
 
-  // 더미 반응 히스토리
-  const reactionHistory = [
-    { name: "윤하린", gender: "여", age: 24, company: "미래에셋대우증권주식회사", reaction: "경의" },
-    { name: "정현우", gender: "남", age: 26, company: "카카오", reaction: "추천" },
-    { name: "박하늘", gender: "여", age: 25, company: "배달의민족", reaction: "존중" },
-    { name: "강시후", gender: "남", age: 22, company: "쿠팡", reaction: "경의" },
-    { name: "김민지", gender: "여", age: 22, company: "카카오엔터테인먼트", reaction: "응원" }
-  ];
-
-
-  // ✅ 실제 Supabase 데이터 상태
-  const [wisdomPosts, setWisdomPosts] = useState<WisdomPost[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // 데이터 로딩
+  // 초기 위즈덤 포스트 로드
   useEffect(() => {
     const loadWisdomPosts = async () => {
       try {
@@ -64,220 +71,6 @@ export const WisdomCardGrid = ({
         setWisdomPosts(posts);
       } catch (error) {
         console.error('위즈덤 포스트 로딩 실패:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    loadWisdomPosts();
-  }, []);
-
-  /*// 더미 위즈덤 데이터 (12개)
-  const dummyWisdomPosts: WisdomPost[] = [
-    {
-      id: "1",
-      user_id: "user1",
-      request_a: "미니 보험은 1만 원 이하의 적은 보험료로 1년 미만의 짧은 보험을 말한다. 해당",
-      request_b: "2030세대 라이프스타일을 반영한 미니보험에 '게임화(게이미피케이션) 요소'를 보험 가입 및",
-      request_c: "최근 미니보험은 생활 밀착형 콘셉트로 2030 세대의 눈길을 사로잡고 있다.",
-      honor_count: 22,
-      recommend_count: 8,
-      respect_count: 10,
-      hug_count: 2,
-      created_at: "2025-09-09T19:18:00Z",
-      updated_at: "2025-09-09T19:18:00Z",
-      profile: {
-        full_name: "홍길동"
-      }
-    },
-    {
-      id: "2",
-      user_id: "user2",
-      request_a: "소액으로 시작하는 미니 보험, 일상 속 작은 안전망이 되어줍니다.",
-      request_b: "미니 보험은 소액으로 가입할 수 있어 누구나 부담 없이 이용 가능합니다. 일상 속 돌발 상황에 대비할 수 있고, 건강·여행·반려동물 등 테마별 보장으로 생활 전반에 안전망을 제공합니다.\n간단한 절차와 저렴한 비용이 강점입니다.",
-      request_c: "소액으로 시작하는 미니 보험, 일상 속 작은 안전망이 되어줍니다.",
-      honor_count: 15,
-      recommend_count: 12,
-      respect_count: 8,
-      hug_count: 5,
-      created_at: "2025-09-08T14:30:00Z",
-      updated_at: "2025-09-08T14:30:00Z",
-      profile: {
-        full_name: "김민수"
-      }
-    },
-    {
-      id: "3",
-      user_id: "user3",
-      request_a: "디지털 네이티브 세대를 위한 맞춤형 금융 서비스 제안",
-      request_b: "Z세대와 밀레니얼 세대는 기존 금융 서비스보다 간편하고 직관적인 서비스를 선호합니다. 모바일 우선 설계와 게임화 요소를 통해 금융에 대한 진입장벽을 낮추고 있습니다.",
-      request_c: "개인 맞춤형 추천 시스템과 실시간 알림으로 효율적인 자산 관리를 지원합니다.",
-      honor_count: 18,
-      recommend_count: 9,
-      respect_count: 14,
-      hug_count: 7,
-      created_at: "2025-09-07T11:45:00Z",
-      updated_at: "2025-09-07T11:45:00Z",
-      profile: {
-        full_name: "이서연"
-      }
-    },
-    {
-      id: "4",
-      user_id: "user4",
-      request_a: "ESG 투자의 새로운 패러다임과 미래 전망",
-      request_b: "환경, 사회, 지배구조를 고려한 ESG 투자가 주류가 되고 있습니다. 기업의 지속가능성을 평가하는 새로운 기준으로 자리잡고 있으며, 장기적 수익성과 사회적 가치 창출을 동시에 추구합니다.",
-      request_c: "ESG 평가 기준의 표준화와 투명성 확보가 향후 과제로 남아있습니다.",
-      honor_count: 25,
-      recommend_count: 16,
-      respect_count: 19,
-      hug_count: 3,
-      created_at: "2025-09-06T09:20:00Z",
-      updated_at: "2025-09-06T09:20:00Z",
-      profile: {
-        full_name: "박준혁"
-      }
-    },
-    {
-      id: "5",
-      user_id: "user5",
-      request_a: "인공지능 기반 개인 자산관리 서비스의 혁신",
-      request_b: "AI 로보어드바이저가 개인의 투자 성향과 목표를 분석하여 맞춤형 포트폴리오를 제안합니다. 시장 변동성에 실시간으로 대응하며 리밸런싱을 자동화합니다.",
-      request_c: "개인화된 금융 상품 추천과 위험 관리를 통해 투자의 민주화를 실현합니다.",
-      honor_count: 20,
-      recommend_count: 13,
-      respect_count: 11,
-      hug_count: 9,
-      created_at: "2025-09-05T16:15:00Z",
-      updated_at: "2025-09-05T16:15:00Z",
-      profile: {
-        full_name: "정다은"
-      }
-    },
-    {
-      id: "6",
-      user_id: "user6",
-      request_a: "블록체인 기술을 활용한 투명한 금융 생태계 구축",
-      request_b: "분산원장 기술로 금융 거래의 투명성과 보안성을 크게 향상시킬 수 있습니다. 스마트 계약을 통한 자동화된 금융 서비스와 중개 수수료 절감이 가능합니다.",
-      request_c: "규제 환경 정비와 기술적 안정성 확보가 대중화의 핵심 요소입니다.",
-      honor_count: 17,
-      recommend_count: 11,
-      respect_count: 13,
-      hug_count: 6,
-      created_at: "2025-09-04T13:40:00Z",
-      updated_at: "2025-09-04T13:40:00Z",
-      profile: {
-        full_name: "최영준"
-      }
-    },
-    {
-      id: "7",
-      user_id: "user7",
-      request_a: "구독 경제 모델의 금융 서비스 적용 가능성",
-      request_b: "Netflix, Spotify와 같은 구독 모델을 금융 서비스에 적용하면 고객의 예측 가능한 비용 지출과 서비스 제공자의 안정적 수익을 보장할 수 있습니다.",
-      request_c: "개인화된 금융 패키지 서비스로 고객 만족도와 충성도를 높일 수 있습니다.",
-      honor_count: 14,
-      recommend_count: 8,
-      respect_count: 12,
-      hug_count: 4,
-      created_at: "2025-09-03T10:25:00Z",
-      updated_at: "2025-09-03T10:25:00Z",
-      profile: {
-        full_name: "강민아"
-      }
-    },
-    {
-      id: "8",
-      user_id: "user8",
-      request_a: "오픈뱅킹과 핀테크 생태계의 상생 발전 방안",
-      request_b: "오픈뱅킹 API를 통해 핀테크 스타트업들이 혁신적인 금융 서비스를 개발할 수 있는 환경이 조성되었습니다. 기존 은행과 핀테크 기업 간의 협력이 새로운 가치를 창출합니다.",
-      request_c: "데이터 보안과 개인정보 보호를 위한 강화된 규제 체계가 필요합니다.",
-      honor_count: 21,
-      recommend_count: 15,
-      respect_count: 16,
-      hug_count: 8,
-      created_at: "2025-09-02T15:50:00Z",
-      updated_at: "2025-09-02T15:50:00Z",
-      profile: {
-        full_name: "윤태민"
-      }
-    },
-    {
-      id: "9",
-      user_id: "user9",
-      request_a: "마이크로 투자와 소액 분산투자의 대중화",
-      request_b: "소액으로도 다양한 자산에 투자할 수 있는 마이크로 투자 플랫폼이 투자의 문턱을 낮추고 있습니다. 잔돈 모으기, 목표 기반 저축 등 일상과 밀착된 투자 방식을 제공합니다.",
-      request_c: "투자 교육과 리스크 인식 개선을 통해 건전한 투자 문화를 조성해야 합니다.",
-      honor_count: 16,
-      recommend_count: 10,
-      respect_count: 9,
-      hug_count: 11,
-      created_at: "2025-09-01T12:30:00Z",
-      updated_at: "2025-09-01T12:30:00Z",
-      profile: {
-        full_name: "손지혜"
-      }
-    },
-    {
-      id: "10",
-      user_id: "user10",
-      request_a: "디지털 자산과 전통 금융의 융합 서비스",
-      request_b: "암호화폐와 같은 디지털 자산을 기존 금융 시스템에 통합하는 하이브리드 서비스가 등장하고 있습니다. 디지털 자산을 담보로 한 대출, 스테이킹 서비스 등이 새로운 수익 모델을 제시합니다.",
-      request_c: "규제 불확실성 해소와 기술적 표준화가 시장 확산의 관건입니다.",
-      honor_count: 19,
-      recommend_count: 14,
-      respect_count: 15,
-      hug_count: 5,
-      created_at: "2025-08-31T08:15:00Z",
-      updated_at: "2025-08-31T08:15:00Z",
-      profile: {
-        full_name: "임수빈"
-      }
-    },
-    {
-      id: "11",
-      user_id: "user11",
-      request_a: "초개인화 금융 서비스와 고객 경험 혁신",
-      request_b: "빅데이터와 AI 분석을 통해 개인의 소비 패턴, 라이프스타일, 금융 목표를 종합 분석하여 완전히 개인화된 금융 상품과 서비스를 제공합니다.",
-      request_c: "실시간 맞춤형 알림과 추천으로 고객의 금융 의사결정을 지원합니다.",
-      honor_count: 12,
-      recommend_count: 7,
-      respect_count: 10,
-      hug_count: 13,
-      created_at: "2025-08-30T17:45:00Z",
-      updated_at: "2025-08-30T17:45:00Z",
-      profile: {
-        full_name: "배성호"
-      }
-    },
-    {
-      id: "12",
-      user_id: "user12",
-      request_a: "지속가능한 금융과 임팩트 투자의 확산",
-      request_b: "사회적 가치 창출과 수익성을 동시에 추구하는 임팩트 투자가 주목받고 있습니다. 환경 보호, 사회 문제 해결 등에 기여하는 기업과 프로젝트에 대한 투자를 통해 지속가능한 성장을 도모합니다.",
-      request_c: "임팩트 측정과 평가 기준의 표준화가 시장 발전의 핵심 과제입니다.",
-      honor_count: 23,
-      recommend_count: 18,
-      respect_count: 17,
-      hug_count: 6,
-      created_at: "2025-08-29T14:20:00Z",
-      updated_at: "2025-08-29T14:20:00Z",
-      profile: {
-        full_name: "조은진"
-      }
-    }
-  ];*/
-
-  // ✅ Supabase에서 실제 데이터 로드
-  useEffect(() => {
-    const loadWisdomPosts = async () => {
-      try {
-        setLoading(true);
-        const posts = await fetchWisdomPosts();
-        setWisdomPosts(posts);
-      } catch (error) {
-        console.error('위즈덤 포스트 로딩 실패:', error);
-        // 에러 시 빈 배열로 설정
         setWisdomPosts([]);
       } finally {
         setLoading(false);
@@ -287,12 +80,58 @@ export const WisdomCardGrid = ({
     loadWisdomPosts();
   }, []);
 
-  // ✅ 새 포스트가 추가되었을 때 리스트에 반영
+  // 새 포스트가 추가되었을 때 리스트에 반영
   useEffect(() => {
     if (newWisdomPost) {
       setWisdomPosts(prev => [newWisdomPost, ...prev]);
     }
   }, [newWisdomPost]);
+
+  // 선택된 카드의 히스토리 로드
+  useEffect(() => {
+    const loadReactionHistory = async () => {
+      if (!selectedCard) {
+        setReactionHistory([]);
+        return;
+      }
+
+      try {
+        setLoadingHistory(true);
+        const { data, error } = await WisdomService.getReactionHistory(selectedCard.id);
+
+        if (error || !data) {
+          console.error('히스토리 로드 실패:', error);
+          setReactionHistory([]);
+          return;
+        }
+
+        // 데이터 포맷팅 - 이름 우선순위: display_name > username > full_name
+        const formattedHistory: ReactionHistoryItem[] = data.map(item => ({
+          id: item.id,
+          name: item.profile?.username || 
+                item.profile?.full_name || 
+                '사용자',
+          gender: item.profile?.gender || '남',
+          age: item.profile?.age || 23,
+          company: item.profile?.company || '회사명',
+          avatar_url: item.profile?.avatar_url || '/images/Ellipse 79.png',
+          reaction: reactionLabels[item.reaction_type as keyof typeof reactionLabels] || item.reaction_type,
+          created_at: item.created_at
+        }));
+
+        setReactionHistory(formattedHistory);
+      } catch (error) {
+        console.error('히스토리 로드 예외:', error);
+        setReactionHistory([]);
+      } finally {
+        setLoadingHistory(false);
+      }
+    };
+
+    if (selectedCard) {
+      loadReactionHistory();
+    }
+  }, [selectedCard]);
 
   // 타임스탬프 포맷팅 함수
   const formatTimestamp = (timestamp: string) => {
@@ -310,7 +149,6 @@ export const WisdomCardGrid = ({
 
   // 카드를 표시용으로 변환
   const convertToDisplayCard = (post: WisdomPost) => {
-    // 프로필에서 실제 데이터 사용
     const userName = post.profile?.username || post.profile?.full_name || '사용자';
     const avatarUrl = post.profile?.avatar_url || '/images/boy.png';
     const gender = post.profile?.gender || '남';
@@ -369,37 +207,65 @@ export const WisdomCardGrid = ({
       return;
     }
     
-    // 인증 확인
     if (requireAuth && onAuthRequired && !onAuthRequired()) {
       return;
     }
     
     try {
-      // ✅ 실제 Supabase API 호출
       const reactionField = `${selectedReaction}_count` as keyof Pick<WisdomPost, 'honor_count' | 'recommend_count' | 'respect_count' | 'hug_count'>;
       const currentCount = selectedCard[reactionField];
       
-      const { error } = await WisdomService.addReaction(selectedCard.id, selectedReaction as 'honor' | 'recommend' | 'respect' | 'hug');
+      const { error } = await WisdomService.addReaction(
+        selectedCard.id, 
+        selectedReaction as 'honor' | 'recommend' | 'respect' | 'hug'
+      );
       
       if (error) {
-        throw new Error(error.message);
+        let userMessage = '표현행위 전송에 실패했습니다.';
+        
+        if (error.message.includes('이미 이 게시물에 반응')) {
+          userMessage = '⚠️ 이미 이 게시물에 표현행위를 보냈습니다.\n다른 게시물을 선택해주세요.';
+        } else if (error.message.includes('본인의 게시물')) {
+          userMessage = '⚠️ 본인이 작성한 위즈덤에는 표현행위를 할 수 없습니다.\n다른 크루의 위즈덤을 선택해주세요.';
+        } else if (error.message.includes('위즈덤을 먼저 작성')) {
+          userMessage = '⚠️ 먼저 1단계에서 위즈덤을 작성해주세요.';
+        } else if (error.message.includes('로그인')) {
+          userMessage = '⚠️ 로그인이 필요합니다.';
+        }
+        
+        console.error('❌ 표현행위 전송 실패 (상세):', error);
+        alert(userMessage);
+        return;
       }
       
-      // ✅ 로컬 상태 업데이트
+      // 로컬 상태 업데이트
       setWisdomPosts(prev => prev.map(post => 
         post.id === selectedCard.id 
           ? { ...post, [reactionField]: currentCount + 1 }
           : post
       ));
       
-      // 선택된 카드도 업데이트
       setSelectedCard(prev => prev ? { ...prev, [reactionField]: currentCount + 1 } : null);
       
-      // 반응 카운트 증가
+      // 히스토리 즉시 다시 로드
+      const { data } = await WisdomService.getReactionHistory(selectedCard.id);
+      if (data) {
+        const formattedHistory: ReactionHistoryItem[] = data.map(item => ({
+          id: item.id,
+          name: item.profile?.username || item.profile?.full_name || '사용자',
+          gender: item.profile?.gender || '남',
+          age: item.profile?.age || 23,
+          company: item.profile?.company || '회사명',
+          avatar_url: item.profile?.avatar_url || '/images/Ellipse 79.png',
+          reaction: reactionLabels[item.reaction_type as keyof typeof reactionLabels] || item.reaction_type,
+          created_at: item.created_at
+        }));
+        setReactionHistory(formattedHistory);
+      }
+      
       const newCount = reactionCount + 1;
       setReactionCount(newCount);
       
-      // 12번째 표현행위 완료 시 완료 팝업이 뜨도록 설정
       if (newCount >= 12) {
         setIsCompletePopup(true);
       } else {
@@ -408,14 +274,24 @@ export const WisdomCardGrid = ({
       
       setShowReactionPopup(true);
       
-      // 3초 후 팝업 자동 닫기
       setTimeout(() => {
         closeReactionPopup();
       }, 3000);
       
     } catch (error) {
-      console.error('표현행위 전송 실패:', error);
-      alert('표현행위 전송에 실패했습니다. 다시 시도해주세요.');
+      console.error('❌ 표현행위 전송 중 예외 발생:', error);
+      
+      let errorMessage = '표현행위 전송 중 오류가 발생했습니다.';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Network')) {
+          errorMessage = '⚠️ 네트워크 연결을 확인해주세요.';
+        } else if (error.message.includes('Failed to fetch')) {
+          errorMessage = '⚠️ 서버와 연결할 수 없습니다. 잠시 후 다시 시도해주세요.';
+        }
+      }
+      
+      alert(errorMessage);
     }
   };
 
@@ -451,7 +327,6 @@ export const WisdomCardGrid = ({
   const closeReactionPopup = () => {
     setShowReactionPopup(false);
     
-    // 12번째 완료 후 팝업을 닫을 때 상위 컴포넌트에 알림
     if (isCompletePopup && reactionCount >= 12 && onAllReactionsComplete) {
       setSelectedCard(null);
       setSelectedReaction(null);
@@ -467,7 +342,7 @@ export const WisdomCardGrid = ({
     }
   };
 
-  // ✅ 로딩 중일 때 표시
+  // 로딩 중일 때 표시
   if (loading) {
     return (
       <div className="w-full flex justify-center items-center min-h-[500px]">
@@ -476,7 +351,7 @@ export const WisdomCardGrid = ({
     );
   }
 
-  // ✅ 데이터가 없을 때 표시
+  // 데이터가 없을 때 표시
   if (wisdomPosts.length === 0) {
     return (
       <div className="w-full flex justify-center items-center min-h-[500px]">
@@ -491,7 +366,7 @@ export const WisdomCardGrid = ({
       <div className="w-full flex justify-center mb-[120px]">
         <div className="w-full max-w-[1400px] px-4 sm:px-6 lg:px-8">
           
-          {/* 데스크톱 레이아웃 (lg 이상) - 4행 3열 */}
+          {/* 데스크탑 레이아웃 (lg 이상) - 4행 3열 */}
           <div className="hidden lg:block">
             <div className="inline-flex flex-col justify-start items-center gap-3.5 w-full">
               {Array(Math.ceil(wisdomPosts.length / 3)).fill(null).map((_, rowIndex) => (
@@ -503,21 +378,19 @@ export const WisdomCardGrid = ({
                         key={post.id}
                         className="w-[470px] h-[523px] p-[25px] bg-[#3B4236] 
                                   rounded-[20px] border border-[#141612] 
-                                  inline-flex flex-col justify-start items-center gap-[35px]"
+                                  inline-flex flex-col justify-start items-center gap-[35px] cursor-pointer
+                                  hover:bg-stone-600 transition-colors duration-300"
                         onClick={(e) => handleCardClick(post, e)}
                       >
                         <div className="self-stretch flex flex-col justify-start items-center gap-5">
-                          {/* 프로필 & 콘텐츠 */}
                           <div className="flex flex-col justify-start items-start gap-4">
-                            {/* 프로필 */}
                             <div className="inline-flex justify-start items-center gap-3.5">
-                              <img className="w-12 h-12 rounded-full" src="/images/boy.png" alt="프로필 이미지" />
+                              <img className="w-12 h-12 rounded-full" src={card.avatarUrl} alt="프로필 이미지" />
                               <div className="w-[408px] text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight truncate">
                                 {card.userInfo}
                               </div>
                             </div>
 
-                            {/* 콘텐츠 (본문 폭 408px 고정) */}
                             <div className="w-[408px] flex flex-col justify-start items-start gap-3.5 overflow-hidden">
                               <div className="self-stretch text-white text-xl font-semibold font-['Pretendard'] leading-9 truncate">
                                 - {post.request_a}
@@ -534,13 +407,15 @@ export const WisdomCardGrid = ({
                             </div>
                           </div>
 
-                          {/* 구분선 (카드 폭 420px) */}
                           <div className="w-[420px] h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-500"></div>
 
-                          {/* 표현 행위 통계 */}
                           <div className="self-stretch bg-neutral-900 rounded-[20px] inline-flex justify-center items-center">
                             <div className="w-28 p-3.5 bg-[#3B4236] inline-flex flex-col justify-center items-center gap-[5px]">
-                              <img className="w-7 h-7" src="/images/honor-icon.png" alt="경의" />
+                            <img 
+                              className="w-7 h-7" 
+                              src="/images/honor-icon.png"  // 직접 경로 지정
+                              alt="경의" 
+                            />
                               <div className="self-stretch flex flex-col justify-center items-center">
                                 <div className="text-center text-white text-3xl font-bold leading-10">{post.honor_count}</div>
                                 <div className="text-center text-gray-400 text-sm font-semibold leading-none">경의</div>
@@ -569,7 +444,6 @@ export const WisdomCardGrid = ({
                             </div>
                           </div>
 
-                          {/* 자세히 보기 버튼 */}
                           <div className="w-[420px] h-14 px-9 py-3 
                                         bg-[#1C1F18]/60
                                         border-t border-b border-white/20 
@@ -600,24 +474,18 @@ export const WisdomCardGrid = ({
                     onClick={(e) => handleCardClick(post, e)}
                   >
                     <div className="flex flex-col justify-start items-center gap-5">
-                      
-                      {/* 모바일 프로필 및 콘텐츠 */}
                       <div className="w-full flex flex-col justify-start items-start gap-4">
-                        
-                        {/* 프로필 */}
                         <div className="w-full inline-flex justify-start items-center gap-3.5">
-                        // 프로필 이미지 부분 (기존 /images/boy.png를 card.avatarUrl로 변경)
-                        <img 
-                          className="w-12 h-12 rounded-full" 
-                          src={card.avatarUrl} 
-                          alt="프로필 이미지" 
-                        />
+                          <img 
+                            className="w-12 h-12 rounded-full" 
+                            src={card.avatarUrl} 
+                            alt="프로필 이미지" 
+                          />
                           <div className="flex-1 min-w-0 text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight truncate">
                             {card.userInfo}
                           </div>
                         </div>
                         
-                        {/* 콘텐츠 */}
                         <div className="w-full flex flex-col justify-start items-start gap-3.5">
                           <div className="w-full text-white text-xl font-semibold font-['Pretendard'] leading-9">
                             - {post.request_a}
@@ -634,14 +502,16 @@ export const WisdomCardGrid = ({
                         </div>
                       </div>
                       
-                      {/* 구분선 */}
                       <div className="w-full h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-500"></div>
                       
-                      {/* 모바일 통계 */}
                       <div className="w-full bg-neutral-900 rounded-[20px] p-4">
                         <div className="grid grid-cols-4 gap-2">
                           <div className="flex flex-col items-center gap-1">
-                            <img className="w-7 h-7" src="/images/honor-icon.png" alt="경의" />
+                          <img 
+                            className="w-7 h-7" 
+                            src="/images/honor-icon.png"  // 직접 경로 지정
+                            alt="경의" 
+                          />
                             <div className="text-center text-white text-3xl font-bold font-['Pretendard'] leading-10">
                               {post.honor_count}
                             </div>
@@ -679,7 +549,6 @@ export const WisdomCardGrid = ({
                         </div>
                       </div>
                       
-                      {/* 모바일 버튼 */}
                       <button className="w-full h-14 px-9 py-3 bg-stone-900/60 border-t border-b border-white/20 backdrop-blur-[6px] inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-stone-800/60 transition-colors">
                         <div className="text-white text-xl font-semibold font-['Pretendard'] leading-9">
                           자세히 보기
@@ -694,7 +563,7 @@ export const WisdomCardGrid = ({
         </div>
       </div>
 
-      {/* 상세 모달 - 클릭한 위치 기준 */}
+      {/* 상세 모달 */}
       {selectedCard && (
         <div 
           className="fixed inset-0 z-50 flex items-start justify-center px-4 overflow-x-hidden bg-black/70 backdrop-blur-sm"
@@ -702,7 +571,7 @@ export const WisdomCardGrid = ({
         >
           <div 
             ref={modalRef}
-            className="w-[589px] h-[999px] bg-[#3B4236] rounded-[20px] 
+            className="w-[589px] bg-[#3B4236] rounded-[20px] 
                         outline outline-1 outline-offset-[-1px] outline-stone-500 
                         my-8 p-[45px]"
             style={{ 
@@ -719,7 +588,7 @@ export const WisdomCardGrid = ({
                   <div className="flex-1 flex justify-start items-center gap-3.5">
                     <img 
                       className="w-12 h-12 rounded-full" 
-                      src="/images/boy.png"
+                      src={convertToDisplayCard(selectedCard).avatarUrl}
                       alt="프로필 이미지"
                     />
                     <div className="text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight">
@@ -753,7 +622,6 @@ export const WisdomCardGrid = ({
                 </div>
               </div>
 
-              {/* 구분선 */}
               <div className="w-full h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-500 my-[25px]"></div>
               
               {/* 표현행위 선택 */}
@@ -810,41 +678,59 @@ export const WisdomCardGrid = ({
               </button>
 
               {/* 표현행위 히스토리 */}
-              <div className="custom-scrollbar relative flex flex-col justify-start items-start gap-[15px] 
-                              w-full h-[310px] overflow-y-auto">
-                {reactionHistory.map((item, index) => (
-                  <div key={index} className="w-full flex flex-col justify-start items-start">
-                    <div className="w-full inline-flex justify-start items-center gap-3.5">
-                      <div className="flex-1 h-[50px] flex justify-start items-center gap-2">
-                        <img 
-                          className="w-12 h-12 rounded-full" 
-                          src="/images/Ellipse 79.png" 
-                          alt="프로필 이미지"
-                        />
-                        <div className="flex-1 text-white text-sm font-medium font-['Pretendard'] leading-tight">
-                          {item.name} ({item.gender} / {item.age} / {item.company}) 님이 {item.reaction}을 부여하였습니다
-                        </div>
-                      </div>
-                      <img 
-                        className="w-7 h-7" 
-                        src={
-                          item.reaction === "경의" ? "/images/honor-icon.png" :
-                          item.reaction === "추천" ? "/images/recommend-icon.png" :
-                          item.reaction === "존중" ? "/images/respect-icon.png" :
-                          "/images/hug-icon.png"
-                        }
-                        alt={item.reaction}
-                      />
-                    </div>
+              <div className="history-scrollbar relative flex flex-col justify-start items-start gap-[15px] 
+                              w-full h-[250px] overflow-y-auto"
+                    style={{
+                      scrollbarWidth: 'thin',
+                      scrollbarColor: '#777777 transparent'
+                    }}
+                  >
+                {loadingHistory ? (
+                  <div className="w-full flex justify-center items-center h-full">
+                    <div className="text-white text-sm">로딩 중...</div>
                   </div>
-                ))}
+                ) : reactionHistory.length === 0 ? (
+                  <div className="w-full flex justify-center items-center h-full">
+                    <div className="text-gray-400 text-sm">아직 표현행위가 없습니다.</div>
+                  </div>
+                ) : (
+                  reactionHistory.map((item) => (
+                    <div key={item.id} className="w-full flex flex-col justify-start items-start">
+                      <div className="w-full inline-flex justify-start items-center gap-3.5">
+                        <div className="flex-1 h-[50px] flex justify-start items-center gap-2">
+                          <img 
+                            className="w-12 h-12 rounded-full object-cover" 
+                            src={item.avatar_url}
+                            alt="프로필 이미지"
+                            onError={(e) => {
+                              // 이미지 로드 실패 시 기본 이미지로 대체
+                              e.currentTarget.src = '/images/Ellipse 79.png';
+                            }}
+                          />
+                          <div className="flex-1 text-white text-sm font-medium font-['Pretendard'] leading-tight">
+                            {item.name} ({item.gender} / {item.age} / {item.company}) 님이 {item.reaction}을 부여하였습니다
+                          </div>
+                        </div>
+                        <img 
+                          className="w-7 h-7" 
+                          src={reactionIcons[item.reaction as keyof typeof reactionIcons]}
+                          alt={item.reaction}
+                          onError={(e) => {
+                            console.error('아이콘 로드 실패:', item.reaction);
+                            // 아이콘 로드 실패 시 기본 처리
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* 표현행위 완료 토스트 팝업 - 모바일 최적화 */}
+      {/* 표현행위 완료 토스트 팝업 */}
       {showReactionPopup && (
         <div 
           className="fixed inset-0 z-[90] flex items-start justify-center bg-black/70 backdrop-blur-sm p-4"
@@ -856,7 +742,6 @@ export const WisdomCardGrid = ({
             onClick={(e) => e.stopPropagation()}
           >
             {isCompletePopup ? (
-              // 12장 모두 완료했을 때
               <div>
                 <div className="text-white text-lg sm:text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-tight">
                   모든 표현 보내기가 완료 되었습니다!
@@ -866,12 +751,11 @@ export const WisdomCardGrid = ({
                 </div>
               </div>
             ) : (
-              // 1~11번째일 때
               <div>
                 <div className="text-white text-lg sm:text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-tight">
                   {reactionCount}번째 표현 보내기가 완료 되었습니다.
                 </div>
-                <div className="text-[#ADFF00] text-base sm:text-lg lg:text-2xl font-bold font-['Pretendard'] leading-tight mt-2">
+                  <div className="text-[#ADFF00] text-base sm:text-lg lg:text-2xl font-bold font-['Pretendard'] leading-tight mt-2">
                   {12 - reactionCount}번의 표현 보내기 완료 후<br/>자동으로 완료 처리 됩니다.
                 </div>
               </div>

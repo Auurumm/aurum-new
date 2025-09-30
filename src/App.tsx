@@ -1,4 +1,4 @@
-// 실제 인증 시스템 연결 - 주석 해제
+// 실제 인증 시스템 연결
 import { AuthProvider, useAuth } from './contexts/AuthContext.tsx';
 import { AuthModal } from './Components/AuthModal.tsx'; 
 
@@ -14,23 +14,71 @@ import { FooterSection } from './Components/Footer/FooterSection.tsx';
 import './styles/index.css';
 import { WisdomPost } from './services/WisdomService.ts';
 import { WisdomModal } from './Components/WisdomModal.tsx';
+import { supabase } from './lib/supabase.ts';
 
 // 메인 앱 컴포넌트 - 실제 인증 로직 사용
 const AppContent = () => {
-  const [showWisdomModal, setShowWisdomModal] = useState(false);
-  const [newWisdomPost, setNewWisdomPost] = useState<WisdomPost | null>(null);
-  // 실제 인증 시스템 사용
+  // 인증 관련 상태
   const { user, profile, signOut, loading } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
-  // 기존 상태들
+  // 위즈덤 관련 상태
+  const [showWisdomModal, setShowWisdomModal] = useState(false);
+  const [newWisdomPost, setNewWisdomPost] = useState<WisdomPost | null>(null);
   const [isWisdomCompleted, setIsWisdomCompleted] = useState(false);
+  const [checkingWisdom, setCheckingWisdom] = useState(true);
+
+  // 반응 완료 상태
   const [isAllReactionsCompleted, setIsAllReactionsCompleted] = useState(false);
   const [showMotionEffect, setShowMotionEffect] = useState(false);
+
+  // 뷰포트 크기
   const [viewportDimensions, setViewportDimensions] = useState({ width: 0, height: 0 });
 
-  // 뷰포트 크기 추적 (스케일링 대신 반응형 접근)
+  // ✅ 사용자 로그인 시 위즈덤 제출 여부 확인
+  useEffect(() => {
+    const checkUserWisdomStatus = async () => {
+      if (!user) {
+        setCheckingWisdom(false);
+        setIsWisdomCompleted(false);
+        return;
+      }
+
+      try {
+        setCheckingWisdom(true);
+        console.log('🔍 사용자 위즈덤 상태 확인 중...', user.id);
+        
+        // 현재 사용자가 작성한 위즈덤 포스트가 있는지 확인
+        const { data, error } = await supabase
+          .from('wisdom_posts')
+          .select('id, created_at')
+          .eq('user_id', user.id)
+          .maybeSingle(); // single() 대신 maybeSingle() 사용 (없어도 에러 안남)
+
+        if (error) {
+          console.error('위즈덤 확인 중 에러:', error);
+          setIsWisdomCompleted(false);
+        } else if (data) {
+          // 위즈덤이 이미 존재하면 완료 상태로 설정
+          console.log('✅ 기존 위즈덤 발견 - 1단계 완료 처리', data);
+          setIsWisdomCompleted(true);
+        } else {
+          console.log('❌ 위즈덤 없음 - 1단계 미완료');
+          setIsWisdomCompleted(false);
+        }
+      } catch (error) {
+        console.error('위즈덤 상태 확인 실패:', error);
+        setIsWisdomCompleted(false);
+      } finally {
+        setCheckingWisdom(false);
+      }
+    };
+
+    checkUserWisdomStatus();
+  }, [user]);
+
+  // 뷰포트 크기 추적
   useEffect(() => {
     const updateViewportDimensions = () => {
       setViewportDimensions({
@@ -42,7 +90,6 @@ const AppContent = () => {
     updateViewportDimensions();
     window.addEventListener('resize', updateViewportDimensions);
     
-    // body 스타일 초기화 - 자연스러운 높이 설정
     document.body.style.height = 'auto';
     document.body.style.minHeight = '100vh';
     document.body.style.overflow = 'visible';
@@ -52,6 +99,7 @@ const AppContent = () => {
     };
   }, []);
 
+  // 모든 반응 완료 처리
   const handleAllReactionsComplete = () => {
     console.log('🔥 App.tsx - handleAllReactionsComplete 호출됨!');
     console.log('이전 상태:', { isWisdomCompleted, isAllReactionsCompleted, showMotionEffect });
@@ -76,41 +124,40 @@ const AppContent = () => {
     return true;
   };
 
-    // 개선된 로그아웃 처리
-    const handleSignOut = async () => {
-      if (isSigningOut) return; // 중복 실행 방지
+  // 개선된 로그아웃 처리
+  const handleSignOut = async () => {
+    if (isSigningOut) return;
+    
+    setIsSigningOut(true);
+    console.log('🚪 로그아웃 시작...');
+    
+    try {
+      const { error } = await signOut();
       
-      setIsSigningOut(true);
-      console.log('🚪 로그아웃 시작...');
-      
-      try {
-        const { error } = await signOut();
+      if (error) {
+        console.error('❌ 로그아웃 실패:', error);
+        alert('로그아웃 중 오류가 발생했습니다. 다시 시도해주세요.');
+      } else {
+        console.log('✅ 로그아웃 성공');
         
-        if (error) {
-          console.error('❌ 로그아웃 실패:', error);
-          alert('로그아웃 중 오류가 발생했습니다. 다시 시도해주세요.');
-        } else {
-          console.log('✅ 로그아웃 성공');
-          
-          // 상태 초기화 (필요시)
-          setShowAuthModal(false);
-          setIsWisdomCompleted(false);
-          setIsAllReactionsCompleted(false);
-          setShowMotionEffect(false);
-          
-          // 페이지 새로고침으로 확실한 상태 초기화
-          setTimeout(() => {
-            window.location.replace(window.location.origin); // ← 해시 없이 도메인 루트로
-            // 또는: window.location.href = '/';
-          }, 200);
-        }
-      } catch (error) {
-        console.error('❌ 로그아웃 예외:', error);
-        alert('로그아웃 중 예상치 못한 오류가 발생했습니다.');
-      } finally {
-        setIsSigningOut(false);
+        // 상태 초기화
+        setShowAuthModal(false);
+        setIsWisdomCompleted(false);
+        setIsAllReactionsCompleted(false);
+        setShowMotionEffect(false);
+        
+        // 페이지 새로고침으로 확실한 상태 초기화
+        setTimeout(() => {
+          window.location.replace(window.location.origin);
+        }, 200);
       }
-    };
+    } catch (error) {
+      console.error('❌ 로그아웃 예외:', error);
+      alert('로그아웃 중 예상치 못한 오류가 발생했습니다.');
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
 
   // 컴포넌트가 마운트될 때 CSS 스타일 추가
   useEffect(() => {
@@ -140,7 +187,7 @@ const AppContent = () => {
     };
   }, []);
 
-  // 별 떨어지는 효과 - 개선된 버전
+  // 별 떨어지는 효과
   useEffect(() => {
     if (!showMotionEffect) return;
 
@@ -290,10 +337,20 @@ const AppContent = () => {
     console.log('✅ 새 위즈덤 포스트 받음:', wisdomPost);
     setNewWisdomPost(wisdomPost);
     setShowWisdomModal(false);
+    setIsWisdomCompleted(true); // ✅ 제출 즉시 완료 상태로
     
     // 잠시 후 null로 리셋하여 중복 추가 방지
     setTimeout(() => setNewWisdomPost(null), 100);
   };
+
+  // ✅ 로딩 중일 때 (인증 로딩 또는 위즈덤 확인 중)
+  if (loading || checkingWisdom) {
+    return (
+      <div className="w-full min-h-screen bg-gradient-to-b from-[#111410] to-black flex items-center justify-center">
+        <div className="text-white text-xl">로딩 중...</div>
+      </div>
+    );
+  }
 
   return (
     <div 
@@ -305,8 +362,7 @@ const AppContent = () => {
         flexDirection: 'column',
       }}
     >
-
-      {/* 반응형 컨테이너 - 스케일링 대신 자연스러운 반응형 레이아웃 사용 */}
+      {/* 반응형 컨테이너 */}
       <div 
         className="w-full flex-1 flex flex-col"
         style={{
@@ -317,14 +373,14 @@ const AppContent = () => {
         {/* 헤더 */}
         <div className="w-full relative z-20">
           <Header 
-            onLoginClick={() => setShowAuthModal(true)}   // ✅ 로그인 모달 열기
-            onLogoutClick={handleSignOut}                 // ✅ App의 커스텀 로그아웃 로직 사용
+            onLoginClick={() => setShowAuthModal(true)}
+            onLogoutClick={handleSignOut}
           />
         </div>
         
         {/* 메인 콘텐츠 영역 */}
         <div className="w-full flex-1 transition-all duration-1000 relative">
-          {/* ⭐ ProgressSection을 motion-effect로 감싸기 */}
+          {/* ProgressSection을 motion-effect로 감싸기 */}
           <div className={`relative ${showMotionEffect ? 'motion-effect' : ''}`}>
             <ProgressSection 
               isCompleted={isWisdomCompleted} 
@@ -350,13 +406,13 @@ const AppContent = () => {
           <WisdomCardGrid 
             isWisdomCompleted={isWisdomCompleted}
             onAllReactionsComplete={handleAllReactionsComplete}
-            newWisdomPost={newWisdomPost}  // ✅ 이 줄 추가
+            newWisdomPost={newWisdomPost}
             requireAuth={true}
             onAuthRequired={handleAuthRequired}
           />
         </div>
         
-        {/* 푸터 - 항상 하단에 위치하도록 보장 */}
+        {/* 푸터 */}
         <div className="w-full mt-auto relative z-20">
           <FooterSection />
         </div>
@@ -378,7 +434,6 @@ const AppContent = () => {
     </div>
   );
 };
-
 
 // 실제 AuthProvider로 감싸기
 const App = () => {

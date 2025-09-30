@@ -282,7 +282,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
               maxLength={50}
             />
             <p className="mt-1 text-xs text-gray-400">
-              현재 재직 중이거나 관심 있는 기업명을 입력하세요
+              관심 있는 기업명을 입력하세요
             </p>
           </div>
 
