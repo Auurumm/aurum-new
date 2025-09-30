@@ -4,6 +4,9 @@ import { supabase } from '../lib/supabase.ts';
 
 // 프로필 타입 정의
 interface Profile {
+  company: string;
+  age: any;
+  gender: string;
   id: string;
   full_name?: string;
   username?: string;
@@ -21,6 +24,7 @@ interface AuthContextType {
   error: string | null;
   signInWithGoogle: () => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,6 +37,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+
+// AuthContext.tsx의 refreshProfile 함수 수정
+const refreshProfile = async () => {
+  try {
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    
+    if (currentUser) {
+      const { data: profileData, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', currentUser.id)
+        .maybeSingle(); // ← single() 대신 maybeSingle() 사용
+      
+      if (error) {
+        console.error('프로필 조회 에러:', error);
+      } else {
+        setProfile(profileData);
+      }
+    }
+  } catch (error) {
+    console.error('프로필 새로고침 오류:', error);
+  }
+};
+
+  
   // fetchProfile 함수 수정
   const fetchProfile = async (userId: string) => {
     try {
@@ -126,6 +155,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           id: session.user.id,
           email: session.user.email,
           full_name: session.user.user_metadata?.full_name || '',
+          company: '',
+          age: null,
+          gender: ''
         });
       }
     } else {
@@ -249,6 +281,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     error,
     signInWithGoogle,
     signOut,
+    refreshProfile
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

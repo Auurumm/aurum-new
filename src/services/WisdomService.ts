@@ -6,6 +6,17 @@ export interface WisdomFormData {
   requestC: string;
 }
 
+// ✅ 프로필 타입에 성별, 나이, 회사 추가
+export interface Profile {
+  id?: string;
+  full_name?: string;
+  username?: string;
+  avatar_url?: string;
+  gender?: string;      // 추가
+  age?: number;         // 추가
+  company?: string;     // 추가
+}
+
 export interface WisdomPost {
   id: string;
   user_id: string;
@@ -18,11 +29,17 @@ export interface WisdomPost {
   hug_count: number;
   created_at: string;
   updated_at: string;
-  profile?: {
-    full_name?: string;
-    username?: string;
-    avatar_url?: string;
-  };
+  profile?: Profile;
+}
+
+// ✅ 반응 히스토리 타입 추가
+export interface WisdomReaction {
+  id: string;
+  wisdom_post_id: string;
+  user_id: string;
+  reaction_type: 'honor' | 'recommend' | 'respect' | 'hug';
+  created_at: string;
+  profile?: Profile;
 }
 
 export interface WisdomDraft {
@@ -42,11 +59,7 @@ export interface RankingUser {
   recommend_count: number;
   respect_count: number;
   hug_count: number;
-  profile?: {
-    full_name?: string;
-    username?: string;
-    avatar_url?: string;
-  };
+  profile?: Profile;
 }
 
 // 에러 타입 정의
@@ -95,7 +108,6 @@ export class WisdomService {
    */
   static async saveDraft(formData: WisdomFormData): Promise<{ error: ServiceError | null }> {
     try {
-      // 인증 상태 체크
       const { user, error: authError } = await this.checkAuth();
       if (authError) {
         return { error: authError };
@@ -144,10 +156,8 @@ export class WisdomService {
    */
   static async loadDraft(): Promise<{ data: WisdomDraft | null; error: ServiceError | null }> {
     try {
-      // 인증 상태 체크
       const { user, error: authError } = await this.checkAuth();
       if (authError) {
-        // 비로그인 상태에서는 에러를 반환하지 않고 null 데이터만 반환
         return { data: null, error: null };
       }
 
@@ -158,7 +168,6 @@ export class WisdomService {
         .single();
 
       if (error) {
-        // 데이터가 없는 경우 (PGRST116)는 정상적인 상황
         if (error.code === 'PGRST116') {
           return { data: null, error: null };
         }
@@ -193,7 +202,6 @@ export class WisdomService {
    */
   static async submitWisdom(formData: WisdomFormData): Promise<{ data: WisdomPost | null; error: ServiceError | null }> {
     try {
-      // 인증 상태 체크
       const { user, error: authError } = await this.checkAuth();
       if (authError) {
         return { data: null, error: authError };
@@ -307,7 +315,10 @@ export class WisdomService {
           profiles(
             full_name,
             username,
-            avatar_url
+            avatar_url,
+            gender,
+            age,
+            company
           )
         `)
         .order('created_at', { ascending: false });
@@ -368,7 +379,10 @@ export class WisdomService {
           profiles!inner(
             full_name,
             username,
-            avatar_url
+            avatar_url,
+            gender,
+            age,
+            company
           )
         `);
 
@@ -413,7 +427,7 @@ export class WisdomService {
         }
       });
 
-      // 가중치 기반 총점 계산 및 정렬 (경의 x4, 추천 x3, 존중 x2, 응원 x1)
+      // 가중치 기반 총점 계산 및 정렬
       const rankingData = Array.from(userStats.values()).map(user => ({
         ...user,
         total_score: (user.honor_count * 4) + (user.recommend_count * 3) + (user.respect_count * 2) + (user.hug_count * 1)
@@ -435,9 +449,99 @@ export class WisdomService {
   }
 
   /**
-   * 표현행위 추가/변경
+   * ✅ 3번: 특정 포스트의 반응 히스토리 조회 (프로필 정보 포함)
    */
-  static async addReaction(postId: string, reactionType: 'honor' | 'recommend' | 'respect' | 'hug'): Promise<{ error: ServiceError | null }> {
+  static async fetchReactionHistory(postId: string): Promise<{ data: WisdomReaction[]; error: ServiceError | null }> {
+    try {
+      const { data, error } = await supabase
+        .from('wisdom_reactions')
+        .select(`
+          *,
+          profile:profiles(
+            full_name,
+            gender,
+            age,
+            company
+          )
+        `)
+        .eq('wisdom_post_id', postId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('반응 히스토리 조회 오류:', error);
+        return { 
+          data: [], 
+          error: { 
+            code: 'GET_REACTION_HISTORY_FAILED', 
+            message: '반응 히스토리 조회 중 오류가 발생했습니다.', 
+            type: 'SERVER' 
+          } 
+        };
+      }
+
+      return { data: data || [], error: null };
+
+    } catch (error) {
+      console.error('반응 히스토리 조회 예외:', error);
+      return { 
+        data: [], 
+        error: { 
+          code: 'GET_REACTION_HISTORY_EXCEPTION', 
+          message: '반응 히스토리 조회 중 예상치 못한 오류가 발생했습니다.', 
+          type: 'NETWORK' 
+        } 
+      };
+    }
+  }
+
+  /**
+   * ✅ 4번: wisdom_posts의 반응 카운트 업데이트
+   */
+  static async updateReaction(
+    postId: string, 
+    reactionType: 'honor' | 'recommend' | 'respect' | 'hug', 
+    newCount: number
+  ): Promise<{ error: ServiceError | null }> {
+    try {
+      const countField = `${reactionType}_count`;
+      
+      const { error } = await supabase
+        .from('wisdom_posts')
+        .update({ [countField]: newCount })
+        .eq('id', postId);
+
+      if (error) {
+        console.error('반응 카운트 업데이트 오류:', error);
+        return { 
+          error: { 
+            code: 'UPDATE_REACTION_COUNT_FAILED', 
+            message: '반응 카운트 업데이트 중 오류가 발생했습니다.', 
+            type: 'SERVER' 
+          } 
+        };
+      }
+
+      return { error: null };
+
+    } catch (error) {
+      console.error('반응 카운트 업데이트 예외:', error);
+      return { 
+        error: { 
+          code: 'UPDATE_REACTION_COUNT_EXCEPTION', 
+          message: '반응 카운트 업데이트 중 예상치 못한 오류가 발생했습니다.', 
+          type: 'NETWORK' 
+        } 
+      };
+    }
+  }
+
+  /**
+   * ✅ 표현행위 추가 (wisdom_reactions 테이블에 기록 + 카운트 증가)
+   */
+  static async addReaction(
+    postId: string, 
+    reactionType: 'honor' | 'recommend' | 'respect' | 'hug'
+  ): Promise<{ error: ServiceError | null }> {
     try {
       // 인증 상태 체크
       const { user, error: authError } = await this.checkAuth();
@@ -462,51 +566,64 @@ export class WisdomService {
         };
       }
 
-      // 기존 반응 확인
+      // 기존 반응 확인 (한 사용자는 한 포스트에 하나의 반응만)
       const { data: existingReaction } = await supabase
-        .from('reactions')
+        .from('wisdom_reactions')
         .select('*')
         .eq('user_id', user.id)
-        .eq('post_id', postId)
+        .eq('wisdom_post_id', postId)
         .single();
 
       if (existingReaction) {
-        // 기존 반응이 있으면 업데이트
-        const { error } = await supabase
-          .from('reactions')
-          .update({ reaction_type: reactionType })
-          .eq('user_id', user.id)
-          .eq('post_id', postId);
+        return { 
+          error: { 
+            code: 'REACTION_ALREADY_EXISTS', 
+            message: '이미 이 게시물에 반응을 보냈습니다.', 
+            type: 'VALIDATION' 
+          } 
+        };
+      }
 
-        if (error) {
-          console.error('표현행위 업데이트 오류:', error);
-          return { 
-            error: { 
-              code: 'UPDATE_REACTION_FAILED', 
-              message: '표현행위 업데이트 중 오류가 발생했습니다.', 
-              type: 'SERVER' 
-            } 
-          };
-        }
-      } else {
-        // 새로운 반응 추가
-        const { error } = await supabase
-          .from('reactions')
-          .insert({
-            user_id: user.id,
-            post_id: postId,
-            reaction_type: reactionType
-          });
+      // wisdom_reactions 테이블에 반응 기록
+      const { error: insertError } = await supabase
+        .from('wisdom_reactions')
+        .insert({
+          user_id: user.id,
+          wisdom_post_id: postId,
+          reaction_type: reactionType
+        });
 
-        if (error) {
-          console.error('표현행위 추가 오류:', error);
-          return { 
-            error: { 
-              code: 'ADD_REACTION_FAILED', 
-              message: '표현행위 추가 중 오류가 발생했습니다.', 
-              type: 'SERVER' 
-            } 
-          };
+      if (insertError) {
+        console.error('반응 추가 오류:', insertError);
+        return { 
+          error: { 
+            code: 'ADD_REACTION_FAILED', 
+            message: '표현행위 추가 중 오류가 발생했습니다.', 
+            type: 'SERVER' 
+          } 
+        };
+      }
+
+      // wisdom_posts의 카운트 증가
+      const countField = `${reactionType}_count`;
+      const { error: updateError } = await supabase.rpc('increment_reaction_count', {
+        post_id: postId,
+        reaction_field: countField
+      });
+
+      // RPC 함수가 없으면 직접 업데이트
+      if (updateError) {
+        const { data: currentPost } = await supabase
+          .from('wisdom_posts')
+          .select(countField)
+          .eq('id', postId)
+          .single();
+
+        if (currentPost) {
+          await supabase
+            .from('wisdom_posts')
+            .update({ [countField]: (currentPost[countField] || 0) + 1 })
+            .eq('id', postId);
         }
       }
 
@@ -548,7 +665,7 @@ export class WisdomService {
   }> {
     try {
       const { data, error } = await supabase
-        .from('reactions')
+        .from('wisdom_reactions')
         .select('reaction_type')
         .eq('user_id', userId);
 
@@ -568,10 +685,10 @@ export class WisdomService {
       return {
         ...counts,
         canSend: {
-          honor: counts.honor < 1,     // 경의: 1장 제한
-          recommend: counts.recommend < 3,  // 추천: 3장 제한
-          respect: counts.respect < 5,      // 존중: 5장 제한
-          hug: counts.hug < 3              // 응원: 3장 제한
+          honor: counts.honor < 1,
+          recommend: counts.recommend < 3,
+          respect: counts.respect < 5,
+          hug: counts.hug < 3
         }
       };
 
@@ -582,5 +699,33 @@ export class WisdomService {
         canSend: { honor: true, recommend: true, respect: true, hug: true }
       };
     }
+  }
+}
+
+// ✅ Supabase에서 모든 위즈덤 포스트 가져오기 (프로필 정보 포함)
+export async function fetchWisdomPosts(): Promise<WisdomPost[]> {
+  try {
+    const { data, error } = await supabase
+      .from('wisdom_posts')
+      .select(`
+        *,
+        profiles!inner(username, avatar_url, gender, age, company)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Supabase 에러:', error);
+      throw error;
+    }
+
+    const postsWithProfile = (data || []).map(post => ({
+      ...post,
+      profile: post.profiles
+    }));
+
+    return postsWithProfile;
+  } catch (error) {
+    console.error('위즈덤 포스트 조회 실패:', error);
+    throw error;
   }
 }

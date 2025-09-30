@@ -13,6 +13,7 @@ import { WisdomCardGrid } from './Components/NavigationSection/CardsSection.tsx'
 import { FooterSection } from './Components/Footer/FooterSection.tsx';
 import './styles/index.css';
 import { WisdomPost } from './services/WisdomService.ts';
+import { WisdomModal } from './Components/WisdomModal.tsx';
 
 // 메인 앱 컴포넌트 - 실제 인증 로직 사용
 const AppContent = () => {
@@ -284,6 +285,16 @@ const AppContent = () => {
     };
   }, [showMotionEffect, viewportDimensions]);
 
+  // 위즈덤 제출 처리
+  const handleWisdomSubmitted = (wisdomPost: WisdomPost) => {
+    console.log('✅ 새 위즈덤 포스트 받음:', wisdomPost);
+    setNewWisdomPost(wisdomPost);
+    setShowWisdomModal(false);
+    
+    // 잠시 후 null로 리셋하여 중복 추가 방지
+    setTimeout(() => setNewWisdomPost(null), 100);
+  };
+
   return (
     <div 
       className="w-full min-h-screen bg-gradient-to-b from-[#111410] to-black"
@@ -312,11 +323,14 @@ const AppContent = () => {
         </div>
         
         {/* 메인 콘텐츠 영역 */}
-        <div className={`w-full flex-1 transition-all duration-1000 relative ${showMotionEffect ? 'motion-effect' : ''}`}>
-          <ProgressSection 
-            isCompleted={isWisdomCompleted} 
-            isAllReactionsCompleted={isAllReactionsCompleted}
-          />
+        <div className="w-full flex-1 transition-all duration-1000 relative">
+          {/* ⭐ ProgressSection을 motion-effect로 감싸기 */}
+          <div className={`relative ${showMotionEffect ? 'motion-effect' : ''}`}>
+            <ProgressSection 
+              isCompleted={isWisdomCompleted} 
+              isAllReactionsCompleted={isAllReactionsCompleted}
+            />
+          </div>
           
           <div id="countdown-section" className="w-full">
             <CountDown 
@@ -326,7 +340,7 @@ const AppContent = () => {
           </div>
 
           <MainContentSection />
-          
+
           <div id="navigation-section" className="w-full">
             <NavigationSection isAllReactionsCompleted={isAllReactionsCompleted} />
           </div>
@@ -336,6 +350,9 @@ const AppContent = () => {
           <WisdomCardGrid 
             isWisdomCompleted={isWisdomCompleted}
             onAllReactionsComplete={handleAllReactionsComplete}
+            newWisdomPost={newWisdomPost}  // ✅ 이 줄 추가
+            requireAuth={true}
+            onAuthRequired={handleAuthRequired}
           />
         </div>
         
@@ -350,9 +367,18 @@ const AppContent = () => {
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
       />
+
+      {/* 위즈덤 작성 모달 */}
+      <WisdomModal
+        isOpen={showWisdomModal}
+        onClose={() => setShowWisdomModal(false)}
+        onWisdomSubmitted={handleWisdomSubmitted}
+        isLoggedIn={!!user}
+      />
     </div>
   );
 };
+
 
 // 실제 AuthProvider로 감싸기
 const App = () => {

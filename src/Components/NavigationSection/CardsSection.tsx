@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { WisdomService, WisdomPost } from "../../services/WisdomService.ts";
+import { WisdomService, WisdomPost, fetchWisdomPosts } from "../../services/WisdomService.ts";
+import { supabase } from "../../lib/supabase";
 
 interface WisdomCardGridProps {
   isWisdomCompleted?: boolean;
@@ -49,7 +50,29 @@ export const WisdomCardGrid = ({
     { name: "김민지", gender: "여", age: 22, company: "카카오엔터테인먼트", reaction: "응원" }
   ];
 
-  // 더미 위즈덤 데이터 (12개)
+
+  // ✅ 실제 Supabase 데이터 상태
+  const [wisdomPosts, setWisdomPosts] = useState<WisdomPost[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // 데이터 로딩
+  useEffect(() => {
+    const loadWisdomPosts = async () => {
+      try {
+        setLoading(true);
+        const posts = await fetchWisdomPosts();
+        setWisdomPosts(posts);
+      } catch (error) {
+        console.error('위즈덤 포스트 로딩 실패:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadWisdomPosts();
+  }, []);
+
+  /*// 더미 위즈덤 데이터 (12개)
   const dummyWisdomPosts: WisdomPost[] = [
     {
       id: "1",
@@ -243,7 +266,33 @@ export const WisdomCardGrid = ({
         full_name: "조은진"
       }
     }
-  ];
+  ];*/
+
+  // ✅ Supabase에서 실제 데이터 로드
+  useEffect(() => {
+    const loadWisdomPosts = async () => {
+      try {
+        setLoading(true);
+        const posts = await fetchWisdomPosts();
+        setWisdomPosts(posts);
+      } catch (error) {
+        console.error('위즈덤 포스트 로딩 실패:', error);
+        // 에러 시 빈 배열로 설정
+        setWisdomPosts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadWisdomPosts();
+  }, []);
+
+  // ✅ 새 포스트가 추가되었을 때 리스트에 반영
+  useEffect(() => {
+    if (newWisdomPost) {
+      setWisdomPosts(prev => [newWisdomPost, ...prev]);
+    }
+  }, [newWisdomPost]);
 
   // 타임스탬프 포맷팅 함수
   const formatTimestamp = (timestamp: string) => {
@@ -261,13 +310,20 @@ export const WisdomCardGrid = ({
 
   // 카드를 표시용으로 변환
   const convertToDisplayCard = (post: WisdomPost) => {
-    const userInfo = post.profile 
-      ? `${post.profile.full_name || '사용자'} / 남 / 23 / 한국대 / 표범학과 / 3 / 미디어 / 웹툰 / 일반 / 구글`
-      : "사용자 / 남 / 23 / 한국대 / 표범학과 / 3 / 미디어 / 웹툰 / 일반 / 구글";
+    // 프로필에서 실제 데이터 사용
+    const userName = post.profile?.username || post.profile?.full_name || '사용자';
+    const avatarUrl = post.profile?.avatar_url || '/images/boy.png';
+    const gender = post.profile?.gender || '남';
+    const age = post.profile?.age || 23;
+    const company = post.profile?.company || '회사명';
+    
+    const userInfo = `${userName} / ${gender} / ${age} / ${company}`;
     
     return {
       ...post,
       userInfo,
+      userName,
+      avatarUrl,
       content: [
         `- ${post.request_a}`,
         `- ${post.request_b}`,
@@ -319,12 +375,32 @@ export const WisdomCardGrid = ({
     }
     
     try {
-      // 실제 API 호출 대신 로컬 상태만 업데이트
-      const newCount = reactionCount === 1 ? 12 : reactionCount + 1;
+      // ✅ 실제 Supabase API 호출
+      const reactionField = `${selectedReaction}_count` as keyof Pick<WisdomPost, 'honor_count' | 'recommend_count' | 'respect_count' | 'hug_count'>;
+      const currentCount = selectedCard[reactionField];
+      
+      const { error } = await WisdomService.addReaction(selectedCard.id, selectedReaction as 'honor' | 'recommend' | 'respect' | 'hug');
+      
+      if (error) {
+        throw new Error(error.message);
+      }
+      
+      // ✅ 로컬 상태 업데이트
+      setWisdomPosts(prev => prev.map(post => 
+        post.id === selectedCard.id 
+          ? { ...post, [reactionField]: currentCount + 1 }
+          : post
+      ));
+      
+      // 선택된 카드도 업데이트
+      setSelectedCard(prev => prev ? { ...prev, [reactionField]: currentCount + 1 } : null);
+      
+      // 반응 카운트 증가
+      const newCount = reactionCount + 1;
       setReactionCount(newCount);
       
       // 12번째 표현행위 완료 시 완료 팝업이 뜨도록 설정
-      if (newCount >= 2) {
+      if (newCount >= 12) {
         setIsCompletePopup(true);
       } else {
         setIsCompletePopup(false);
@@ -338,8 +414,8 @@ export const WisdomCardGrid = ({
       }, 3000);
       
     } catch (error) {
-      console.error('표현행위 예외:', error);
-      alert('표현행위 중 예상치 못한 오류가 발생했습니다.');
+      console.error('표현행위 전송 실패:', error);
+      alert('표현행위 전송에 실패했습니다. 다시 시도해주세요.');
     }
   };
 
@@ -370,7 +446,7 @@ export const WisdomCardGrid = ({
       setTimeout(scrollToToastPosition, 100);
       setTimeout(scrollToToastPosition, 300);
     }
-  }, [showReactionPopup]);
+  }, [showReactionPopup, modalTopPosition]);
 
   const closeReactionPopup = () => {
     setShowReactionPopup(false);
@@ -391,6 +467,24 @@ export const WisdomCardGrid = ({
     }
   };
 
+  // ✅ 로딩 중일 때 표시
+  if (loading) {
+    return (
+      <div className="w-full flex justify-center items-center min-h-[500px]">
+        <div className="text-white text-xl">위즈덤 포스트를 불러오는 중...</div>
+      </div>
+    );
+  }
+
+  // ✅ 데이터가 없을 때 표시
+  if (wisdomPosts.length === 0) {
+    return (
+      <div className="w-full flex justify-center items-center min-h-[500px]">
+        <div className="text-white text-xl">아직 등록된 위즈덤 포스트가 없습니다.</div>
+      </div>
+    );
+  }
+
   return (
     <>
       {/* 반응형 카드 그리드 */}
@@ -400,9 +494,9 @@ export const WisdomCardGrid = ({
           {/* 데스크톱 레이아웃 (lg 이상) - 4행 3열 */}
           <div className="hidden lg:block">
             <div className="inline-flex flex-col justify-start items-center gap-3.5 w-full">
-              {Array(4).fill(null).map((_, rowIndex) => (
+              {Array(Math.ceil(wisdomPosts.length / 3)).fill(null).map((_, rowIndex) => (
                 <div key={rowIndex} className="w-full inline-flex justify-center items-center gap-3.5">
-                  {dummyWisdomPosts.slice(rowIndex * 3, (rowIndex + 1) * 3).map((post) => {
+                  {wisdomPosts.slice(rowIndex * 3, (rowIndex + 1) * 3).map((post) => {
                     const card = convertToDisplayCard(post);
                     return (
                       <div
@@ -443,7 +537,7 @@ export const WisdomCardGrid = ({
                           {/* 구분선 (카드 폭 420px) */}
                           <div className="w-[420px] h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-500"></div>
 
-                          {/* 표현 행위 통계 (기존 그대로) */}
+                          {/* 표현 행위 통계 */}
                           <div className="self-stretch bg-neutral-900 rounded-[20px] inline-flex justify-center items-center">
                             <div className="w-28 p-3.5 bg-[#3B4236] inline-flex flex-col justify-center items-center gap-[5px]">
                               <img className="w-7 h-7" src="/images/honor-icon.png" alt="경의" />
@@ -475,9 +569,9 @@ export const WisdomCardGrid = ({
                             </div>
                           </div>
 
-                          {/* 자세히 보기 버튼 (카드 폭 420px) */}
+                          {/* 자세히 보기 버튼 */}
                           <div className="w-[420px] h-14 px-9 py-3 
-                                        bg-[#1C1F18]/60   /* 👈 Figma 색상 60% 적용 */
+                                        bg-[#1C1F18]/60
                                         border-t border-b border-white/20 
                                         inline-flex justify-center items-center gap-2.5 
                                         cursor-pointer mt-[10px]">
@@ -494,11 +588,10 @@ export const WisdomCardGrid = ({
             </div>
           </div>
 
-
           {/* 모바일/태블릿 레이아웃 (lg 미만) - 1열 */}
           <div className="lg:hidden">
             <div className="grid grid-cols-1 gap-6">
-              {dummyWisdomPosts.map((post) => {
+              {wisdomPosts.map((post) => {
                 const card = convertToDisplayCard(post);
                 return (
                   <div 
@@ -513,11 +606,12 @@ export const WisdomCardGrid = ({
                         
                         {/* 프로필 */}
                         <div className="w-full inline-flex justify-start items-center gap-3.5">
-                          <img 
-                            className="w-12 h-12 rounded-full flex-shrink-0" 
-                            src="/images/boy.png"
-                            alt="프로필 이미지"
-                          />
+                        // 프로필 이미지 부분 (기존 /images/boy.png를 card.avatarUrl로 변경)
+                        <img 
+                          className="w-12 h-12 rounded-full" 
+                          src={card.avatarUrl} 
+                          alt="프로필 이미지" 
+                        />
                           <div className="flex-1 min-w-0 text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight truncate">
                             {card.userInfo}
                           </div>
