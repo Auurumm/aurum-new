@@ -171,7 +171,12 @@ export const WisdomCardGrid = ({
         hug: limits.hug
       });
 
+      // ✅ 총 반응 횟수도 설정
+      const totalCount = limits.honor + limits.recommend + limits.respect + limits.hug;
+      setReactionCount(totalCount);
+
       console.log('현재 반응 사용 횟수:', limits);
+      console.log('총 반응 횟수:', totalCount);
     } catch (error) {
       console.error('반응 사용 현황 로드 중 오류:', error);
     }
