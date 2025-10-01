@@ -681,55 +681,55 @@ export class WisdomService {
   /**
    * 사용자의 표현행위 제한 확인
    */
-  static async checkReactionLimits(userId: string): Promise<{
-    honor: number;
-    recommend: number; 
-    respect: number;
-    hug: number;
-    canSend: {
-      honor: boolean;
-      recommend: boolean;
-      respect: boolean;
-      hug: boolean;
-    };
-  }> {
-    try {
-      const { data, error } = await supabase
-        .from('wisdom_reactions')
-        .select('reaction_type')
-        .eq('user_id', userId);
-
-      if (error) {
-        console.error('반응 제한 확인 오류:', error);
+    static async checkReactionLimits(userId: string): Promise<{
+      honor: number;
+      recommend: number; 
+      respect: number;
+      hug: number;
+      canSend: {
+        honor: boolean;
+        recommend: boolean;
+        respect: boolean;
+        hug: boolean;
+      };
+    }> {
+      try {
+        // user_reactions에서 캐시된 데이터 조회 (더 빠름)
+        const { data, error } = await supabase
+          .from('user_reactions')
+          .select('honor_sent, recommend_sent, respect_sent, hug_sent')
+          .eq('user_id', userId)
+          .maybeSingle();
+    
+        if (error || !data) {
+          // 없으면 기본값 반환
+          return {
+            honor: 0, recommend: 0, respect: 0, hug: 0,
+            canSend: { honor: true, recommend: true, respect: true, hug: true }
+          };
+        }
+    
+        return {
+          honor: data.honor_sent,
+          recommend: data.recommend_sent,
+          respect: data.respect_sent,
+          hug: data.hug_sent,
+          canSend: {
+            honor: data.honor_sent < 1,
+            recommend: data.recommend_sent < 3,
+            respect: data.respect_sent < 5,
+            hug: data.hug_sent < 3
+          }
+        };
+    
+      } catch (error) {
+        console.error('반응 제한 확인 예외:', error);
         return {
           honor: 0, recommend: 0, respect: 0, hug: 0,
           canSend: { honor: true, recommend: true, respect: true, hug: true }
         };
       }
-
-      const counts = { honor: 0, recommend: 0, respect: 0, hug: 0 };
-      (data || []).forEach(reaction => {
-        counts[reaction.reaction_type as keyof typeof counts]++;
-      });
-
-      return {
-        ...counts,
-        canSend: {
-          honor: counts.honor < 1,
-          recommend: counts.recommend < 3,
-          respect: counts.respect < 5,
-          hug: counts.hug < 3
-        }
-      };
-
-    } catch (error) {
-      console.error('반응 제한 확인 예외:', error);
-      return {
-        honor: 0, recommend: 0, respect: 0, hug: 0,
-        canSend: { honor: true, recommend: true, respect: true, hug: true }
-      };
     }
-  }
 }
 
 // ✅ Supabase에서 모든 위즈덤 포스트 가져오기 (프로필 정보 포함)

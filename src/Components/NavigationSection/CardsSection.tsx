@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { WisdomService, WisdomPost, fetchWisdomPosts } from "../../services/WisdomService.ts";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "../../lib/supabase.ts";
 
 interface WisdomCardGridProps {
   isWisdomCompleted?: boolean;
@@ -10,7 +10,6 @@ interface WisdomCardGridProps {
   newWisdomPost?: WisdomPost | null;
 }
 
-// 히스토리 아이템 인터페이스
 interface ReactionHistoryItem {
   id: string;
   name: string;
@@ -22,16 +21,50 @@ interface ReactionHistoryItem {
   created_at: string;
 }
 
-export const WisdomCardGrid = ({ 
-  isWisdomCompleted = false, 
-  onAllReactionsComplete, 
-  requireAuth = false, 
+type ReactionType = 'honor' | 'recommend' | 'respect' | 'hug';
+
+// 상수 정의
+const REACTION_LIMITS = {
+  honor: 1,
+  recommend: 3,
+  respect: 5,
+  hug: 3
+} as const;
+
+const TOTAL_REACTIONS_REQUIRED = 12;
+const POPUP_CLOSE_DELAY = 3000;
+
+const REACTION_ICONS: Record<ReactionType, string> = {
+  honor: "/images/honor-icon.png",
+  recommend: "/images/recommend-icon.png",
+  respect: "/images/respect-icon.png",
+  hug: "/images/hug-icon.png"
+};
+
+const REACTION_LABELS: Record<ReactionType, string> = {
+  honor: "경의",
+  recommend: "추천",
+  respect: "존중",
+  hug: "응원"
+};
+
+const REACTION_KEY_MAP: Record<string, ReactionType> = {
+  "경의": "honor",
+  "추천": "recommend",
+  "존중": "respect",
+  "응원": "hug"
+};
+
+export const WisdomCardGrid = ({
+  isWisdomCompleted = false,
+  onAllReactionsComplete,
+  requireAuth = false,
   onAuthRequired,
-  newWisdomPost 
+  newWisdomPost
 }: WisdomCardGridProps): JSX.Element => {
   // 카드 상태
   const [selectedCard, setSelectedCard] = useState<WisdomPost | null>(null);
-  const [selectedReaction, setSelectedReaction] = useState<string | null>(null);
+  const [selectedReaction, setSelectedReaction] = useState<ReactionType | null>(null);
   const [reactionCount, setReactionCount] = useState(0);
   const [showReactionPopup, setShowReactionPopup] = useState(false);
   const [isCompletePopup, setIsCompletePopup] = useState(false);
@@ -46,46 +79,16 @@ export const WisdomCardGrid = ({
   const [reactionHistory, setReactionHistory] = useState<ReactionHistoryItem[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
-  // 표현 행위 아이콘 매핑
-  const reactionIcons = {
-    honor: "/images/honor-icon.png",
-    recommend: "/images/recommend-icon.png", 
-    respect: "/images/respect-icon.png",
-    hug: "/images/hug-icon.png"
-  };
+  // 반응 사용 횟수 상태
+  const [reactionUsage, setReactionUsage] = useState<Record<ReactionType, number>>({
+    honor: 0,
+    recommend: 0,
+    respect: 0,
+    hug: 0
+  });
 
-  // 표현 행위 라벨 매핑
-  const reactionLabels = {
-    honor: "경의",
-    recommend: "추천",
-    respect: "존중", 
-    hug: "응원"
-  };
-
-  // 추가: 한글 -> 영문 키 변환용
-  const reactionKeyMap: { [key: string]: keyof typeof reactionIcons } = {
-    "경의": "honor",
-    "추천": "recommend",
-    "존중": "respect",
-    "응원": "hug"
-  };
-
-  
   // 초기 위즈덤 포스트 로드
   useEffect(() => {
-    const loadWisdomPosts = async () => {
-      try {
-        setLoading(true);
-        const posts = await fetchWisdomPosts();
-        setWisdomPosts(posts);
-      } catch (error) {
-        console.error('위즈덤 포스트 로딩 실패:', error);
-        setWisdomPosts([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
     loadWisdomPosts();
   }, []);
 
@@ -98,220 +101,26 @@ export const WisdomCardGrid = ({
 
   // 선택된 카드의 히스토리 로드
   useEffect(() => {
-    const loadReactionHistory = async () => {
-      if (!selectedCard) {
-        setReactionHistory([]);
-        return;
-      }
-
-      try {
-        setLoadingHistory(true);
-        const { data, error } = await WisdomService.getReactionHistory(selectedCard.id);
-
-        if (error || !data) {
-          console.error('히스토리 로드 실패:', error);
-          setReactionHistory([]);
-          return;
-        }
-
-        // 데이터 포맷팅 - 이름 우선순위: display_name > username > full_name
-        const formattedHistory: ReactionHistoryItem[] = data.map(item => ({
-          id: item.id,
-          name: item.profile?.username || 
-                item.profile?.full_name || 
-                '사용자',
-          gender: item.profile?.gender || '남',
-          age: item.profile?.age || 23,
-          company: item.profile?.company || '회사명',
-          avatar_url: item.profile?.avatar_url || '/images/Ellipse 79.png',
-          reaction: reactionLabels[item.reaction_type as keyof typeof reactionLabels] || item.reaction_type,
-          created_at: item.created_at
-        }));
-
-        setReactionHistory(formattedHistory);
-      } catch (error) {
-        console.error('히스토리 로드 예외:', error);
-        setReactionHistory([]);
-      } finally {
-        setLoadingHistory(false);
-      }
-    };
-
     if (selectedCard) {
-      loadReactionHistory();
+      loadReactionHistory(selectedCard.id);
+    } else {
+      setReactionHistory([]);
     }
   }, [selectedCard]);
 
-  // 타임스탬프 포맷팅 함수
-  const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
-    const dayName = dayNames[date.getDay()];
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    
-    return `${year}. ${month}. ${day}(${dayName}) ${hours}:${minutes}`;
-  };
-
-  // 카드를 표시용으로 변환
-  const convertToDisplayCard = (post: WisdomPost) => {
-    const userName = post.profile?.username || post.profile?.full_name || '사용자';
-    const avatarUrl = post.profile?.avatar_url || '/images/boy.png';
-    const gender = post.profile?.gender || '남';
-    const age = post.profile?.age || 23;
-    const company = post.profile?.company || '회사명';
-    
-    const userInfo = `${userName} / ${gender} / ${age} / ${company}`;
-    
-    return {
-      ...post,
-      userInfo,
-      userName,
-      avatarUrl,
-      content: [
-        `- ${post.request_a}`,
-        `- ${post.request_b}`,
-        `- ${post.request_c}`
-      ],
-      timestamp: formatTimestamp(post.created_at),
-      stats: {
-        honor: post.honor_count,
-        recommend: post.recommend_count,
-        respect: post.respect_count,
-        hug: post.hug_count
-      }
-    };
-  };
-
-  const handleCardClick = (post: WisdomPost, event: React.MouseEvent<HTMLElement>) => {
-    const clickedElement = event.currentTarget;
-    const elementRect = clickedElement.getBoundingClientRect();
-    const elementTop = elementRect.top + window.pageYOffset;
-    
-    setModalTopPosition(Math.max(50, elementTop - 50));
-    setSelectedCard(post);
-  };
-
-  const closeModal = () => {
-    setSelectedCard(null);
-    setSelectedReaction(null);
-    setModalTopPosition(0);
-  };
-
-  const handleReactionSelect = (reactionType: string) => {
-    setSelectedReaction(reactionType);
-  };
-
-  const handleSendReaction = async () => {
-    if (!isWisdomCompleted) {
-      alert("1단계를 먼저 완료해주세요!");
-      return;
-    }
-    
-    if (!selectedReaction || !selectedCard) {
-      alert("표현행위를 선택해주세요!");
-      return;
-    }
-    
-    if (requireAuth && onAuthRequired && !onAuthRequired()) {
-      return;
-    }
-    
-    try {
-      const reactionField = `${selectedReaction}_count` as keyof Pick<WisdomPost, 'honor_count' | 'recommend_count' | 'respect_count' | 'hug_count'>;
-      const currentCount = selectedCard[reactionField];
-      
-      const { error } = await WisdomService.addReaction(
-        selectedCard.id, 
-        selectedReaction as 'honor' | 'recommend' | 'respect' | 'hug'
-      );
-      
-      if (error) {
-        let userMessage = '표현행위 전송에 실패했습니다.';
-        
-        if (error.message.includes('이미 이 게시물에 반응')) {
-          userMessage = '⚠️ 이미 이 게시물에 표현행위를 보냈습니다.\n다른 게시물을 선택해주세요.';
-        } else if (error.message.includes('본인의 게시물')) {
-          userMessage = '⚠️ 본인이 작성한 위즈덤에는 표현행위를 할 수 없습니다.\n다른 크루의 위즈덤을 선택해주세요.';
-        } else if (error.message.includes('위즈덤을 먼저 작성')) {
-          userMessage = '⚠️ 먼저 1단계에서 위즈덤을 작성해주세요.';
-        } else if (error.message.includes('로그인')) {
-          userMessage = '⚠️ 로그인이 필요합니다.';
-        }
-        
-        console.error('❌ 표현행위 전송 실패 (상세):', error);
-        alert(userMessage);
-        return;
-      }
-      
-      // 로컬 상태 업데이트
-      setWisdomPosts(prev => prev.map(post => 
-        post.id === selectedCard.id 
-          ? { ...post, [reactionField]: currentCount + 1 }
-          : post
-      ));
-      
-      setSelectedCard(prev => prev ? { ...prev, [reactionField]: currentCount + 1 } : null);
-      
-      // 히스토리 즉시 다시 로드
-      const { data } = await WisdomService.getReactionHistory(selectedCard.id);
-      if (data) {
-        const formattedHistory: ReactionHistoryItem[] = data.map(item => ({
-          id: item.id,
-          name: item.profile?.username || item.profile?.full_name || '사용자',
-          gender: item.profile?.gender || '남',
-          age: item.profile?.age || 23,
-          company: item.profile?.company || '회사명',
-          avatar_url: item.profile?.avatar_url || '/images/Ellipse 79.png',
-          reaction: reactionLabels[item.reaction_type as keyof typeof reactionLabels] || item.reaction_type,
-          created_at: item.created_at
-        }));
-        setReactionHistory(formattedHistory);
-      }
-      
-      const newCount = reactionCount + 1;
-      setReactionCount(newCount);
-      
-      if (newCount >= 12) {
-        setIsCompletePopup(true);
-      } else {
-        setIsCompletePopup(false);
-      }
-      
-      setShowReactionPopup(true);
-      
-      setTimeout(() => {
-        closeReactionPopup();
-      }, 3000);
-      
-    } catch (error) {
-      console.error('❌ 표현행위 전송 중 예외 발생:', error);
-      
-      let errorMessage = '표현행위 전송 중 오류가 발생했습니다.';
-      
-      if (error instanceof Error) {
-        if (error.message.includes('Network')) {
-          errorMessage = '⚠️ 네트워크 연결을 확인해주세요.';
-        } else if (error.message.includes('Failed to fetch')) {
-          errorMessage = '⚠️ 서버와 연결할 수 없습니다. 잠시 후 다시 시도해주세요.';
-        }
-      }
-      
-      alert(errorMessage);
-    }
-  };
+  // 사용자의 반응 사용 현황 로드
+  useEffect(() => {
+    loadUserReactionUsage();
+  }, []);
 
   // 모달이 열릴 때 스크롤 위치 조정
   useEffect(() => {
     if (selectedCard && modalTopPosition > 0) {
       const scrollToModal = () => {
         const targetScrollTop = modalTopPosition - 80;
-        window.scrollTo({ 
-          top: Math.max(0, targetScrollTop), 
-          behavior: 'smooth' 
+        window.scrollTo({
+          top: Math.max(0, targetScrollTop),
+          behavior: 'smooth'
         });
       };
       setTimeout(scrollToModal, 150);
@@ -323,9 +132,9 @@ export const WisdomCardGrid = ({
     if (showReactionPopup) {
       const scrollToToastPosition = () => {
         const targetScrollTop = Math.max(0, modalTopPosition + 100);
-        window.scrollTo({ 
-          top: targetScrollTop, 
-          behavior: 'smooth' 
+        window.scrollTo({
+          top: targetScrollTop,
+          behavior: 'smooth'
         });
       };
       setTimeout(scrollToToastPosition, 100);
@@ -333,20 +142,270 @@ export const WisdomCardGrid = ({
     }
   }, [showReactionPopup, modalTopPosition]);
 
+  // 위즈덤 포스트 로드
+  const loadWisdomPosts = async () => {
+    try {
+      setLoading(true);
+      const posts = await fetchWisdomPosts();
+      setWisdomPosts(posts);
+    } catch (error) {
+      console.error('위즈덤 포스트 로딩 실패:', error);
+      setWisdomPosts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 사용자 반응 사용 현황 로드
+  const loadUserReactionUsage = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const limits = await WisdomService.checkReactionLimits(user.id);
+
+      setReactionUsage({
+        honor: limits.honor,
+        recommend: limits.recommend,
+        respect: limits.respect,
+        hug: limits.hug
+      });
+
+      console.log('현재 반응 사용 횟수:', limits);
+    } catch (error) {
+      console.error('반응 사용 현황 로드 중 오류:', error);
+    }
+  };
+
+  // 반응 히스토리 로드
+  const loadReactionHistory = async (postId: string) => {
+    try {
+      setLoadingHistory(true);
+      const { data, error } = await WisdomService.getReactionHistory(postId);
+
+      if (error || !data) {
+        console.error('히스토리 로드 실패:', error);
+        setReactionHistory([]);
+        return;
+      }
+
+      const formattedHistory: ReactionHistoryItem[] = data.map(item => ({
+        id: item.id,
+        name: item.profile?.username || item.profile?.full_name || '사용자',
+        gender: item.profile?.gender || '남',
+        age: item.profile?.age || 23,
+        company: item.profile?.company || '회사명',
+        avatar_url: item.profile?.avatar_url || '/images/Ellipse 79.png',
+        reaction: REACTION_LABELS[item.reaction_type as ReactionType] || item.reaction_type,
+        created_at: item.created_at
+      }));
+
+      setReactionHistory(formattedHistory);
+    } catch (error) {
+      console.error('히스토리 로드 예외:', error);
+      setReactionHistory([]);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  // 타임스탬프 포맷팅
+  const formatTimestamp = (timestamp: string): string => {
+    const date = new Date(timestamp);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+    const dayName = dayNames[date.getDay()];
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+
+    return `${year}. ${month}. ${day}(${dayName}) ${hours}:${minutes}`;
+  };
+
+  // 카드를 표시용으로 변환
+  const convertToDisplayCard = (post: WisdomPost) => {
+    const userName = post.profile?.username || post.profile?.full_name || '사용자';
+    const avatarUrl = post.profile?.avatar_url || '/images/boy.png';
+    const gender = post.profile?.gender || '남';
+    const age = post.profile?.age || 23;
+    const company = post.profile?.company || '회사명';
+
+    const userInfo = `${userName} / ${gender} / ${age} / ${company}`;
+
+    return {
+      ...post,
+      userInfo,
+      userName,
+      avatarUrl,
+      timestamp: formatTimestamp(post.created_at)
+    };
+  };
+
+  // 카드 클릭 핸들러
+  const handleCardClick = (post: WisdomPost, event: React.MouseEvent<HTMLElement>) => {
+    const clickedElement = event.currentTarget;
+    const elementRect = clickedElement.getBoundingClientRect();
+    const elementTop = elementRect.top + window.pageYOffset;
+
+    setModalTopPosition(Math.max(50, elementTop - 50));
+    setSelectedCard(post);
+  };
+
+  // 모달 닫기
+  const closeModal = () => {
+    setSelectedCard(null);
+    setSelectedReaction(null);
+    setModalTopPosition(0);
+  };
+
+  // 반응 선택 핸들러
+  const handleReactionSelect = (reactionType: ReactionType) => {
+    setSelectedReaction(reactionType);
+  };
+
+  // 반응 전송 핸들러
+  const handleSendReaction = async () => {
+    // 1단계 완료 체크
+    if (!isWisdomCompleted) {
+      alert("1단계를 먼저 완료해주세요!");
+      return;
+    }
+
+    // 반응 선택 체크
+    if (!selectedReaction || !selectedCard) {
+      alert("표현행위를 선택해주세요!");
+      return;
+    }
+
+    // 반응 제한 체크
+    const currentUsage = reactionUsage[selectedReaction];
+    const limit = REACTION_LIMITS[selectedReaction];
+
+    if (currentUsage >= limit) {
+      const limitText = {
+        honor: '경의는 1명',
+        recommend: '추천은 3명',
+        respect: '존중은 5명',
+        hug: '응원은 3명'
+      };
+      alert(`⚠️ ${limitText[selectedReaction]}까지만 부여할 수 있습니다.\n현재 ${currentUsage}/${limit} 사용 중입니다.`);
+      return;
+    }
+
+    // 인증 체크
+    if (requireAuth && onAuthRequired && !onAuthRequired()) {
+      return;
+    }
+
+    try {
+      const reactionField = `${selectedReaction}_count` as keyof Pick<WisdomPost, 'honor_count' | 'recommend_count' | 'respect_count' | 'hug_count'>;
+      const currentCount = selectedCard[reactionField];
+
+      const { error } = await WisdomService.addReaction(selectedCard.id, selectedReaction);
+
+      if (error) {
+        handleReactionError(error);
+        return;
+      }
+
+      // 성공 처리
+      await handleReactionSuccess(selectedReaction, reactionField, currentCount);
+
+    } catch (error) {
+      console.error('표현행위 전송 중 예외 발생:', error);
+      handleUnexpectedError(error);
+    }
+  };
+
+  // 반응 전송 에러 처리
+  const handleReactionError = (error: Error) => {
+    let userMessage = '표현행위 전송에 실패했습니다.';
+
+    if (error.message.includes('이미 이 게시물에 반응')) {
+      userMessage = '⚠️ 이미 이 게시물에 표현행위를 보냈습니다.\n다른 게시물을 선택해주세요.';
+    } else if (error.message.includes('본인의 게시물')) {
+      userMessage = '⚠️ 본인이 작성한 위즈덤에는 표현행위를 할 수 없습니다.\n다른 크루의 위즈덤을 선택해주세요.';
+    } else if (error.message.includes('위즈덤을 먼저 작성')) {
+      userMessage = '⚠️ 먼저 1단계에서 위즈덤을 작성해주세요.';
+    } else if (error.message.includes('로그인')) {
+      userMessage = '⚠️ 로그인이 필요합니다.';
+    }
+
+    console.error('표현행위 전송 실패:', error);
+    alert(userMessage);
+  };
+
+  // 예상치 못한 에러 처리
+  const handleUnexpectedError = (error: unknown) => {
+    let errorMessage = '표현행위 전송 중 오류가 발생했습니다.';
+
+    if (error instanceof Error) {
+      if (error.message.includes('Network')) {
+        errorMessage = '⚠️ 네트워크 연결을 확인해주세요.';
+      } else if (error.message.includes('Failed to fetch')) {
+        errorMessage = '⚠️ 서버와 연결할 수 없습니다. 잠시 후 다시 시도해주세요.';
+      }
+    }
+
+    alert(errorMessage);
+  };
+
+  // 반응 전송 성공 처리
+  const handleReactionSuccess = async (
+    reactionType: ReactionType,
+    reactionField: keyof Pick<WisdomPost, 'honor_count' | 'recommend_count' | 'respect_count' | 'hug_count'>,
+    currentCount: number
+  ) => {
+    if (!selectedCard) return;
+
+    // 사용 횟수 증가
+    setReactionUsage(prev => ({
+      ...prev,
+      [reactionType]: prev[reactionType] + 1
+    }));
+
+    // 로컬 상태 업데이트
+    setWisdomPosts(prev => prev.map(post =>
+      post.id === selectedCard.id
+        ? { ...post, [reactionField]: currentCount + 1 }
+        : post
+    ));
+
+    setSelectedCard(prev => prev ? { ...prev, [reactionField]: currentCount + 1 } : null);
+
+    // 히스토리 즉시 다시 로드
+    await loadReactionHistory(selectedCard.id);
+
+    // 반응 카운트 증가
+    const newCount = reactionCount + 1;
+    setReactionCount(newCount);
+
+    // 완료 체크
+    setIsCompletePopup(newCount >= TOTAL_REACTIONS_REQUIRED);
+    setShowReactionPopup(true);
+
+    // 자동 닫기
+    setTimeout(() => {
+      closeReactionPopup();
+    }, POPUP_CLOSE_DELAY);
+  };
+
+  // 반응 팝업 닫기
   const closeReactionPopup = () => {
     setShowReactionPopup(false);
-    
-    if (isCompletePopup && reactionCount >= 12 && onAllReactionsComplete) {
+
+    if (isCompletePopup && reactionCount >= TOTAL_REACTIONS_REQUIRED && onAllReactionsComplete) {
       setSelectedCard(null);
       setSelectedReaction(null);
-      
+
       setTimeout(() => {
-        window.scrollTo({ 
-          top: 0, 
-          behavior: 'smooth' 
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
         });
       }, 500);
-      
+
       onAllReactionsComplete();
     }
   };
@@ -372,401 +431,515 @@ export const WisdomCardGrid = ({
   return (
     <>
       {/* 반응형 카드 그리드 */}
-      <div className="w-full flex justify-center mb-[120px]">
-        <div className="w-full max-w-[1400px] px-4 sm:px-6 lg:px-8">
-          
-          {/* 데스크탑 레이아웃 (lg 이상) - 4행 3열 */}
-          <div className="hidden lg:block">
-            <div className="inline-flex flex-col justify-start items-center gap-3.5 w-full">
-              {Array(Math.ceil(wisdomPosts.length / 3)).fill(null).map((_, rowIndex) => (
-                <div key={rowIndex} className="w-full inline-flex justify-center items-center gap-3.5">
-                  {wisdomPosts.slice(rowIndex * 3, (rowIndex + 1) * 3).map((post) => {
-                    const card = convertToDisplayCard(post);
-                    return (
-                      <div
-                        key={post.id}
-                        className="w-[470px] h-[523px] p-[25px] bg-[#3B4236] 
-                                  rounded-[20px] border border-[#141612] 
-                                  inline-flex flex-col justify-start items-center gap-[35px] cursor-pointer
-                                  hover:bg-stone-600 transition-colors duration-300"
-                        onClick={(e) => handleCardClick(post, e)}
-                      >
-                        <div className="self-stretch flex flex-col justify-start items-center gap-5">
-                          <div className="flex flex-col justify-start items-start gap-4">
-                            <div className="inline-flex justify-start items-center gap-3.5">
-                              <img className="w-12 h-12 rounded-full" src={card.avatarUrl} alt="프로필 이미지" />
-                              <div className="w-[408px] text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight truncate">
-                                {card.userInfo}
-                              </div>
-                            </div>
-
-                            <div className="w-[408px] flex flex-col justify-start items-start gap-3.5 overflow-hidden">
-                              <div className="self-stretch text-white text-xl font-semibold font-['Pretendard'] leading-9 truncate">
-                                - {post.request_a}
-                              </div>
-                              <div className="self-stretch text-white text-xl font-semibold font-['Pretendard'] leading-9 truncate">
-                                - {post.request_b}
-                              </div>
-                              <div className="self-stretch text-white text-xl font-semibold font-['Pretendard'] leading-9 truncate">
-                                - {post.request_c}
-                              </div>
-                              <div className="text-neutral-400 text-sm font-semibold font-['Pretendard'] capitalize leading-none">
-                                {card.timestamp}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="w-[420px] h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-500"></div>
-
-                          <div className="self-stretch bg-neutral-900 rounded-[20px] inline-flex justify-center items-center">
-                            <div className="w-28 p-3.5 bg-[#3B4236] inline-flex flex-col justify-center items-center gap-[5px]">
-                            <img 
-                              className="w-7 h-7" 
-                              src="/images/honor-icon.png"  // 직접 경로 지정
-                              alt="경의" 
-                            />
-                              <div className="self-stretch flex flex-col justify-center items-center">
-                                <div className="text-center text-white text-3xl font-bold leading-10">{post.honor_count}</div>
-                                <div className="text-center text-gray-400 text-sm font-semibold leading-none">경의</div>
-                              </div>
-                            </div>
-                            <div className="w-28 p-3.5 bg-[#3B4236] inline-flex flex-col justify-center items-center gap-[5px]">
-                              <img className="w-7 h-7" src="/images/recommend-icon.png" alt="추천" />
-                              <div className="self-stretch flex flex-col justify-center items-center">
-                                <div className="text-center text-white text-3xl font-bold leading-10">{post.recommend_count}</div>
-                                <div className="text-center text-gray-400 text-sm font-semibold leading-none">추천</div>
-                              </div>
-                            </div>
-                            <div className="w-28 p-3.5 bg-[#3B4236] inline-flex flex-col justify-center items-center gap-[5px]">
-                              <img className="w-7 h-7" src="/images/respect-icon.png" alt="존중" />
-                              <div className="self-stretch flex flex-col justify-center items-center">
-                                <div className="text-center text-white text-3xl font-bold leading-10">{post.respect_count}</div>
-                                <div className="text-center text-gray-400 text-sm font-semibold leading-none">존중</div>
-                              </div>
-                            </div>
-                            <div className="w-28 p-3.5 bg-[#3B4236] inline-flex flex-col justify-center items-center gap-[5px]">
-                              <img className="w-7 h-7" src="/images/hug-icon.png" alt="응원" />
-                              <div className="self-stretch flex flex-col justify-center items-center">
-                                <div className="text-center text-white text-3xl font-bold leading-10">{post.hug_count}</div>
-                                <div className="text-center text-gray-400 text-sm font-semibold leading-none">응원</div>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="w-[420px] h-14 px-9 py-3 
-                                        bg-[#1C1F18]/60
-                                        border-t border-b border-white/20 
-                                        inline-flex justify-center items-center gap-2.5 
-                                        cursor-pointer mt-[10px]">
-                            <div className="text-white text-xl font-semibold leading-9">
-                              자세히 보기
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 모바일/태블릿 레이아웃 (lg 미만) - 1열 */}
-          <div className="lg:hidden">
-            <div className="grid grid-cols-1 gap-6">
-              {wisdomPosts.map((post) => {
-                const card = convertToDisplayCard(post);
-                return (
-                  <div 
-                    key={post.id}
-                    className="w-full bg-[#3B4236] rounded-[20px] outline outline-1 outline-offset-[-0.50px] outline-neutral-900 p-6 flex flex-col gap-9 opacity-100 cursor-pointer hover:bg-stone-600 transition-colors duration-300"
-                    onClick={(e) => handleCardClick(post, e)}
-                  >
-                    <div className="flex flex-col justify-start items-center gap-5">
-                      <div className="w-full flex flex-col justify-start items-start gap-4">
-                        <div className="w-full inline-flex justify-start items-center gap-3.5">
-                          <img 
-                            className="w-12 h-12 rounded-full" 
-                            src={card.avatarUrl} 
-                            alt="프로필 이미지" 
-                          />
-                          <div className="flex-1 min-w-0 text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight truncate">
-                            {card.userInfo}
-                          </div>
-                        </div>
-                        
-                        <div className="w-full flex flex-col justify-start items-start gap-3.5">
-                          <div className="w-full text-white text-xl font-semibold font-['Pretendard'] leading-9">
-                            - {post.request_a}
-                          </div>
-                          <div className="w-full text-white text-xl font-semibold font-['Pretendard'] leading-9">
-                            - {post.request_b}
-                          </div>
-                          <div className="w-full text-white text-xl font-semibold font-['Pretendard'] leading-9">
-                            - {post.request_c}
-                          </div>
-                          <div className="text-neutral-400 text-sm font-semibold font-['Pretendard'] capitalize leading-none">
-                            {card.timestamp}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="w-full h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-500"></div>
-                      
-                      <div className="w-full bg-neutral-900 rounded-[20px] p-4">
-                        <div className="grid grid-cols-4 gap-2">
-                          <div className="flex flex-col items-center gap-1">
-                          <img 
-                            className="w-7 h-7" 
-                            src="/images/honor-icon.png"  // 직접 경로 지정
-                            alt="경의" 
-                          />
-                            <div className="text-center text-white text-3xl font-bold font-['Pretendard'] leading-10">
-                              {post.honor_count}
-                            </div>
-                            <div className="text-center text-gray-400 text-sm font-semibold font-['Pretendard'] capitalize leading-none">
-                              경의
-                            </div>
-                          </div>
-                          <div className="flex flex-col items-center gap-1">
-                            <img className="w-7 h-7" src="/images/recommend-icon.png" alt="추천" />
-                            <div className="text-center text-white text-3xl font-bold font-['Pretendard'] leading-10">
-                              {post.recommend_count}
-                            </div>
-                            <div className="text-center text-gray-400 text-sm font-semibold font-['Pretendard'] capitalize leading-none">
-                              추천
-                            </div>
-                          </div>
-                          <div className="flex flex-col items-center gap-1">
-                            <img className="w-7 h-7" src="/images/respect-icon.png" alt="존중" />
-                            <div className="text-center text-white text-3xl font-bold font-['Pretendard'] leading-10">
-                              {post.respect_count}
-                            </div>
-                            <div className="text-center text-gray-400 text-sm font-semibold font-['Pretendard'] capitalize leading-none">
-                              존중
-                            </div>
-                          </div>
-                          <div className="flex flex-col items-center gap-1">
-                            <img className="w-7 h-7" src="/images/hug-icon.png" alt="응원" />
-                            <div className="text-center text-white text-3xl font-bold font-['Pretendard'] leading-10">
-                              {post.hug_count}
-                            </div>
-                            <div className="text-center text-gray-400 text-sm font-semibold font-['Pretendard'] capitalize leading-none">
-                              응원
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <button className="w-full h-14 px-9 py-3 bg-stone-900/60 border-t border-b border-white/20 backdrop-blur-[6px] inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-stone-800/60 transition-colors">
-                        <div className="text-white text-xl font-semibold font-['Pretendard'] leading-9">
-                          자세히 보기
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
+      <CardGrid
+        wisdomPosts={wisdomPosts}
+        onCardClick={handleCardClick}
+        convertToDisplayCard={convertToDisplayCard}
+      />
 
       {/* 상세 모달 */}
       {selectedCard && (
-        <div 
-          className="fixed inset-0 z-50 flex items-start justify-center px-4 overflow-x-hidden bg-black/70 backdrop-blur-sm"
-          onClick={closeModal}
-        >
-          <div 
-            ref={modalRef}
-            className="w-[589px] bg-[#3B4236] rounded-[20px] 
-                        outline outline-1 outline-offset-[-1px] outline-stone-500 
-                        my-8 p-[45px]"
-            style={{ 
-              marginTop: `${modalTopPosition}px`,
-              marginBottom: '10px'
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="inline-flex flex-col justify-start items-center gap-[10px]">
-              <div className="w-full flex flex-col justify-start items-start gap-6">
-                
-                {/* 모달 헤더 */}
-                <div className="self-stretch inline-flex justify-between items-center gap-2.5">
-                  <div className="flex-1 flex justify-start items-center gap-3.5">
-                    <img 
-                      className="w-12 h-12 rounded-full" 
-                      src={convertToDisplayCard(selectedCard).avatarUrl}
-                      alt="프로필 이미지"
-                    />
-                    <div className="text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight">
-                      {convertToDisplayCard(selectedCard).userInfo}
-                    </div>
-                  </div>
-                  <button 
-                    onClick={closeModal}
-                    className="w-6 h-6 relative overflow-hidden text-white hover:bg-[#3B4236] rounded flex items-center justify-center"
-                  >
-                    ✕
-                  </button>
-                </div>
-
-                {/* 모달 콘텐츠 */}
-                <div className="self-stretch flex flex-col justify-start items-start gap-3">
-                  <div className="self-stretch flex flex-col justify-start items-start gap-3.5">
-                    <div className="self-stretch text-white text-xl font-semibold font-['Pretendard'] leading-9">
-                      - {selectedCard.request_a}
-                    </div>
-                    <div className="self-stretch text-white text-xl font-semibold font-['Pretendard'] leading-9 whitespace-pre-line">
-                      - {selectedCard.request_b}
-                    </div>
-                    <div className="self-stretch text-white text-xl font-semibold font-['Pretendard'] leading-9">
-                      - {selectedCard.request_c}
-                    </div>
-                  </div>
-                  <div className="self-stretch text-left text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight">
-                    {formatTimestamp(selectedCard.created_at)}
-                  </div>
-                </div>
-              </div>
-
-              <div className="w-full h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-500 my-[25px]"></div>
-              
-              {/* 표현행위 선택 */}
-              <div className="bg-[#3B4236] rounded-[20px] inline-flex justify-center items-center">
-                <div className="w-96 h-32 rounded-[20px] flex justify-center items-center">
-                  {[
-                    { type: 'honor', count: selectedCard.honor_count, icon: '/images/honor-icon.png' },
-                    { type: 'recommend', count: selectedCard.recommend_count, icon: '/images/recommend-icon.png' },
-                    { type: 'respect', count: selectedCard.respect_count, icon: '/images/respect-icon.png' },
-                    { type: 'hug', count: selectedCard.hug_count, icon: '/images/hug-icon.png' }
-                  ].map(({ type, count, icon }) => (
-                    <button
-                      key={type}
-                      onClick={() => handleReactionSelect(type)}
-                      className={`w-28 p-3.5 inline-flex flex-col justify-center items-center gap-[5px] transition-all duration-200 ${
-                        selectedReaction === type 
-                          ? 'bg-[#ADFF00]/20 border-2 border-[#ADFF00] rounded-lg' 
-                          : 'bg-[#3B4236] hover:bg-stone-600'
-                      }`}
-                    >
-                      <img 
-                        className="w-7 h-7" 
-                        src={icon}
-                        alt={reactionLabels[type as keyof typeof reactionLabels]}
-                      />
-                      <div className="self-stretch flex flex-col justify-center items-center">
-                        <div className="text-center text-white text-3xl font-bold font-['Pretendard'] leading-10">
-                          {count}
-                        </div>
-                        <div className="text-center text-gray-400 text-sm font-semibold font-['Pretendard'] capitalize leading-none">
-                          {reactionLabels[type as keyof typeof reactionLabels]}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* 표현행위 보내기 버튼 */}
-              <button 
-                onClick={handleSendReaction}
-                disabled={!selectedReaction}
-                className={`w-96 h-14 px-9 py-3 bg-stone-900/60 border-t border-b border-white/20 backdrop-blur-[6px] inline-flex justify-center items-center gap-2.5 transition-colors my-[15px] ${
-                  selectedReaction 
-                    ? 'hover:bg-stone-800/60 cursor-pointer' 
-                    : 'opacity-50 cursor-not-allowed'
-                }`}
-              >
-                <div className={`text-xl font-semibold font-['Pretendard'] leading-9 ${
-                  selectedReaction ? 'text-[#ADFF00]' : 'text-gray-500'
-                }`}>
-                  표현행위 보내기
-                </div>
-              </button>
-
-              {/* 표현행위 히스토리 */}
-              <div className="history-scrollbar relative flex flex-col justify-start items-start gap-[15px] 
-                              w-full h-[250px] overflow-y-auto"
-                    style={{
-                      scrollbarWidth: 'thin',
-                      scrollbarColor: '#777777 transparent'
-                    }}
-                  >
-                {loadingHistory ? (
-                  <div className="w-full flex justify-center items-center h-full">
-                    <div className="text-white text-sm">로딩 중...</div>
-                  </div>
-                ) : reactionHistory.length === 0 ? (
-                  <div className="w-full flex justify-center items-center h-full">
-                    <div className="text-gray-400 text-sm">아직 표현행위가 없습니다.</div>
-                  </div>
-                ) : (
-                  reactionHistory.map((item) => (
-                    <div key={item.id} className="w-full flex flex-col justify-start items-start">
-                      <div className="w-full inline-flex justify-start items-center gap-3.5">
-                        <div className="flex-1 h-[50px] flex justify-start items-center gap-2">
-                          <img 
-                            className="w-12 h-12 rounded-full object-cover" 
-                            src={item.avatar_url}
-                            alt="프로필 이미지"
-                            onError={(e) => {
-                              e.currentTarget.src = '/images/Ellipse 79.png';
-                            }}
-                          />
-                          <div className="flex-1 text-white text-sm font-medium font-['Pretendard'] leading-tight">
-                            {item.name} ({item.gender} / {item.age} / {item.company}) 님이 {item.reaction}을 부여하였습니다
-                          </div>
-                        </div>
-                        <img 
-                          className="w-7 h-7" 
-                          src={reactionIcons[reactionKeyMap[item.reaction]]}
-                          alt={item.reaction}
-                        />
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        <DetailModal
+          selectedCard={selectedCard}
+          selectedReaction={selectedReaction}
+          reactionUsage={reactionUsage}
+          reactionHistory={reactionHistory}
+          loadingHistory={loadingHistory}
+          modalTopPosition={modalTopPosition}
+          modalRef={modalRef}
+          onClose={closeModal}
+          onReactionSelect={handleReactionSelect}
+          onSendReaction={handleSendReaction}
+          formatTimestamp={formatTimestamp}
+          convertToDisplayCard={convertToDisplayCard}
+        />
       )}
 
       {/* 표현행위 완료 토스트 팝업 */}
       {showReactionPopup && (
-        <div 
-          className="fixed inset-0 z-[90] flex items-start justify-center bg-black/70 backdrop-blur-sm p-4"
-          style={{ paddingTop: `${modalTopPosition + 200}px` }}
-          onClick={closeReactionPopup}
-        >
-          <div 
-            className="w-full max-w-md sm:max-w-lg px-6 sm:px-8 py-8 sm:py-12 bg-neutral-900 outline outline-2 outline-offset-[-1px] outline-[#ADFF00] rounded-[20px] text-center"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {isCompletePopup ? (
-              <div>
-                <div className="text-white text-lg sm:text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-tight">
-                  모든 표현 보내기가 완료 되었습니다!
-                </div>
-                <div className="text-gray-400 text-base sm:text-lg lg:text-2xl font-bold font-['Pretendard'] leading-tight mt-2">
-                  *수정이 어려워요
-                </div>
-              </div>
-            ) : (
-              <div>
-                <div className="text-white text-lg sm:text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-tight">
-                  {reactionCount}번째 표현 보내기가 완료 되었습니다.
-                </div>
-                  <div className="text-[#ADFF00] text-base sm:text-lg lg:text-2xl font-bold font-['Pretendard'] leading-tight mt-2">
-                  {12 - reactionCount}번의 표현 보내기 완료 후<br/>자동으로 완료 처리 됩니다.
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        <ReactionPopup
+          isComplete={isCompletePopup}
+          reactionCount={reactionCount}
+          modalTopPosition={modalTopPosition}
+          onClose={closeReactionPopup}
+        />
       )}
     </>
   );
 };
+
+// 카드 그리드 컴포넌트
+const CardGrid = ({
+  wisdomPosts,
+  onCardClick,
+  convertToDisplayCard
+}: {
+  wisdomPosts: WisdomPost[];
+  onCardClick: (post: WisdomPost, event: React.MouseEvent<HTMLElement>) => void;
+  convertToDisplayCard: (post: WisdomPost) => any;
+}) => (
+  <div className="w-full flex justify-center mb-[120px]">
+    <div className="w-full max-w-[1400px] px-4 sm:px-6 lg:px-8">
+      {/* 데스크탑 레이아웃 */}
+      <DesktopCardLayout
+        wisdomPosts={wisdomPosts}
+        onCardClick={onCardClick}
+        convertToDisplayCard={convertToDisplayCard}
+      />
+
+      {/* 모바일/태블릿 레이아웃 */}
+      <MobileCardLayout
+        wisdomPosts={wisdomPosts}
+        onCardClick={onCardClick}
+        convertToDisplayCard={convertToDisplayCard}
+      />
+    </div>
+  </div>
+);
+
+// 데스크탑 카드 레이아웃
+const DesktopCardLayout = ({
+  wisdomPosts,
+  onCardClick,
+  convertToDisplayCard
+}: {
+  wisdomPosts: WisdomPost[];
+  onCardClick: (post: WisdomPost, event: React.MouseEvent<HTMLElement>) => void;
+  convertToDisplayCard: (post: WisdomPost) => any;
+}) => (
+  <div className="hidden lg:block">
+    <div className="inline-flex flex-col justify-start items-center gap-3.5 w-full">
+      {Array(Math.ceil(wisdomPosts.length / 3)).fill(null).map((_, rowIndex) => (
+        <div key={rowIndex} className="w-full inline-flex justify-center items-center gap-3.5">
+          {wisdomPosts.slice(rowIndex * 3, (rowIndex + 1) * 3).map((post) => {
+            const card = convertToDisplayCard(post);
+            return (
+              <WisdomCard
+                key={post.id}
+                post={post}
+                card={card}
+                onClick={(e) => onCardClick(post, e)}
+              />
+            );
+          })}
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+// 모바일 카드 레이아웃
+const MobileCardLayout = ({
+  wisdomPosts,
+  onCardClick,
+  convertToDisplayCard
+}: {
+  wisdomPosts: WisdomPost[];
+  onCardClick: (post: WisdomPost, event: React.MouseEvent<HTMLElement>) => void;
+  convertToDisplayCard: (post: WisdomPost) => any;
+}) => (
+  <div className="lg:hidden">
+    <div className="grid grid-cols-1 gap-6">
+      {wisdomPosts.map((post) => {
+        const card = convertToDisplayCard(post);
+        return (
+          <MobileWisdomCard
+            key={post.id}
+            post={post}
+            card={card}
+            onClick={(e) => onCardClick(post, e)}
+          />
+        );
+      })}
+    </div>
+  </div>
+);
+
+// 위즈덤 카드 컴포넌트 (데스크탑)
+const WisdomCard = ({
+  post,
+  card,
+  onClick
+}: {
+  post: WisdomPost;
+  card: any;
+  onClick: (e: React.MouseEvent<HTMLElement>) => void;
+}) => (
+  <div
+    className="w-[470px] h-[523px] p-[25px] bg-[#3B4236] rounded-[20px] border border-[#141612] 
+              inline-flex flex-col justify-start items-center gap-[35px] cursor-pointer
+              hover:bg-stone-600 transition-colors duration-300"
+    onClick={onClick}
+  >
+    <div className="self-stretch flex flex-col justify-start items-center gap-5">
+      <CardHeader card={card} />
+      <CardContent post={post} timestamp={card.timestamp} />
+      <div className="w-[420px] h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-500"></div>
+      <ReactionStats post={post} />
+      <div className="w-[420px] h-14 px-9 py-3 bg-[#1C1F18]/60 border-t border-b border-white/20 
+                    inline-flex justify-center items-center gap-2.5 cursor-pointer mt-[10px]">
+        <div className="text-white text-xl font-semibold leading-9">자세히 보기</div>
+      </div>
+    </div>
+  </div>
+);
+
+// 모바일 위즈덤 카드
+const MobileWisdomCard = ({
+  post,
+  card,
+  onClick
+}: {
+  post: WisdomPost;
+  card: any;
+  onClick: (e: React.MouseEvent<HTMLElement>) => void;
+}) => (
+  <div
+    className="w-full bg-[#3B4236] rounded-[20px] outline outline-1 outline-offset-[-0.50px] 
+              outline-neutral-900 p-6 flex flex-col gap-9 opacity-100 cursor-pointer 
+              hover:bg-stone-600 transition-colors duration-300"
+    onClick={onClick}
+  >
+    <div className="flex flex-col justify-start items-center gap-5">
+      <div className="w-full flex flex-col justify-start items-start gap-4">
+        <CardHeader card={card} isMobile />
+        <CardContent post={post} timestamp={card.timestamp} isMobile />
+      </div>
+      <div className="w-full h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-500"></div>
+      <ReactionStats post={post} isMobile />
+      <button className="w-full h-14 px-9 py-3 bg-stone-900/60 border-t border-b border-white/20 
+                       backdrop-blur-[6px] inline-flex justify-center items-center gap-2.5 
+                       cursor-pointer hover:bg-stone-800/60 transition-colors">
+        <div className="text-white text-xl font-semibold leading-9">자세히 보기</div>
+      </button>
+    </div>
+  </div>
+);
+
+// 카드 헤더
+const CardHeader = ({ card, isMobile = false }: { card: any; isMobile?: boolean }) => (
+  <div className={`${isMobile ? 'w-full' : ''} inline-flex justify-start items-center gap-3.5`}>
+    <img className="w-12 h-12 rounded-full" src={card.avatarUrl} alt="프로필 이미지" />
+    <div className={`${isMobile ? 'flex-1 min-w-0' : 'w-[408px]'} text-neutral-400 text-sm font-medium leading-tight truncate`}>
+      {card.userInfo}
+    </div>
+  </div>
+);
+
+// 카드 내용
+const CardContent = ({
+  post,
+  timestamp,
+  isMobile = false
+}: {
+  post: WisdomPost;
+  timestamp: string;
+  isMobile?: boolean;
+}) => (
+  <div className={`${isMobile ? 'w-full' : 'w-[408px]'} flex flex-col justify-start items-start gap-3.5`}>
+    <div className="self-stretch text-white text-xl font-semibold leading-9 truncate">- {post.request_a}</div>
+    <div className="self-stretch text-white text-xl font-semibold leading-9 truncate">- {post.request_b}</div>
+    <div className="self-stretch text-white text-xl font-semibold leading-9 truncate">- {post.request_c}</div>
+    <div className="text-neutral-400 text-sm font-semibold capitalize leading-none">{timestamp}</div>
+  </div>
+);
+
+// 반응 통계
+const ReactionStats = ({ post, isMobile = false }: { post: WisdomPost; isMobile?: boolean }) => {
+  const reactions = [
+    { type: 'honor', count: post.honor_count, icon: REACTION_ICONS.honor, label: REACTION_LABELS.honor },
+    { type: 'recommend', count: post.recommend_count, icon: REACTION_ICONS.recommend, label: REACTION_LABELS.recommend },
+    { type: 'respect', count: post.respect_count, icon: REACTION_ICONS.respect, label: REACTION_LABELS.respect },
+    { type: 'hug', count: post.hug_count, icon: REACTION_ICONS.hug, label: REACTION_LABELS.hug }
+  ];
+
+  if (isMobile) {
+    return (
+      <div className="w-full bg-neutral-900 rounded-[20px] p-4">
+        <div className="grid grid-cols-4 gap-2">
+          {reactions.map(({ icon, count, label }) => (
+            <div key={label} className="flex flex-col items-center gap-1">
+              <img className="w-7 h-7" src={icon} alt={label} />
+              <div className="text-center text-white text-3xl font-bold leading-10">{count}</div>
+              <div className="text-center text-gray-400 text-sm font-semibold capitalize leading-none">{label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="self-stretch bg-neutral-900 rounded-[20px] inline-flex justify-center items-center">
+      {reactions.map(({ icon, count, label }) => (
+        <div key={label} className="w-28 p-3.5 bg-[#3B4236] inline-flex flex-col justify-center items-center gap-[5px]">
+          <img className="w-7 h-7" src={icon} alt={label} />
+          <div className="self-stretch flex flex-col justify-center items-center">
+            <div className="text-center text-white text-3xl font-bold leading-10">{count}</div>
+            <div className="text-center text-gray-400 text-sm font-semibold leading-none">{label}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// 상세 모달
+const DetailModal = ({
+  selectedCard,
+  selectedReaction,
+  reactionUsage,
+  reactionHistory,
+  loadingHistory,
+  modalTopPosition,
+  modalRef,
+  onClose,
+  onReactionSelect,
+  onSendReaction,
+  formatTimestamp,
+  convertToDisplayCard
+}: any) => {
+  const card = convertToDisplayCard(selectedCard);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center px-4 overflow-x-hidden bg-black/70 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        ref={modalRef}
+        className="w-[589px] bg-[#3B4236] rounded-[20px] outline outline-1 outline-offset-[-1px] 
+                  outline-stone-500 my-8 p-[45px]"
+        style={{
+          marginTop: `${modalTopPosition}px`,
+          marginBottom: '10px'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="inline-flex flex-col justify-start items-center gap-[10px]">
+          <ModalHeader card={card} onClose={onClose} />
+          <ModalContent selectedCard={selectedCard} formatTimestamp={formatTimestamp} />
+          <div className="w-full h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-500 my-[25px]"></div>
+          
+          {/* 남은 횟수 표시 
+          <RemainingReactionsDisplay reactionUsage={reactionUsage} />*/}
+          
+          {/* 표현행위 선택 */}
+          <ReactionSelector
+            selectedCard={selectedCard}
+            selectedReaction={selectedReaction}
+            onReactionSelect={onReactionSelect}
+          />
+          
+          {/* 표현행위 보내기 버튼 */}
+          <SendReactionButton
+            selectedReaction={selectedReaction}
+            onSendReaction={onSendReaction}
+          />
+          
+          {/* 표현행위 히스토리 */}
+          <ReactionHistory
+            reactionHistory={reactionHistory}
+            loadingHistory={loadingHistory}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// 모달 헤더
+const ModalHeader = ({ card, onClose }: any) => (
+  <div className="w-full flex flex-col justify-start items-start gap-6">
+    <div className="self-stretch inline-flex justify-between items-center gap-2.5">
+      <div className="flex-1 flex justify-start items-center gap-3.5">
+        <img className="w-12 h-12 rounded-full" src={card.avatarUrl} alt="프로필 이미지" />
+        <div className="text-neutral-400 text-sm font-medium leading-tight">{card.userInfo}</div>
+      </div>
+      <button
+        onClick={onClose}
+        className="w-6 h-6 relative overflow-hidden text-white hover:bg-[#3B4236] rounded flex items-center justify-center"
+      >
+        ✕
+      </button>
+    </div>
+  </div>
+);
+
+// 모달 내용
+const ModalContent = ({ selectedCard, formatTimestamp }: any) => (
+  <div className="self-stretch flex flex-col justify-start items-start gap-3">
+    <div className="self-stretch flex flex-col justify-start items-start gap-3.5">
+      <div className="self-stretch text-white text-xl font-semibold leading-9">- {selectedCard.request_a}</div>
+      <div className="self-stretch text-white text-xl font-semibold leading-9 whitespace-pre-line">- {selectedCard.request_b}</div>
+      <div className="self-stretch text-white text-xl font-semibold leading-9">- {selectedCard.request_c}</div>
+    </div>
+    <div className="self-stretch text-left text-neutral-400 text-sm font-medium leading-tight">
+      {formatTimestamp(selectedCard.created_at)}
+    </div>
+  </div>
+);
+
+{/* // 남은 횟수 표시
+const RemainingReactionsDisplay = ({ reactionUsage }: { reactionUsage: Record<ReactionType, number> }) => (
+  <div className="w-full px-4 py-3 bg-neutral-900/50 rounded-lg mb-2">
+    <div className="text-center text-sm text-gray-300">
+      <span className="font-semibold text-[#ADFF00]">남은 횟수</span>
+      <div className="mt-1">
+        경의: {REACTION_LIMITS.honor - reactionUsage.honor}/{REACTION_LIMITS.honor} | 
+        추천: {REACTION_LIMITS.recommend - reactionUsage.recommend}/{REACTION_LIMITS.recommend} | 
+        존중: {REACTION_LIMITS.respect - reactionUsage.respect}/{REACTION_LIMITS.respect} | 
+        응원: {REACTION_LIMITS.hug - reactionUsage.hug}/{REACTION_LIMITS.hug}
+      </div>
+    </div>
+  </div>
+); */}
+
+// 반응 선택기
+const ReactionSelector = ({ selectedCard, selectedReaction, onReactionSelect }: any) => {
+  const reactions = [
+    { type: 'honor', count: selectedCard.honor_count, icon: REACTION_ICONS.honor },
+    { type: 'recommend', count: selectedCard.recommend_count, icon: REACTION_ICONS.recommend },
+    { type: 'respect', count: selectedCard.respect_count, icon: REACTION_ICONS.respect },
+    { type: 'hug', count: selectedCard.hug_count, icon: REACTION_ICONS.hug }
+  ];
+
+  return (
+    <div className="bg-[#3B4236] rounded-[20px] inline-flex justify-center items-center">
+      <div className="w-96 h-32 rounded-[20px] flex justify-center items-center">
+        {reactions.map(({ type, count, icon }) => (
+          <button
+            key={type}
+            onClick={() => onReactionSelect(type as ReactionType)}
+            className={`w-28 p-3.5 inline-flex flex-col justify-center items-center gap-[5px] transition-all duration-200 ${
+              selectedReaction === type
+                ? 'bg-[#ADFF00]/20 border-2 border-[#ADFF00] rounded-lg'
+                : 'bg-[#3B4236] hover:bg-stone-600'
+            }`}
+          >
+            <img className="w-7 h-7" src={icon} alt={REACTION_LABELS[type as ReactionType]} />
+            <div className="self-stretch flex flex-col justify-center items-center">
+              <div className="text-center text-white text-3xl font-bold leading-10">{count}</div>
+              <div className="text-center text-gray-400 text-sm font-semibold capitalize leading-none">
+                {REACTION_LABELS[type as ReactionType]}
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// 표현행위 보내기 버튼
+const SendReactionButton = ({ selectedReaction, onSendReaction }: any) => (
+  <button
+    onClick={onSendReaction}
+    disabled={!selectedReaction}
+    className={`w-96 h-14 px-9 py-3 bg-stone-900/60 border-t border-b border-white/20 backdrop-blur-[6px] 
+              inline-flex justify-center items-center gap-2.5 transition-colors my-[15px] ${
+      selectedReaction
+        ? 'hover:bg-stone-800/60 cursor-pointer'
+        : 'opacity-50 cursor-not-allowed'
+    }`}
+  >
+    <div className={`text-xl font-semibold leading-9 ${
+      selectedReaction ? 'text-[#ADFF00]' : 'text-gray-500'
+    }`}>
+      표현행위 보내기
+    </div>
+  </button>
+);
+
+// 반응 히스토리
+const ReactionHistory = ({ reactionHistory, loadingHistory }: any) => (
+  <div
+    className="history-scrollbar relative flex flex-col justify-start items-start gap-[15px] 
+              w-full h-[250px] overflow-y-auto"
+    style={{
+      scrollbarWidth: 'thin',
+      scrollbarColor: '#777777 transparent'
+    }}
+  >
+    {loadingHistory ? (
+      <div className="w-full flex justify-center items-center h-full">
+        <div className="text-white text-sm">로딩 중...</div>
+      </div>
+    ) : reactionHistory.length === 0 ? (
+      <div className="w-full flex justify-center items-center h-full">
+        <div className="text-gray-400 text-sm">아직 표현행위가 없습니다.</div>
+      </div>
+    ) : (
+      reactionHistory.map((item: ReactionHistoryItem) => (
+        <div key={item.id} className="w-full flex flex-col justify-start items-start">
+          <div className="w-full inline-flex justify-start items-center gap-3.5">
+            <div className="flex-1 h-[50px] flex justify-start items-center gap-2">
+              <img
+                className="w-12 h-12 rounded-full object-cover"
+                src={item.avatar_url}
+                alt="프로필 이미지"
+                onError={(e) => {
+                  e.currentTarget.src = '/images/Ellipse 79.png';
+                }}
+              />
+              <div className="flex-1 text-white text-sm font-medium leading-tight">
+                {item.name} ({item.gender} / {item.age} / {item.company}) 님이 {item.reaction}을 부여하였습니다
+              </div>
+            </div>
+            <img
+              className="w-7 h-7"
+              src={REACTION_ICONS[REACTION_KEY_MAP[item.reaction]]}
+              alt={item.reaction}
+            />
+          </div>
+        </div>
+      ))
+    )}
+  </div>
+);
+
+// 반응 팝업
+const ReactionPopup = ({
+  isComplete,
+  reactionCount,
+  modalTopPosition,
+  onClose
+}: {
+  isComplete: boolean;
+  reactionCount: number;
+  modalTopPosition: number;
+  onClose: () => void;
+}) => (
+  <div
+    className="fixed inset-0 z-[90] flex items-start justify-center bg-black/70 backdrop-blur-sm p-4"
+    style={{ paddingTop: `${modalTopPosition + 200}px` }}
+    onClick={onClose}
+  >
+    <div
+      className="w-full max-w-md sm:max-w-lg px-6 sm:px-8 py-8 sm:py-12 bg-neutral-900 
+                outline outline-2 outline-offset-[-1px] outline-[#ADFF00] rounded-[20px] text-center"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {isComplete ? (
+        <div>
+          <div className="text-white text-lg sm:text-2xl lg:text-3xl font-bold leading-tight">
+            모든 표현 보내기가 완료 되었습니다!
+          </div>
+          <div className="text-gray-400 text-base sm:text-lg lg:text-2xl font-bold leading-tight mt-2">
+            *수정이 어려워요
+          </div>
+        </div>
+      ) : (
+        <div>
+          <div className="text-white text-lg sm:text-2xl lg:text-3xl font-bold leading-tight">
+            {reactionCount}번째 표현 보내기가 완료 되었습니다.
+          </div>
+          <div className="text-[#ADFF00] text-base sm:text-lg lg:text-2xl font-bold leading-tight mt-2">
+            {TOTAL_REACTIONS_REQUIRED - reactionCount}번의 표현 보내기 완료 후<br />
+            자동으로 완료 처리 됩니다.
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+);
