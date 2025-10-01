@@ -842,13 +842,13 @@ const SendReactionButton = ({ selectedReaction, onSendReaction }: any) => (
     onClick={onSendReaction}
     disabled={!selectedReaction}
     className={`w-96 h-14 px-9 py-3 bg-stone-900/60 border-t border-b border-white/20 backdrop-blur-[6px] 
-              inline-flex justify-center items-center gap-2.5 transition-colors my-[15px] ${
+                inline-flex justify-center items-center gap-2.5 transition-all my-[15px] ${
       selectedReaction
-        ? 'hover:bg-stone-800/60 cursor-pointer'
+        ? 'hover:bg-stone-800/60 hover:border-[#ADFF00]/30 cursor-pointer'
         : 'opacity-50 cursor-not-allowed'
     }`}
   >
-    <div className={`text-xl font-semibold leading-9 ${
+    <div className={`text-xl font-semibold font-['Pretendard'] leading-9 transition-colors ${
       selectedReaction ? 'text-[#ADFF00]' : 'text-gray-500'
     }`}>
       표현행위 보내기
@@ -927,20 +927,23 @@ const ReactionPopup = ({
     >
       {isComplete ? (
         <div>
-          <div className="text-white text-lg sm:text-2xl lg:text-3xl font-bold leading-tight">
-            모든 표현 보내기가 완료 되었습니다!
+          <div className="text-white text-lg sm:text-2xl lg:text-3xl font-bold leading-snug break-keep">
+            모든 표현 보내기가<br className="sm:hidden" />
+            완료 되었습니다!
           </div>
-          <div className="text-gray-400 text-base sm:text-lg lg:text-2xl font-bold leading-tight mt-2">
+          <div className="text-gray-400 text-base sm:text-lg lg:text-2xl font-bold leading-snug mt-4 whitespace-nowrap">
             *수정이 어려워요
           </div>
         </div>
       ) : (
         <div>
-          <div className="text-white text-lg sm:text-2xl lg:text-3xl font-bold leading-tight">
-            {reactionCount}번째 표현 보내기가 완료 되었습니다.
+          <div className="text-white text-lg sm:text-2xl lg:text-3xl font-bold leading-snug break-keep">
+            {reactionCount}번째 표현 보내기가<br className="sm:hidden" />
+            완료 되었습니다.
           </div>
-          <div className="text-[#ADFF00] text-base sm:text-lg lg:text-2xl font-bold leading-tight mt-2">
-            {TOTAL_REACTIONS_REQUIRED - reactionCount}번의 표현 보내기 완료 후<br />
+          <div className="text-[#ADFF00] text-base sm:text-lg lg:text-2xl font-bold leading-snug mt-4 break-keep">
+            {TOTAL_REACTIONS_REQUIRED - reactionCount}번의<br className="sm:hidden" />
+            표현 보내기 완료 후<br />
             자동으로 완료 처리 됩니다.
           </div>
         </div>
@@ -948,3 +951,5 @@ const ReactionPopup = ({
     </div>
   </div>
 );
+
+export default ReactionPopup;
