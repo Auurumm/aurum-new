@@ -21,18 +21,38 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 기존 프로필 데이터 로드
-  useEffect(() => {
-    if (isOpen && profile) {
+  // 프로필 데이터를 폼에 로드하는 함수
+  const loadProfileData = () => {
+    if (profile) {
+      console.log('프로필 데이터 로드:', profile);
       setFormData({
-        fullName: profile.username || '',  // 이 줄 추가
+        fullName: profile.username || '',
         gender: profile.gender || '',
         age: profile.age?.toString() || '',
         company: profile.company || ''
       });
       setAvatarPreview(profile.avatar_url || '');
+    } else {
+      console.log('프로필 데이터 없음');
     }
-  }, [isOpen, profile]);
+  };
+
+  // 모달이 열릴 때 프로필 데이터 로드
+  useEffect(() => {
+    if (isOpen) {
+      console.log('모달 열림, 프로필 로드 시작');
+      setError(null);
+      setAvatarFile(null);
+      loadProfileData();
+    }
+  }, [isOpen]);
+
+  // 프로필이 업데이트되면 폼 데이터도 업데이트
+  useEffect(() => {
+    if (isOpen && profile) {
+      loadProfileData();
+    }
+  }, [profile]);
 
   // 아바타 파일 선택 핸들러
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,6 +71,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
       return;
     }
 
+    setError(null);
     setAvatarFile(file);
     
     // 미리보기 생성
@@ -66,6 +87,10 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
     setError(null);
 
     // 유효성 검사
+    if (!formData.fullName || formData.fullName.trim().length < 2) {
+      setError('이름을 2자 이상 입력해주세요.');
+      return;
+    }
     if (!formData.gender) {
       setError('성별을 선택해주세요.');
       return;
@@ -85,27 +110,27 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
       let avatarUrl = profile?.avatar_url;
 
       // 아바타 이미지 업로드 (선택된 경우)
-    if (avatarFile) {
+      if (avatarFile) {
         setUploadingAvatar(true);
         const { url, error: uploadError } = await ProfileService.uploadAvatar(avatarFile);
         setUploadingAvatar(false);
     
         if (uploadError) {
-        setError(uploadError.message);
-        setLoading(false);
-        return;
+          setError(uploadError.message);
+          setLoading(false);
+          return;
         }
     
         avatarUrl = url || '';
-    }
+      }
 
       // 프로필 업데이트
       const { error: updateError } = await ProfileService.updateProfile({
-        username: formData.fullName.trim(),  // full_name → username 변경
+        username: formData.fullName.trim(),
         gender: formData.gender,
         age: parseInt(formData.age),
         company: formData.company.trim(),
-        avatar_url: avatarUrl
+        avatar_url: avatarUrl ?? undefined
       });
 
       if (updateError) {
@@ -131,19 +156,23 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
 
   if (!isOpen) return null;
 
+  // 현재 표시될 이름 (username 우선, 없으면 이메일 앞부분)
+  const displayName = profile?.username || user?.email?.split('@')[0] || '사용자';
+
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-start pt-40 justify-center bg-black/70 backdrop-blur-sm px-4"
+      className="fixed inset-0 z-50 flex items-start pt-20 sm:pt-32 lg:pt-40 justify-center bg-black/70 backdrop-blur-sm px-4 overflow-y-auto"
       onClick={onClose}
     >
       <div 
-        className="w-full max-w-md bg-[#3B4236] rounded-[20px] p-8 relative max-h-[90vh] overflow-y-auto"
+        className="w-full max-w-md bg-[#3B4236] rounded-[20px] p-6 sm:p-8 relative my-8"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 닫기 버튼 */}
         <button
           onClick={onClose}
           className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-white hover:bg-white/10 rounded-full transition-colors"
+          disabled={loading}
         >
           ✕
         </button>
@@ -177,7 +206,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
               ) : (
                 <div className="w-32 h-32 rounded-full bg-gradient-to-br from-[#ADFF00] to-[#7CB500] flex items-center justify-center border-4 border-stone-600">
                   <span className="text-black font-bold text-4xl">
-                    {profile?.full_name?.charAt(0) || '?'}
+                    {displayName.charAt(0).toUpperCase()}
                   </span>
                 </div>
               )}
@@ -196,30 +225,35 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
                 accept="image/*"
                 onChange={handleAvatarChange}
                 className="hidden"
+                disabled={loading || uploadingAvatar}
               />
             </div>
             <p className="mt-2 text-xs text-gray-400 text-center">
               JPG, PNG 파일 (최대 5MB)
             </p>
             {uploadingAvatar && (
-              <p className="mt-2 text-sm text-[#ADFF00]">업로드 중...</p>
+              <div className="mt-2 flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#ADFF00]"></div>
+                <p className="text-sm text-[#ADFF00]">업로드 중...</p>
+              </div>
             )}
           </div>
 
-        {/* 이름 */}
-        <div>
-        <label className="block text-white text-sm font-semibold mb-2">
-            이름 *
-        </label>
-        <input
-            type="text"
-            value={formData.fullName}
-            onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
-            className="w-full py-3 px-4 bg-stone-800/50 border-2 border-stone-600 rounded-lg text-white placeholder-gray-500 focus:border-[#ADFF00] focus:outline-none transition-colors"
-            placeholder="이름을 입력하세요"
-            maxLength={30}
-        />
-        </div>
+          {/* 이름 */}
+          <div>
+            <label className="block text-white text-sm font-semibold mb-2">
+              이름 *
+            </label>
+            <input
+              type="text"
+              value={formData.fullName}
+              onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
+              className="w-full py-3 px-4 bg-stone-800/50 border-2 border-stone-600 rounded-lg text-white placeholder-gray-500 focus:border-[#ADFF00] focus:outline-none transition-colors"
+              placeholder="이름을 입력하세요"
+              maxLength={30}
+              disabled={loading}
+            />
+          </div>
 
           {/* 성별 */}
           <div>
@@ -230,22 +264,24 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
               <button
                 type="button"
                 onClick={() => setFormData(prev => ({ ...prev, gender: '남' }))}
+                disabled={loading}
                 className={`flex-1 py-3 px-4 rounded-lg border-2 transition-all ${
                   formData.gender === '남'
-                    ? 'bg-[#ADFF00]/20 border-[#ADFF00] text-white'
+                    ? 'bg-[#ADFF00]/20 border-[#ADFF00] text-white font-semibold'
                     : 'bg-stone-800/50 border-stone-600 text-gray-400 hover:border-stone-500'
-                }`}
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 남성
               </button>
               <button
                 type="button"
                 onClick={() => setFormData(prev => ({ ...prev, gender: '여' }))}
+                disabled={loading}
                 className={`flex-1 py-3 px-4 rounded-lg border-2 transition-all ${
                   formData.gender === '여'
-                    ? 'bg-[#ADFF00]/20 border-[#ADFF00] text-white'
+                    ? 'bg-[#ADFF00]/20 border-[#ADFF00] text-white font-semibold'
                     : 'bg-stone-800/50 border-stone-600 text-gray-400 hover:border-stone-500'
-                }`}
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 여성
               </button>
@@ -265,6 +301,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
               onChange={(e) => setFormData(prev => ({ ...prev, age: e.target.value }))}
               className="w-full py-3 px-4 bg-stone-800/50 border-2 border-stone-600 rounded-lg text-white placeholder-gray-500 focus:border-[#ADFF00] focus:outline-none transition-colors"
               placeholder="나이를 입력하세요"
+              disabled={loading}
             />
           </div>
 
@@ -280,6 +317,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
               className="w-full py-3 px-4 bg-stone-800/50 border-2 border-stone-600 rounded-lg text-white placeholder-gray-500 focus:border-[#ADFF00] focus:outline-none transition-colors"
               placeholder="예: 카카오, 네이버, 삼성전자"
               maxLength={50}
+              disabled={loading}
             />
             <p className="mt-1 text-xs text-gray-400">
               관심 있는 기업명을 입력하세요
@@ -291,7 +329,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 px-4 bg-stone-700 hover:bg-stone-600 text-white rounded-lg transition-colors"
+              className="flex-1 py-3 px-4 bg-stone-700 hover:bg-stone-600 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading}
             >
               취소

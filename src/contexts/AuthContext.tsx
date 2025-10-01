@@ -2,15 +2,14 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase.ts';
 
-// 프로필 타입 정의
+// 프로필 타입 정의 (username으로 통일)
 interface Profile {
-  company: string;
-  age: any;
-  gender: string;
   id: string;
-  full_name?: string;
-  username?: string;
-  avatar_url?: string;
+  username: string | null;
+  gender: string | null;
+  age: number | null;
+  company: string | null;
+  avatar_url: string | null;
   email?: string;
   created_at?: string;
 }
@@ -37,45 +36,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-
-// AuthContext.tsx의 refreshProfile 함수 수정
-const refreshProfile = async () => {
-  try {
-    const { data: { user: currentUser } } = await supabase.auth.getUser();
-    
-    if (currentUser) {
-      const { data: profileData, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', currentUser.id)
-        .maybeSingle(); // ← single() 대신 maybeSingle() 사용
-      
-      if (error) {
-        console.error('프로필 조회 에러:', error);
-      } else {
-        setProfile(profileData);
-      }
-    }
-  } catch (error) {
-    console.error('프로필 새로고침 오류:', error);
-  }
-};
-
-  
-  // fetchProfile 함수 수정
-  const fetchProfile = async (userId: string) => {
+  // 프로필 조회 함수
+  const fetchProfile = async (userId: string): Promise<Profile | null> => {
     try {
+      console.log('프로필 조회 시작:', userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('프로필 조회 실패:', error);
         return null;
       }
 
+      console.log('프로필 조회 성공:', data);
       return data;
     } catch (error) {
       console.error('프로필 조회 예외:', error);
@@ -83,82 +59,85 @@ const refreshProfile = async () => {
     }
   };
 
-  // createProfile 함수 수정  
-  const createProfile = async (user: User) => {
+  // 프로필 생성 함수
+  const createProfile = async (user: User): Promise<Profile | null> => {
     const profileData = {
       id: user.id,
       email: user.email,
-      full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
-      username: user.user_metadata?.preferred_username || user.user_metadata?.user_name || '',
-      avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
+      username: user.user_metadata?.full_name || user.user_metadata?.name || null,
+      avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
+      gender: null,
+      age: null,
+      company: null
     };
 
     try {
-      // 최대 3회까지만 시도
-      let attempts = 0;
-      const maxAttempts = 3;
-      
-      while (attempts < maxAttempts) {
-        const { data, error } = await supabase
-          .from('profiles')
-          .upsert(profileData, { onConflict: 'id' })
-          .select()
-          .single();
+      console.log('프로필 생성 시도:', profileData);
+      const { data, error } = await supabase
+        .from('profiles')
+        .upsert(profileData, { onConflict: 'id' })
+        .select()
+        .maybeSingle();
 
-        if (!error) {
-          return data;
-        }
-        
-        attempts++;
-        console.warn(`프로필 생성 실패 (${attempts}/${maxAttempts}):`, error);
-        
-        if (attempts >= maxAttempts) {
-          break;
-        }
-        
-        // 잠시 대기 후 재시도
-        await new Promise(resolve => setTimeout(resolve, 1000));
+      if (error) {
+        console.error('프로필 생성 실패:', error);
+        return profileData as Profile;
       }
-      
-      // 프로필 생성에 실패해도 기본 정보로 진행
-      console.warn('프로필 생성 최종 실패, 기본 정보 사용');
-      return profileData;
-      
+
+      console.log('프로필 생성 성공:', data);
+      return data;
     } catch (error) {
       console.error('프로필 생성 예외:', error);
-      // 예외 발생 시에도 기본 정보로 진행
-      return profileData;
+      return profileData as Profile;
+    }
+  };
+
+  // 프로필 새로고침 함수
+  const refreshProfile = async () => {
+    try {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      
+      if (currentUser) {
+        console.log('프로필 새로고침 시작:', currentUser.email);
+        const profileData = await fetchProfile(currentUser.id);
+        
+        if (profileData) {
+          setProfile(profileData);
+          console.log('프로필 새로고침 완료:', profileData);
+        } else {
+          console.warn('프로필 데이터를 찾을 수 없습니다.');
+        }
+      }
+    } catch (error) {
+      console.error('프로필 새로고침 오류:', error);
     }
   };
 
   // 세션 및 프로필 초기화
-  const initializeAuth = async (session: Session | null) => {
-    console.log('인증 초기화 시작:', session?.user?.email);
+  const initializeAuth = async (currentSession: Session | null) => {
+    console.log('인증 초기화 시작:', currentSession?.user?.email);
     
-    if (session?.user) {
-      setUser(session.user);
-      setSession(session);
+    if (currentSession?.user) {
+      setUser(currentSession.user);
+      setSession(currentSession);
       
-      // 프로필 로드 또는 생성 (한 번만 시도)
       try {
-        let profileData = await fetchProfile(session.user.id);
+        // 프로필 조회
+        let profileData = await fetchProfile(currentSession.user.id);
+        
+        // 프로필이 없으면 생성
         if (!profileData) {
           console.log('프로필이 없어 새로 생성합니다.');
-          profileData = await createProfile(session.user);
+          profileData = await createProfile(currentSession.user);
         }
+        
         setProfile(profileData);
-        console.log('인증 초기화 완료:', { user: session.user.email, profile: profileData?.full_name });
+        console.log('인증 초기화 완료:', {
+          user: currentSession.user.email,
+          profile: profileData?.username
+        });
       } catch (error) {
         console.error('프로필 처리 실패:', error);
-        // 프로필 처리 실패해도 사용자 인증은 유지
-        setProfile({
-          id: session.user.id,
-          email: session.user.email,
-          full_name: session.user.user_metadata?.full_name || '',
-          company: '',
-          age: null,
-          gender: ''
-        });
       }
     } else {
       setUser(null);
@@ -170,43 +149,81 @@ const refreshProfile = async () => {
     setLoading(false);
   };
 
-  // 세션 변경 감지
+  // 초기 세션 확인 및 인증 상태 변경 감지
   useEffect(() => {
     let mounted = true;
-  
-    const hardStop = setTimeout(() => mounted && setLoading(false), 5000); // 최후 안전장치
-  
-    (async () => {
+    let initializing = true;
+
+    const hardStop = setTimeout(() => {
+      if (mounted && initializing) {
+        console.warn('인증 초기화 타임아웃');
+        setLoading(false);
+      }
+    }, 5000);
+
+    // 초기 세션 확인
+    const initSession = async () => {
       try {
         const { data, error } = await supabase.auth.getSession();
-        if (error) console.error('getSession error:', error);
-        if (!mounted) return;
-        setUser(data?.session?.user ?? null);
-      } catch (e) {
-        console.error('getSession catch:', e);
+        
+        if (error) {
+          console.error('세션 조회 오류:', error);
+        }
+        
+        if (mounted) {
+          await initializeAuth(data.session);
+        }
+      } catch (error) {
+        console.error('세션 초기화 예외:', error);
+        if (mounted) {
+          setLoading(false);
+        }
       } finally {
-        if (mounted) setLoading(false); // ✅ 어떤 경우에도 로딩 해제
+        initializing = false;
+        clearTimeout(hardStop);
       }
-    })();
-  
-    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
-      if (!mounted) return;
-      setUser(session?.user ?? null);
-      setLoading(false); // ✅ 이벤트 들어오면 즉시 해제
-    });
-  
+    };
+
+    initSession();
+
+    // 인증 상태 변경 리스너
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, currentSession) => {
+        console.log('인증 상태 변경:', event);
+        
+        if (!mounted || initializing) return;
+
+        if (event === 'SIGNED_IN' && currentSession) {
+          // 로그인 시
+          await initializeAuth(currentSession);
+        } else if (event === 'SIGNED_OUT') {
+          // 로그아웃 시
+          setUser(null);
+          setProfile(null);
+          setSession(null);
+        } else if (event === 'USER_UPDATED' && currentSession) {
+          // 사용자 정보 업데이트 시
+          setUser(currentSession.user);
+          await refreshProfile();
+        }
+        
+        setLoading(false);
+      }
+    );
+
     return () => {
       mounted = false;
       clearTimeout(hardStop);
-      sub?.subscription?.unsubscribe?.();
+      subscription.unsubscribe();
     };
   }, []);
-  
 
   // Google 로그인
   const signInWithGoogle = async () => {
     try {
       setError(null);
+      console.log('Google 로그인 시작');
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -236,11 +253,7 @@ const refreshProfile = async () => {
   const signOut = async () => {
     try {
       setError(null);
-      console.log('Supabase 로그아웃 요청...');
-      
-      // 로컬 스토리지 정리
-      localStorage.removeItem('supabase.auth.token');
-      sessionStorage.clear();
+      console.log('로그아웃 시작');
       
       const { error } = await supabase.auth.signOut();
       
@@ -248,9 +261,7 @@ const refreshProfile = async () => {
         console.error('로그아웃 오류:', error);
         setError(error.message);
       } else {
-        console.log('Supabase 로그아웃 성공');
-        
-        // 상태 즉시 초기화
+        console.log('로그아웃 성공');
         setUser(null);
         setProfile(null);
         setSession(null);
@@ -263,7 +274,7 @@ const refreshProfile = async () => {
       const errorMessage = '로그아웃 중 오류가 발생했습니다.';
       setError(errorMessage);
       
-      // 예외 발생 시에도 상태 초기화 (강제)
+      // 예외 발생 시에도 상태 초기화
       setUser(null);
       setProfile(null);
       setSession(null);

@@ -53,6 +53,13 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick, onLogoutClick }) =
     }
   };
 
+  // 표시할 사용자 이름 결정 (우선순위: username > 이메일)
+  const displayName = profile?.username || user?.email?.split('@')[0] || '사용자';
+  
+  // 프로필 이미지 또는 기본 아바타
+  const avatarUrl = profile?.avatar_url;
+  const avatarInitial = displayName.charAt(0).toUpperCase();
+
   return (
     <>
       <header className="w-full h-72 sm:h-[350px] lg:h-[493px] relative overflow-hidden">
@@ -106,19 +113,42 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick, onLogoutClick }) =
           {/* 로그인/프로필 영역 */}
           <div className="absolute top-1/2 -translate-y-1/2 flex items-center gap-3 right-[100px] sm:right-[135px]">
             {loading ? (
-              <span className="text-white text-sm">로딩 중…</span>
+              <div className="flex items-center gap-2 text-white text-sm">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <span className="hidden sm:inline">로딩 중…</span>
+              </div>
             ) : user ? (
               <div className="relative" ref={profileMenuRef}>
                 {/* 프로필 버튼 */}
                 <button
                   onClick={() => setShowProfileMenu(!showProfileMenu)}
-                  className="flex items-center gap-2 px-3 py-2 bg-stone-800/50 hover:bg-stone-700/50 rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 bg-stone-800/50 hover:bg-stone-700/50 rounded-lg transition-colors min-w-[120px] sm:min-w-[140px]"
                 >
-                  <span className="text-white text-sm hidden sm:inline max-w-[120px] truncate">
-                    {profile?.full_name || user.email}
+                  {/* 프로필 이미지 */}
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0">
+                    {avatarUrl ? (
+                      <img 
+                        src={avatarUrl} 
+                        alt="프로필" 
+                        className="w-full h-full rounded-full object-cover border-2 border-[#ADFF00]"
+                      />
+                    ) : (
+                      <div className="w-full h-full rounded-full bg-gradient-to-br from-[#ADFF00] to-[#7CB500] flex items-center justify-center">
+                        <span className="text-black font-bold text-sm">
+                          {avatarInitial}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* 이름 */}
+                  <span className="text-white text-sm flex-1 truncate text-left">
+                    {displayName}
                   </span>
+                  
+                  {/* 화살표 아이콘 */}
                   <svg 
-                    className={`w-4 h-4 text-white transition-transform ${showProfileMenu ? 'rotate-180' : ''}`}
+                    className={`w-4 h-4 text-white transition-transform flex-shrink-0 ${showProfileMenu ? 'rotate-180' : ''}`}
                     fill="none" 
                     viewBox="0 0 24 24" 
                     stroke="currentColor"
@@ -132,22 +162,22 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick, onLogoutClick }) =
                   <div className="absolute right-0 top-full mt-2 w-48 bg-[#3B4236] rounded-lg shadow-xl border border-stone-600 overflow-hidden z-30">
                     <button
                       onClick={handleProfileEditClick}
-                      className="w-full px-4 py-3 text-left text-white hover:bg-stone-700 transition-colors flex items-center gap-2"
+                      className="w-full px-4 py-3 text-left text-white hover:bg-stone-700 transition-colors flex items-center gap-3"
                     >
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
-                      프로필 수정
+                      <span className="text-sm font-medium">프로필 수정</span>
                     </button>
                     <div className="h-px bg-stone-600"></div>
                     <button
                       onClick={handleLogoutClick}
-                      className="w-full px-4 py-3 text-left text-red-400 hover:bg-stone-700 transition-colors flex items-center gap-2"
+                      className="w-full px-4 py-3 text-left text-red-400 hover:bg-stone-700 transition-colors flex items-center gap-3"
                     >
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                       </svg>
-                      로그아웃
+                      <span className="text-sm font-medium">로그아웃</span>
                     </button>
                   </div>
                 )}
