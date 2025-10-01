@@ -44,7 +44,7 @@ export const NavigationSection = ({ isAllReactionsCompleted = false }: Navigatio
   ];
 
   return (
-    <section className="self-stretch pt-8 sm:pt-10 lg:pt-12 flex flex-col justify-center items-center gap-6 sm:gap-16 lg:gap-20 px-4 sm:px-6 lg:px-8">
+    <section className="self-stretch pt-8 sm:pt-10 lg:pt-12 lg:pb-12 flex flex-col justify-center items-center gap-6 sm:gap-16 lg:gap-20 px-4 sm:px-6 lg:px-8">
       
       {/* 데스크탑 레이아웃 (lg 이상) - 기존 유지 */}
       <div className="hidden lg:block self-stretch">
@@ -76,7 +76,7 @@ export const NavigationSection = ({ isAllReactionsCompleted = false }: Navigatio
       <div className="lg:hidden self-stretch py-5 flex flex-col justify-start items-start gap-6">
         
         {/* 헤더 영역 */}
-        <div className="w-96 flex flex-col justify-start items-center gap-2.5 mx-auto">
+        <div className="w-96 flex flex-col justify-start items-center gap-5 mx-auto">
           <div className="self-stretch flex flex-col justify-start items-center gap-[5px]">
             <div 
               className="self-stretch text-center text-lime-400 text-3xl font-bold font-['Pretendard'] leading-10"

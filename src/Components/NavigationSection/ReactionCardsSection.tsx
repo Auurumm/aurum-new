@@ -4,24 +4,28 @@ const reactionCards = [
   {
     id: 1,
     image: "/images/honor-card.png",
+    mobileImage: "/images/honor-mobile.png",
     title: "경의",
     position: { left: "503.45px", top: "40px" },
   },
   {
     id: 2,
-    image: "/images/recommend-card.png", 
+    image: "/images/recommend-card.png",
+    mobileImage: "/images/recommend-mobile.png",
     title: "추천",
     position: { left: "803.45px", top: "40px" },
   },
   {
     id: 3,
     image: "/images/respect-card.png",
+    mobileImage: "/images/respect-mobile.png",
     title: "존중", 
     position: { left: "1103.45px", top: "40px" },
   },
   {
     id: 4,
     image: "/images/hug-card.png",
+    mobileImage: "/images/hug-mobile.png",
     title: "응원",
     position: { left: "1403.45px", top: "40px" },
   },
@@ -63,10 +67,8 @@ export const ReactionCardsSection = (): JSX.Element => {
   return (
     <section className="w-full my-[0px] content-padding">
       <div className="responsive-container">
-        {/* ============================== */}
-        {/* 데스크톱: 이미지 기반 */}
-        {/* ============================== */}
-        <div className="hidden md:flex justify-center items-center min-h-[500px]">
+        {/* 데스크톱: 이미지 기반 - 1280px 이상만 rotate */}
+        <div className="hidden xl:flex justify-center items-center min-h-[500px]">
           <div
             className="relative"
             style={{ width: "2283.45px", height: "625px", minWidth: "2283.45px" }}
@@ -92,18 +94,16 @@ export const ReactionCardsSection = (): JSX.Element => {
           </div>
         </div>
 
-        {/* ============================== */}
-        {/* 모바일: 수평 스크롤 */}
-        {/* ============================== */}
-        <div className="block md:hidden w-full">
+        {/* 모바일/태블릿: 수평 스크롤 - 1279px 이하, rotate 없음 */}
+        <div className="block xl:hidden w-full">
           <div 
-            className="flex overflow-x-auto py-6"
+            className="flex overflow-x-auto py-6 md:py-8"
             style={{ 
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
               WebkitOverflowScrolling: 'touch',
               paddingLeft: '16px',
-              paddingRight: '60px' // 마지막 카드 여백
+              paddingRight: '60px'
             }}
           >
             {reactionCards.map((card, index) => (
@@ -111,19 +111,15 @@ export const ReactionCardsSection = (): JSX.Element => {
                 key={card.id}
                 className="flex-shrink-0"
                 style={{ 
-                  width: 'calc(100vw - 80px)', // 화면 너비에서 여백 제외, 다음 카드가 살짝 보이도록
-                  marginRight: index < reactionCards.length - 1 ? '12px' : '0' 
+                  width: 'min(280px, calc(100vw - 80px))',
+                  marginRight: index < reactionCards.length - 1 ? '20px' : '0' 
                 }}
               >
-                <div className={`
-                  ${index === 0 || index === 2 ? 'rotate-[15deg]' : 'rotate-[-15deg]'}
-                `}>
-                  <img
-                    src={card.image}
-                    alt={card.title}
-                    className="max-w-full max-h-full object-contain"
-                  />
-                </div>
+                <img
+                  src={card.mobileImage}
+                  alt={card.title}
+                  className="w-full h-auto object-contain"
+                />
               </div>
             ))}
           </div>

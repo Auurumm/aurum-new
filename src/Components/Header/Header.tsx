@@ -74,7 +74,7 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick, onLogoutClick }) =
         </div>
 
         {/* Mobile Background */}
-        <div className="sm:hidden w-96 h-72 relative">
+        <div className="sm:hidden w-full h-72 relative">
           <div 
             className="absolute inset-0 bg-cover bg-center"
             style={{
@@ -111,7 +111,7 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick, onLogoutClick }) =
           </div>
 
           {/* 로그인/프로필 영역 */}
-          <div className="absolute top-1/2 -translate-y-1/2 flex items-center gap-3 right-[100px] sm:right-[135px]">
+          <div className="absolute top-1/2 -translate-y-1/2 flex items-center gap-3 right-[52px] sm:right-[56px] lg:right-[100px]">
             {loading ? (
               <div className="flex items-center gap-2 text-white text-sm">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -167,7 +167,7 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick, onLogoutClick }) =
                       <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
-                      <span className="text-sm font-medium">프로필 수정</span>
+                      <span className="text-sm font-medium">프로필<br className="sm:hidden" /> 수정</span>
                     </button>
                     <div className="h-px bg-stone-600"></div>
                     <button
@@ -177,7 +177,7 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick, onLogoutClick }) =
                       <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                       </svg>
-                      <span className="text-sm font-medium">로그아웃</span>
+                      <span className="text-sm font-medium">로그<br className="sm:hidden" />아웃</span>
                     </button>
                   </div>
                 )}

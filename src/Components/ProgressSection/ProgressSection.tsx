@@ -116,7 +116,7 @@ export const ProgressSection: React.FC<ProgressSectionProps> = ({ isCompleted = 
         </div>
 
         {/* 모바일 레이아웃 (lg 미만) - ProgressBar-mobile.png 사용 */}
-        <div className="lg:hidden w-full h-56 flex flex-col justify-center items-center gap-6">
+        <div className="lg:hidden w-full h-56 flex flex-col justify-center items-center gap-6 px-4">
           
           {/* 제목 */}
           <h2 className="w-full text-center text-white text-xl font-semibold font-['Pretendard'] leading-9">
@@ -127,7 +127,7 @@ export const ProgressSection: React.FC<ProgressSectionProps> = ({ isCompleted = 
           <div className="w-full flex flex-col justify-start items-center gap-3.5">
             
             {/* Mobile Progress Bar 이미지 - 진행 상태별로 다른 이미지 */}
-            <div className="w-80 h-11 flex justify-center items-center">
+            <div className="w-full max-w-80 h-11 flex justify-center items-center">
               <img 
                 src={getMobileProgressBarImage()}
                 alt="모바일 진행 상태 바" 

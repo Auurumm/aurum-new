@@ -105,13 +105,13 @@ export const MainContentSection = (): JSX.Element => {
   const goToNext = () => {
     const nextIndex = currentIndex < rankings.length - 1 ? currentIndex + 1 : 0;
     setCurrentIndex(nextIndex);
-    setTranslateX(-nextIndex * 296);
+    setTranslateX(-nextIndex * 304);
   };
 
   const goToPrev = () => {
     const prevIndex = currentIndex > 0 ? currentIndex - 1 : rankings.length - 1;
     setCurrentIndex(prevIndex);
-    setTranslateX(-prevIndex * 296);
+    setTranslateX(-prevIndex * 304);
   };
 
   // 사용자 정보 포맷팅 - 우선순위 변경
@@ -172,7 +172,7 @@ export const MainContentSection = (): JSX.Element => {
             <img 
               src="/images/left.png" 
               alt="이전" 
-              className="w-6 h-6 object-contain"
+              className="w-4 h-4 object-contain"
             />
           </button>
           
@@ -306,7 +306,7 @@ export const MainContentSection = (): JSX.Element => {
             <img 
               src="/images/right.png" 
               alt="다음" 
-              className="w-6 h-6 object-contain"
+              className="w-4 h-4 object-contain"
             />
           </button>
         </div>

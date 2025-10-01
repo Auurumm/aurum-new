@@ -132,70 +132,135 @@ export const CountDown: React.FC<CountDownProps> = ({ isCompleted = false, onCom
         {/* 카운트다운 타이머 */}
         <div className="w-full max-w-96 flex flex-col justify-start items-center gap-5">
           
-          {/* 타이머 숫자들 */}
-          <div className="w-full flex justify-center items-center gap-2 sm:gap-3 lg:gap-4">
+          {/* 타이머 숫자들 - 모바일 */}
+          <div className="lg:hidden inline-flex justify-start items-start gap-6">
+            
+            {/* 일/시 그룹 */}
+            <div className="flex justify-start items-center gap-6">
+              {/* 일 */}
+              <div className="inline-flex flex-col justify-start items-center gap-2.5">
+                <div className="w-12 h-12 rounded-[42px] outline outline-1 outline-offset-[-1px] outline-white/20 backdrop-blur-[20px] flex flex-col justify-center items-center">
+                  <div 
+                    className="text-center text-3xl font-bold font-['Pretendard'] leading-10"
+                    style={{ color: primaryColor }}
+                  >
+                    {formatTime(timeLeft.days)}
+                  </div>
+                </div>
+                <div className="self-stretch text-center text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight">
+                  일
+                </div>
+              </div>
+
+              {/* 시 */}
+              <div className="inline-flex flex-col justify-start items-center gap-2.5">
+                <div className="w-12 h-12 rounded-[42px] outline outline-1 outline-offset-[-1px] outline-white/20 backdrop-blur-[20px] flex flex-col justify-center items-center">
+                  <div 
+                    className="text-center text-3xl font-bold font-['Pretendard'] leading-10"
+                    style={{ color: primaryColor }}
+                  >
+                    {formatTime(timeLeft.hours)}
+                  </div>
+                </div>
+                <div className="self-stretch text-center text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight">
+                  시
+                </div>
+              </div>
+            </div>
+
+            {/* 분/초 그룹 */}
+            <div className="flex justify-start items-center gap-6">
+              {/* 분 */}
+              <div className="inline-flex flex-col justify-start items-center gap-2.5">
+                <div className="w-12 h-12 rounded-[42px] outline outline-1 outline-offset-[-1px] outline-white/20 backdrop-blur-[20px] flex flex-col justify-center items-center">
+                  <div 
+                    className="text-center text-3xl font-bold font-['Pretendard'] leading-10"
+                    style={{ color: primaryColor }}
+                  >
+                    {formatTime(timeLeft.minutes)}
+                  </div>
+                </div>
+                <div className="self-stretch text-center text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight">
+                  분
+                </div>
+              </div>
+
+              {/* 초 */}
+              <div className="inline-flex flex-col justify-start items-center gap-2.5">
+                <div className="w-12 h-12 rounded-[42px] outline outline-1 outline-offset-[-1px] outline-white/20 backdrop-blur-[20px] flex flex-col justify-center items-center">
+                  <div 
+                    className="text-center text-3xl font-bold font-['Pretendard'] leading-10"
+                    style={{ color: primaryColor }}
+                  >
+                    {formatTime(timeLeft.seconds)}
+                  </div>
+                </div>
+                <div className="self-stretch text-center text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight">
+                  초
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 타이머 숫자들 - 데스크톱 */}
+          <div className="hidden lg:flex w-full justify-center items-center gap-4">
             
             {/* 일 */}
-            <div className="w-16 sm:w-18 lg:w-20 inline-flex flex-col justify-start items-center">
-              <div className="self-stretch h-16 sm:h-18 lg:h-20 rounded-[32px] sm:rounded-[36px] lg:rounded-[42px] outline outline-1 outline-offset-[-1px] outline-white/20 backdrop-blur-[20px] flex flex-col justify-center items-center ">
+            <div className="w-20 inline-flex flex-col justify-start items-center">
+              <div className="self-stretch h-20 rounded-[42px] outline outline-1 outline-offset-[-1px] outline-white/20 backdrop-blur-[20px] flex flex-col justify-center items-center">
                 <div 
-                  className="text-center text-xl sm:text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-none"
+                  className="text-center text-3xl font-bold font-['Pretendard'] leading-none"
                   style={{ color: primaryColor }}
                 >
                   {formatTime(timeLeft.days)}
                 </div>
               </div>
-              <div className="self-stretch text-center text-neutral-400 text-xs sm:text-sm font-medium font-['Pretendard'] leading-tight">
+              <div className="self-stretch text-center text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight">
                 일
               </div>
             </div>
 
             {/* 시 */}
-            <div className="w-16 sm:w-18 lg:w-20 inline-flex flex-col justify-start items-center ">
-              <div className="self-stretch h-16 sm:h-18 lg:h-20 rounded-[32px] sm:rounded-[36px] lg:rounded-[42px] outline outline-1 outline-offset-[-1px] outline-white/20 backdrop-blur-[20px] flex flex-col justify-center items-center ">
+            <div className="w-20 inline-flex flex-col justify-start items-center">
+              <div className="self-stretch h-20 rounded-[42px] outline outline-1 outline-offset-[-1px] outline-white/20 backdrop-blur-[20px] flex flex-col justify-center items-center">
                 <div 
-                  className="text-center text-xl sm:text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-none"
+                  className="text-center text-3xl font-bold font-['Pretendard'] leading-none"
                   style={{ color: primaryColor }}
                 >
                   {formatTime(timeLeft.hours)}
                 </div>
               </div>
-              <div className="self-stretch text-center text-neutral-400 text-xs sm:text-sm font-medium font-['Pretendard'] leading-tight">
+              <div className="self-stretch text-center text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight">
                 시
               </div>
             </div>
 
             {/* 분 */}
-            <div className="w-16 sm:w-18 lg:w-20 inline-flex flex-col justify-start items-center ">
-              <div className="self-stretch h-16 sm:h-18 lg:h-20 
-                  rounded-[32px] sm:rounded-[36px] lg:rounded-[42px] 
-                  outline outline-1 outline-offset-[-1px] outline-white/20 
-                  backdrop-blur-[20px] 
-                  flex items-center justify-center">
+            <div className="w-20 inline-flex flex-col justify-start items-center">
+              <div className="self-stretch h-20 rounded-[42px] outline outline-1 outline-offset-[-1px] outline-white/20 backdrop-blur-[20px] flex items-center justify-center">
                 <span 
-                  className="text-center text-xl sm:text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-none"
+                  className="text-center text-3xl font-bold font-['Pretendard'] leading-none"
                   style={{ color: primaryColor }}
                 >
                   {formatTime(timeLeft.minutes)}
                 </span>
               </div>
-
-              <div className="self-stretch text-center text-neutral-400 text-xs sm:text-sm font-medium font-['Pretendard'] leading-tight">
+              <div className="self-stretch text-center text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight">
                 분
               </div>
             </div>
 
             {/* 초 */}
-            <div className="w-16 sm:w-18 lg:w-20 inline-flex flex-col justify-start items-center ">
-              <div className="self-stretch h-16 sm:h-18 lg:h-20 rounded-[32px] sm:rounded-[36px] lg:rounded-[42px] outline outline-1 outline-offset-[-1px] outline-white/20 backdrop-blur-[20px] flex flex-col justify-center items-center ">
+            <div className="w-20 inline-flex flex-col justify-start items-center">
+              <div className="self-stretch h-20 rounded-[42px] outline outline-1 outline-offset-[-1px] outline-white/20 backdrop-blur-[20px] flex flex-col justify-center items-center">
                 <div 
-                  className="text-center text-xl sm:text-2xl lg:text-3xl font-bold font-['Pretendard'] leading-none"
+                  className="text-center text-3xl font-bold font-['Pretendard'] leading-none"
                   style={{ color: primaryColor }}
                 >
                   {formatTime(timeLeft.seconds)}
                 </div>
               </div>
-              <div className="self-stretch text-center text-neutral-400 text-xs sm:text-sm font-medium font-['Pretendard'] leading-tight">
+              <div className="self-stretch text-center text-neutral-400 text-sm font-medium font-['Pretendard'] leading-tight">
                 초
               </div>
             </div>
@@ -214,8 +279,7 @@ export const CountDown: React.FC<CountDownProps> = ({ isCompleted = false, onCom
       {/* 하단: 비디오와 텍스트 */}
       <div className="w-full flex flex-col lg:flex-row justify-center items-center gap-5 max-w-7xl mx-auto">
         
-      <div className="w-[1200px] h-[400px] bg-stone-700/40 outline outline-1 outline-offset-[-1px] outline-white/20 flex justify-center items-center relative rounded-lg lg:rounded-none overflow-hidden">
-
+      <div className="w-full h-48 lg:w-[1200px] lg:h-[400px] bg-stone-700/40 outline outline-1 outline-offset-[-1px] outline-white/20 flex justify-center items-center relative overflow-hidden">
         {!isVideoPlaying ? (
           <>
             {/* YouTube 썸네일 배경 */}
@@ -231,16 +295,15 @@ export const CountDown: React.FC<CountDownProps> = ({ isCompleted = false, onCom
             
             {/* 플레이 버튼 */}
             <button 
-              className="relative w-20 sm:w-24 lg:w-28 h-20 sm:h-24 lg:h-28 bg-stone-900/60 rounded-full border border-[#ADFF00] backdrop-blur-[6px] flex items-center justify-center hover:scale-105 transition-transform group z-10"
+              className="relative w-14 h-14 lg:w-28 lg:h-28 bg-stone-900/60 rounded-full border border-[#ADFF00] backdrop-blur-[6px] flex items-center justify-center hover:scale-105 transition-transform group z-10"
               onClick={() => setIsVideoPlaying(true)}
               aria-label="비디오 재생"
             >
               <img 
                 src="/images/Polygon 1.png" 
                 alt="재생 버튼" 
-                className="w-6 sm:w-8 lg:w-10 h-6 sm:h-8 lg:h-10 object-contain group-hover:brightness-110 ml-0.5 sm:ml-1"
+                className="w-4 h-4 lg:w-10 lg:h-10 object-contain group-hover:brightness-110 ml-0.5 lg:ml-1"
               />
-
             </button>
           </>
         ) : (
@@ -256,21 +319,21 @@ export const CountDown: React.FC<CountDownProps> = ({ isCompleted = false, onCom
       </div>
 
         {/* 텍스트 영역 */}
-        <div className="w-full max-w-[534px] h-[400px] flex flex-col justify-between items-start px-4 lg:px-0">
+        <div className="w-full max-w-[534px] h-auto lg:h-[400px] flex flex-col justify-start lg:justify-between items-start gap-6 lg:gap-0 px-4 lg:px-0">
           
           {/* 상단 영역 - 영상과 같은 위치에서 시작 */}
-          <div className="flex flex-col justify-start items-start">
-            <h3 className="self-stretch text-white text-2xl sm:text-3xl lg:text-5xl font-bold font-['Pretendard'] leading-tight lg:leading-[72px]">
+          <div className="flex flex-col justify-start items-start gap-3">
+            <h3 className="self-stretch text-white text-3xl lg:text-5xl font-bold font-['Pretendard'] leading-10 lg:leading-[72px]">
               이색 미니 보험의 등장
             </h3>
             
-            <div className="self-stretch text-neutral-400 text-sm sm:text-base lg:text-lg font-normal font-['Pretendard'] leading-relaxed">
+            <div className="self-stretch text-neutral-400 text-sm lg:text-lg font-medium lg:font-normal font-['Pretendard'] leading-tight lg:leading-relaxed">
               이번 영상은 "요즘 보험"에 대한 트렌드를 다루고 있어요. 아이돌 덕질하다 다치거나, 책을 오래 읽다가 시력이 나빠지는 등의 일상 속 예상 못한 상황을 보장해주는 '미니 보험' 상품에 대한 내용이에요. '우리 서비스에도 이런 개인화된 접근을 할 수 있을까?' 고민해볼 수 있는 좋은 사례예요. 이번주 위즈덤도 화이팅~! 💪
             </div>
           </div>
 
           {/* 하단 영역 - 영상과 같은 위치에서 종료 */}
-          <div className="flex flex-col justify-start items-start gap-3.5 mt-auto">
+          <div className="w-full flex flex-col justify-start items-center lg:items-start gap-3.5 lg:mt-auto">
             
             {/* 날짜 영역 */}
             <div className="inline-flex justify-center items-center gap-[10px]">
@@ -281,30 +344,30 @@ export const CountDown: React.FC<CountDownProps> = ({ isCompleted = false, onCom
                   className="w-3.5 h-2.5 object-contain"
                 />
               </div>
-              <div className="text-white text-base sm:text-lg lg:text-xl font-semibold font-['Pretendard'] leading-relaxed lg:leading-9">
+              <div className="text-white text-sm lg:text-xl font-medium lg:font-semibold font-['Pretendard'] leading-tight lg:leading-9">
                 2025. 09. 08 (월) ~ 2025. 09. 12 (목) 23:59
               </div>
             </div>
 
             {/* 버튼 - 완료 상태에 따라 이미지와 클릭 가능 여부 변경 */}
             {isWisdomCompleted ? (
-              <div className="w-full h-12 sm:h-14 flex justify-center items-center">
+              <div className="w-64 lg:w-full h-12 lg:h-14 flex justify-center items-center">
                 <img 
                   src="/images/complete.png" 
                   alt="작성 완료됨" 
-                  className="w-full max-w-[534px] h-full object-cover"
+                  className="w-full h-full object-cover lg:max-w-[534px]"
                 />
               </div>
             ) : (
               <button 
-                className="w-full h-12 sm:h-14 flex justify-center items-center hover:scale-[1.02] transition-transform"
-                onClick={handleWisdomButtonClick} // 수정: 새로운 핸들러 사용
+                className="w-64 lg:w-full h-12 lg:h-14 flex justify-center items-center hover:scale-[1.02] transition-transform"
+                onClick={handleWisdomButtonClick}
                 aria-label="위즈덤 작성하기"
               >
                 <img 
                   src="/images/button.png" 
                   alt="위즈덤 작성하기" 
-                  className="w-full max-w-[534px] h-full object-cover"
+                  className="w-full h-full object-cover lg:max-w-[534px]"
                 />
               </button>
             )}

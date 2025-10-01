@@ -70,10 +70,16 @@ export const WisdomCardGrid = ({
   const [isCompletePopup, setIsCompletePopup] = useState(false);
   const [modalTopPosition, setModalTopPosition] = useState<number>(0);
   const modalRef = useRef<HTMLDivElement>(null);
+  const [showAll, setShowAll] = useState(false);
+
 
   // 위즈덤 포스트 상태
   const [wisdomPosts, setWisdomPosts] = useState<WisdomPost[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // 표시할 포스트 결정
+  const displayedPosts = showAll ? wisdomPosts : wisdomPosts.slice(0, 12);
+  const hasMore = wisdomPosts.length > 12
 
   // 히스토리 상태
   const [reactionHistory, setReactionHistory] = useState<ReactionHistoryItem[]>([]);
@@ -436,11 +442,23 @@ export const WisdomCardGrid = ({
   return (
     <>
       {/* 반응형 카드 그리드 */}
-      <CardGrid
-        wisdomPosts={wisdomPosts}
-        onCardClick={handleCardClick}
-        convertToDisplayCard={convertToDisplayCard}
-      />
+      <div className="w-full flex flex-col items-center mb-[120px]">
+        <CardGrid
+          wisdomPosts={displayedPosts}
+          onCardClick={handleCardClick}
+          convertToDisplayCard={convertToDisplayCard}
+        />
+        
+        {/* 더보기 버튼 */}
+        {hasMore && !showAll && (
+          <button
+            onClick={() => setShowAll(true)}
+            className="mt-8 text-white text-lg font-medium underline hover:text-gray-300 transition-colors"
+          >
+            더보기...
+          </button>
+        )}
+      </div>
 
       {/* 상세 모달 */}
       {selectedCard && (
@@ -484,7 +502,7 @@ const CardGrid = ({
   convertToDisplayCard: (post: WisdomPost) => any;
 }) => (
   <div className="w-full flex justify-center mb-[120px]">
-    <div className="w-full max-w-[1400px] px-4 sm:px-6 lg:px-8">
+    <div className="w-full max-w-[1480px] px-4 sm:px-6 lg:px-8">
       {/* 데스크탑 레이아웃 */}
       <DesktopCardLayout
         wisdomPosts={wisdomPosts}
@@ -511,27 +529,48 @@ const DesktopCardLayout = ({
   wisdomPosts: WisdomPost[];
   onCardClick: (post: WisdomPost, event: React.MouseEvent<HTMLElement>) => void;
   convertToDisplayCard: (post: WisdomPost) => any;
-}) => (
-  <div className="hidden lg:block">
-    <div className="inline-flex flex-col justify-start items-center gap-3.5 w-full">
-      {Array(Math.ceil(wisdomPosts.length / 3)).fill(null).map((_, rowIndex) => (
-        <div key={rowIndex} className="w-full inline-flex justify-center items-center gap-3.5">
-          {wisdomPosts.slice(rowIndex * 3, (rowIndex + 1) * 3).map((post) => {
-            const card = convertToDisplayCard(post);
-            return (
-              <WisdomCard
-                key={post.id}
-                post={post}
-                card={card}
-                onClick={(e) => onCardClick(post, e)}
-              />
-            );
-          })}
-        </div>
-      ))}
+}) => {
+  const [columnsPerRow, setColumnsPerRow] = useState(3);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1440) {
+        setColumnsPerRow(3); // 1440px 이상: 3열
+      } else if (window.innerWidth >= 1024) {
+        setColumnsPerRow(2); // 1024~1439px: 2열
+      } else if (window.innerWidth >= 768) {
+        setColumnsPerRow(2); // 768~1023px: 2열
+      } else {
+        setColumnsPerRow(1); // 768px 미만: 1열
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return (
+    <div className="hidden lg:block">
+      <div className="inline-flex flex-col justify-start items-center gap-3.5 w-full">
+        {Array(Math.ceil(wisdomPosts.length / columnsPerRow)).fill(null).map((_, rowIndex) => (
+          <div key={rowIndex} className="w-full inline-flex justify-center items-center gap-3.5">
+            {wisdomPosts.slice(rowIndex * columnsPerRow, (rowIndex + 1) * columnsPerRow).map((post) => {
+              const card = convertToDisplayCard(post);
+              return (
+                <WisdomCard
+                  key={post.id}
+                  post={post}
+                  card={card}
+                  onClick={(e) => onCardClick(post, e)}
+                />
+              );
+            })}
+          </div>
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // 모바일 카드 레이아웃
 const MobileCardLayout = ({
@@ -543,8 +582,8 @@ const MobileCardLayout = ({
   onCardClick: (post: WisdomPost, event: React.MouseEvent<HTMLElement>) => void;
   convertToDisplayCard: (post: WisdomPost) => any;
 }) => (
-  <div className="lg:hidden">
-    <div className="grid grid-cols-1 gap-6">
+  <div className="lg:hidden pl-3">
+    <div className="flex flex-col gap-6">
       {wisdomPosts.map((post) => {
         const card = convertToDisplayCard(post);
         return (
@@ -572,8 +611,7 @@ const WisdomCard = ({
 }) => (
   <div
     className="w-[470px] h-[523px] p-[25px] bg-[#3B4236] rounded-[20px] border border-[#141612] 
-              inline-flex flex-col justify-start items-center gap-[35px] cursor-pointer
-              hover:bg-stone-600 transition-colors duration-300"
+              inline-flex flex-col justify-start items-center gap-[35px] cursor-pointer"
     onClick={onClick}
   >
     <div className="self-stretch flex flex-col justify-start items-center gap-5">
@@ -600,15 +638,14 @@ const MobileWisdomCard = ({
   onClick: (e: React.MouseEvent<HTMLElement>) => void;
 }) => (
   <div
-    className="w-full bg-[#3B4236] rounded-[20px] outline outline-1 outline-offset-[-0.50px] 
-              outline-neutral-900 p-6 flex flex-col gap-9 opacity-100 cursor-pointer 
-              hover:bg-stone-600 transition-colors duration-300"
+    className="w-[323px] mx-auto bg-[#3B4236] rounded-[20px] outline outline-1 outline-offset-[-0.50px] 
+              outline-neutral-900 p-6 flex flex-col gap-9 opacity-100 cursor-pointer "
     onClick={onClick}
   >
     <div className="flex flex-col justify-start items-center gap-5">
       <div className="w-full flex flex-col justify-start items-start gap-4">
         <CardHeader card={card} isMobile />
-        <CardContent post={post} timestamp={card.timestamp} isMobile />
+        <CardContent post={card} timestamp={card.timestamp} isMobile />
       </div>
       <div className="w-full h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-500"></div>
       <ReactionStats post={post} isMobile />
@@ -660,7 +697,7 @@ const ReactionStats = ({ post, isMobile = false }: { post: WisdomPost; isMobile?
 
   if (isMobile) {
     return (
-      <div className="w-full bg-neutral-900 rounded-[20px] p-4">
+      <div className="w-full">
         <div className="grid grid-cols-4 gap-2">
           {reactions.map(({ icon, count, label }) => (
             <div key={label} className="flex flex-col items-center gap-1">
@@ -708,26 +745,23 @@ const DetailModal = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center px-4 overflow-x-hidden bg-black/70 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-start justify-center px-2 sm:px-4 overflow-x-hidden bg-black/70 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
         ref={modalRef}
-        className="w-[589px] bg-[#3B4236] rounded-[20px] outline outline-1 outline-offset-[-1px] 
-                  outline-stone-500 my-8 p-[45px]"
+        className="w-full max-w-[545px] lg:w-[589px] bg-[#3B4236] rounded-[20px] outline outline-1 outline-offset-[-1px] 
+                  outline-stone-500 my-4 sm:my-8 p-7 lg:p-[45px]"
         style={{
           marginTop: `${modalTopPosition}px`,
           marginBottom: '10px'
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="inline-flex flex-col justify-start items-center gap-[10px]">
+        <div className="inline-flex flex-col justify-start items-center gap-6 lg:gap-[10px]">
           <ModalHeader card={card} onClose={onClose} />
           <ModalContent selectedCard={selectedCard} formatTimestamp={formatTimestamp} />
-          <div className="w-full h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-500 my-[25px]"></div>
-          
-          {/* 남은 횟수 표시 
-          <RemainingReactionsDisplay reactionUsage={reactionUsage} />*/}
+          <div className="w-full h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-500"></div>
           
           {/* 표현행위 선택 */}
           <ReactionSelector
@@ -775,11 +809,17 @@ const ModalHeader = ({ card, onClose }: any) => (
 const ModalContent = ({ selectedCard, formatTimestamp }: any) => (
   <div className="self-stretch flex flex-col justify-start items-start gap-3">
     <div className="self-stretch flex flex-col justify-start items-start gap-3.5">
-      <div className="self-stretch text-white text-xl font-semibold leading-9">- {selectedCard.request_a}</div>
-      <div className="self-stretch text-white text-xl font-semibold leading-9 whitespace-pre-line">- {selectedCard.request_b}</div>
-      <div className="self-stretch text-white text-xl font-semibold leading-9">- {selectedCard.request_c}</div>
+      <div className="self-stretch text-white text-base lg:text-xl font-extralight leading-relaxed lg:leading-9">
+        - {selectedCard.request_a}
+      </div>
+      <div className="self-stretch text-white text-base lg:text-xl font-extralight leading-relaxed lg:leading-9 whitespace-pre-line">
+        - {selectedCard.request_b}
+      </div>
+      <div className="self-stretch text-white text-base lg:text-xl font-extralight leading-relaxed lg:leading-9">
+        - {selectedCard.request_c}
+      </div>
     </div>
-    <div className="self-stretch text-left text-neutral-400 text-sm font-medium leading-tight">
+    <div className="self-stretch text-left text-neutral-400 text-sm font-extralight leading-tight">
       {formatTimestamp(selectedCard.created_at)}
     </div>
   </div>
