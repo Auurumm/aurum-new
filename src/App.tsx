@@ -74,8 +74,54 @@ const AppContent = () => {
         setCheckingWisdom(false);
       }
     };
-
+    
     checkUserWisdomStatus();
+  }, [user]);
+  
+  // ✅ 추가: 페이지 로드 시 반응 완료 상태 확인
+  useEffect(() => {
+    const checkReactionCompletion = async () => {
+      if (!user) {
+        setIsAllReactionsCompleted(false);
+        return;
+      }
+  
+      try {
+        console.log('🔍 반응 완료 상태 확인 중...', user.id);
+        
+        // WisdomService를 사용하여 반응 개수 확인
+        const { data: reactionData, error } = await supabase
+          .from('user_reactions')
+          .select('honor_sent, recommend_sent, respect_sent, hug_sent')
+          .eq('user_id', user.id)
+          .maybeSingle();
+  
+        if (error) {
+          console.error('반응 확인 오류:', error);
+          return;
+        }
+  
+        if (reactionData) {
+          const totalReactions = 
+            (reactionData.honor_sent || 0) + 
+            (reactionData.recommend_sent || 0) + 
+            (reactionData.respect_sent || 0) + 
+            (reactionData.hug_sent || 0);
+  
+          console.log('총 반응 개수:', totalReactions);
+  
+          // ✅ 12개 이상이면 완료 상태로 설정
+          if (totalReactions >= 12) {
+            console.log('✅ 반응 12개 완료 - ProgressBar3 표시');
+            setIsAllReactionsCompleted(true);
+          }
+        }
+      } catch (error) {
+        console.error('반응 완료 상태 확인 실패:', error);
+      }
+    };
+  
+    checkReactionCompletion();
   }, [user]);
 
   // 뷰포트 크기 추적
