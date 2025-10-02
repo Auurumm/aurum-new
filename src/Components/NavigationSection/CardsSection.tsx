@@ -70,6 +70,7 @@ export const WisdomCardGrid = ({
   const [isCompletePopup, setIsCompletePopup] = useState(false);
   const [modalTopPosition, setModalTopPosition] = useState<number>(0);
   const modalRef = useRef<HTMLDivElement>(null);
+  const prevReactionCountRef = useRef<number>(0); // ✅ 추가
   const [showAll, setShowAll] = useState(false);
 
 
@@ -92,6 +93,10 @@ export const WisdomCardGrid = ({
     respect: 0,
     hug: 0
   });
+
+  const [showDefaultWarning, setShowDefaultWarning] = useState(false);
+  const [showAlertImage, setShowAlertImage] = useState(false);
+  const [userReactedPosts, setUserReactedPosts] = useState<Map<string, ReactionType>>(new Map());
 
   // 초기 위즈덤 포스트 로드
   useEffect(() => {
@@ -148,6 +153,23 @@ export const WisdomCardGrid = ({
     }
   }, [showReactionPopup, modalTopPosition]);
 
+  // 기존 useEffect들 아래에 추가
+  useEffect(() => {
+    loadUserReactedPosts();
+  }, []);
+
+  // ✅ 11번째 달성 감지 (이전 카운트와 비교)
+  useEffect(() => {
+    // 10 → 11로 변경될 때만 팝업 표시
+    if (prevReactionCountRef.current < 11 && reactionCount === 11) {
+      setShowAlertImage(true);
+      setTimeout(() => setShowAlertImage(false), 3000);
+    }
+    
+    // 현재 카운트를 이전 카운트로 저장
+    prevReactionCountRef.current = reactionCount;
+  }, [reactionCount]);
+  
   // 위즈덤 포스트 로드
   const loadWisdomPosts = async () => {
     try {
@@ -185,6 +207,31 @@ export const WisdomCardGrid = ({
       console.log('총 반응 횟수:', totalCount);
     } catch (error) {
       console.error('반응 사용 현황 로드 중 오류:', error);
+    }
+  };
+
+  // 사용자가 표현행위를 보낸 카드 목록 로드
+  const loadUserReactedPosts = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+  
+      const { data, error } = await supabase
+        .from('wisdom_reactions')
+        .select('wisdom_post_id, reaction_type')
+        .eq('user_id', user.id);
+  
+      if (error) {
+        console.error('표현행위 보낸 카드 로드 실패:', error);
+        return;
+      }
+  
+      const reactedMap = new Map(
+        data?.map(item => [item.wisdom_post_id, item.reaction_type as ReactionType]) || []
+      );
+      setUserReactedPosts(reactedMap);
+    } catch (error) {
+      console.error('표현행위 보낸 카드 로드 중 오류:', error);
     }
   };
 
@@ -275,7 +322,7 @@ export const WisdomCardGrid = ({
     setSelectedReaction(reactionType);
   };
 
-  // 반응 전송 핸들러
+  // 표현 행위 전송 핸들러
   const handleSendReaction = async () => {
     // 1단계 완료 체크
     if (!isWisdomCompleted) {
@@ -283,9 +330,10 @@ export const WisdomCardGrid = ({
       return;
     }
 
-    // 반응 선택 체크
+    // 반응 선택 체크 - 수정된 부분
     if (!selectedReaction || !selectedCard) {
-      alert("표현행위를 선택해주세요!");
+      setShowDefaultWarning(true); // ✅ 이미지 표시
+      setTimeout(() => setShowDefaultWarning(false), 3000); // 3초 후 자동 숨김
       return;
     }
 
@@ -370,6 +418,13 @@ export const WisdomCardGrid = ({
   ) => {
     if (!selectedCard) return;
 
+    // ✅ userReactedPosts 즉시 업데이트
+    setUserReactedPosts(prev => {
+      const newMap = new Map(prev);
+      newMap.set(selectedCard.id, reactionType);
+      return newMap;
+    });
+
     // 사용 횟수 증가
     setReactionUsage(prev => ({
       ...prev,
@@ -400,6 +455,71 @@ export const WisdomCardGrid = ({
     setTimeout(() => {
       closeReactionPopup();
     }, POPUP_CLOSE_DELAY);
+  };
+
+  // 표현행위 취소 핸들러
+  const handleCancelReaction = async () => {
+    if (!selectedCard) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // 취소하려는 반응 타입 찾기
+      const userReactionType = userReactedPosts.get(selectedCard.id);
+      if (!userReactionType) {
+        alert('취소할 표현행위를 찾을 수 없습니다.');
+        return;
+      }
+
+      const { error } = await WisdomService.removeReaction(selectedCard.id, user.id);
+
+      if (error) {
+        console.error('표현행위 취소 실패:', error);
+        alert('표현행위 취소에 실패했습니다.');
+        return;
+      }
+
+      // ✅ userReactedPosts에서 즉시 제거
+      setUserReactedPosts(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(selectedCard.id);
+        return newMap;
+      });
+
+      // 로컬 상태 업데이트 - 카운트 감소
+      const reactionField = `${userReactionType}_count` as keyof Pick<WisdomPost, 'honor_count' | 'recommend_count' | 'respect_count' | 'hug_count'>;
+      const currentCount = selectedCard[reactionField];
+
+      setWisdomPosts(prev => prev.map(post =>
+        post.id === selectedCard.id
+          ? { ...post, [reactionField]: Math.max(0, currentCount - 1) }
+          : post
+      ));
+
+      setSelectedCard(prev => prev ? { 
+        ...prev, 
+        [reactionField]: Math.max(0, currentCount - 1) 
+      } : null);
+
+      // 반응 사용 횟수 감소
+      setReactionUsage(prev => ({
+        ...prev,
+        [userReactionType]: Math.max(0, prev[userReactionType] - 1)
+      }));
+
+      // 전체 반응 카운트 감소
+      setReactionCount(prev => Math.max(0, prev - 1));
+
+      // 히스토리 다시 로드
+      await loadReactionHistory(selectedCard.id);
+      
+      alert('표현행위가 취소되었습니다.');
+      closeModal();
+    } catch (error) {
+      console.error('표현행위 취소 중 오류:', error);
+      alert('표현행위 취소 중 오류가 발생했습니다.');
+    }
   };
 
   // 반응 팝업 닫기
@@ -470,9 +590,13 @@ export const WisdomCardGrid = ({
           loadingHistory={loadingHistory}
           modalTopPosition={modalTopPosition}
           modalRef={modalRef}
+          showDefaultWarning={showDefaultWarning}
+          showAlertImage={showAlertImage}
+          userReactionType={userReactedPosts.get(selectedCard.id) || null}  // ✅ 수정
           onClose={closeModal}
           onReactionSelect={handleReactionSelect}
           onSendReaction={handleSendReaction}
+          onCancelReaction={handleCancelReaction}
           formatTimestamp={formatTimestamp}
           convertToDisplayCard={convertToDisplayCard}
         />
@@ -735,12 +859,17 @@ const DetailModal = ({
   loadingHistory,
   modalTopPosition,
   modalRef,
+  showDefaultWarning,  // ✅ 추가
+  showAlertImage,  // ✅ 추가
+  userReactionType,  // ✅ 추가
   onClose,
   onReactionSelect,
   onSendReaction,
+  onCancelReaction,  // ✅ 추가
   formatTimestamp,
   convertToDisplayCard
 }: any) => {
+  const hasUserReacted = !!userReactionType;
   const card = convertToDisplayCard(selectedCard);
 
   return (
@@ -751,32 +880,60 @@ const DetailModal = ({
       <div
         ref={modalRef}
         className="w-full max-w-[545px] lg:w-[589px] bg-[#3B4236] rounded-[20px] outline outline-1 outline-offset-[-1px] 
-                  outline-stone-500 my-4 sm:my-8 p-7 lg:p-[45px]"
+                  outline-stone-500 my-4 sm:my-8 p-7 lg:p-[45px] relative"  // ✅ relative 추가
         style={{
           marginTop: `${modalTopPosition}px`,
           marginBottom: '10px'
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* ✅ Alert 이미지 (11번째 완료 후) */}
+        {showAlertImage && (
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
+            <img src="/images/alert.png" alt="알림" className="w-16 h-16" />
+          </div>
+        )}
+
         <div className="inline-flex flex-col justify-start items-center gap-6 lg:gap-[10px]">
-          <ModalHeader card={card} onClose={onClose} />
+          <ModalHeader 
+            card={card} 
+            onClose={onClose}
+            hasUserReacted={hasUserReacted}  // ✅ 추가
+            onCancelReaction={onCancelReaction}  // ✅ 추가
+          />
           <ModalContent selectedCard={selectedCard} formatTimestamp={formatTimestamp} />
           <div className="w-full h-0 outline outline-1 outline-offset-[-0.50px] outline-stone-500"></div>
           
-          {/* 표현행위 선택 */}
           <ReactionSelector
             selectedCard={selectedCard}
             selectedReaction={selectedReaction}
+            userReactionType={userReactionType}
             onReactionSelect={onReactionSelect}
+            onCancelReaction={onCancelReaction}
           />
-          
-          {/* 표현행위 보내기 버튼 */}
-          <SendReactionButton
-            selectedReaction={selectedReaction}
-            onSendReaction={onSendReaction}
-          />
-          
-          {/* 표현행위 히스토리 */}
+
+          {/* ✅ 상대 위치 컨테이너로 감싸기 */}
+          <div className="relative w-full flex flex-col items-center">
+            {/* ✅ Alert 이미지 (11번째 완료 후) - 버튼 위에 절대 위치 */}
+            {showAlertImage && (
+              <div className="absolute -top-20 left-1/2 transform -translate-x-1/2 z-10">
+                <img src="/images/alert.png" alt="마지막 표현행위" className="w-32 h-auto" />
+              </div>
+            )}
+
+            {/* ✅ Default 경고 이미지 - 버튼 위에 절대 위치 */}
+            {showDefaultWarning && (
+              <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 z-10">
+                <img src="/images/default.png" alt="표현행위를 선택해주세요" className="w-64 h-[150px]" />
+              </div>
+            )}
+            
+            <SendReactionButton
+              selectedReaction={selectedReaction}
+              onSendReaction={onSendReaction}
+            />
+          </div>
+
           <ReactionHistory
             reactionHistory={reactionHistory}
             loadingHistory={loadingHistory}
@@ -788,13 +945,14 @@ const DetailModal = ({
 };
 
 // 모달 헤더
-const ModalHeader = ({ card, onClose }: any) => (
+const ModalHeader = ({ card, onClose, hasUserReacted, onCancelReaction }: any) => (
   <div className="w-full flex flex-col justify-start items-start gap-6">
     <div className="self-stretch inline-flex justify-between items-center gap-2.5">
       <div className="flex-1 flex justify-start items-center gap-3.5">
         <img className="w-12 h-12 rounded-full" src={card.avatarUrl} alt="프로필 이미지" />
         <div className="text-neutral-400 text-sm font-medium leading-tight">{card.userInfo}</div>
       </div>
+      {/* ✅ 취소 버튼 제거 */}
       <button
         onClick={onClose}
         className="w-6 h-6 relative overflow-hidden text-white hover:bg-[#3B4236] rounded flex items-center justify-center"
@@ -840,8 +998,16 @@ const RemainingReactionsDisplay = ({ reactionUsage }: { reactionUsage: Record<Re
   </div>
 ); */}
 
-// 반응 선택기
-const ReactionSelector = ({ selectedCard, selectedReaction, onReactionSelect }: any) => {
+const ReactionSelector = ({ 
+  selectedCard, 
+  selectedReaction, 
+  userReactionType,  
+  onReactionSelect,
+  onCancelReaction  
+}: any) => {
+  console.log('ReactionSelector - userReactionType:', userReactionType);
+  console.log('ReactionSelector - selectedCard.id:', selectedCard.id);
+
   const reactions = [
     { type: 'honor', count: selectedCard.honor_count, icon: REACTION_ICONS.honor },
     { type: 'recommend', count: selectedCard.recommend_count, icon: REACTION_ICONS.recommend },
@@ -853,23 +1019,40 @@ const ReactionSelector = ({ selectedCard, selectedReaction, onReactionSelect }: 
     <div className="bg-[#3B4236] rounded-[20px] inline-flex justify-center items-center">
       <div className="w-96 h-32 rounded-[20px] flex justify-center items-center">
         {reactions.map(({ type, count, icon }) => (
-          <button
-            key={type}
-            onClick={() => onReactionSelect(type as ReactionType)}
-            className={`w-28 p-3.5 inline-flex flex-col justify-center items-center gap-[5px] transition-all duration-200 ${
-              selectedReaction === type
-                ? 'bg-[#ADFF00]/20 border-2 border-[#ADFF00] rounded-lg'
-                : 'bg-[#3B4236] hover:bg-stone-600'
-            }`}
-          >
-            <img className="w-7 h-7" src={icon} alt={REACTION_LABELS[type as ReactionType]} />
-            <div className="self-stretch flex flex-col justify-center items-center">
-              <div className="text-center text-white text-3xl font-bold leading-10">{count}</div>
-              <div className="text-center text-gray-400 text-sm font-semibold capitalize leading-none">
-                {REACTION_LABELS[type as ReactionType]}
+          <div key={type} className="relative">
+            {/* Cancel 버튼 (사용자가 이미 보낸 반응인 경우) */}
+            {userReactionType === type && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCancelReaction();
+                }}
+                className="absolute -top-2 -right-2 w-7 h-7 z-10 hover:opacity-80 transition-opacity"
+                title="표현행위 취소"
+              >
+                <img src="/images/cancel.png" alt="취소" className="w-full h-full" />
+              </button>
+            )}
+            
+            <button
+              onClick={() => !userReactionType && onReactionSelect(type as ReactionType)}
+              disabled={!!userReactionType}
+              className={`w-28 p-3.5 inline-flex flex-col justify-center items-center gap-[5px] transition-all duration-200 ${
+                // ✅ selectedReaction이거나 userReactionType인 경우 모두 lime 스타일 적용
+                selectedReaction === type || userReactionType === type
+                  ? 'bg-lime-400/20 outline outline-1 outline-offset-[-1px] outline-lime-400'
+                  : 'bg-[#3B4236] hover:bg-stone-600'
+              }`}
+            >
+              <img className="w-7 h-7" src={icon} alt={REACTION_LABELS[type as ReactionType]} />
+              <div className="self-stretch flex flex-col justify-center items-center">
+                <div className="text-center text-white text-3xl font-bold leading-10">{count}</div>
+                <div className="text-center text-gray-400 text-sm font-semibold capitalize leading-none">
+                  {REACTION_LABELS[type as ReactionType]}
+                </div>
               </div>
-            </div>
-          </button>
+            </button>
+          </div>
         ))}
       </div>
     </div>
@@ -880,17 +1063,10 @@ const ReactionSelector = ({ selectedCard, selectedReaction, onReactionSelect }: 
 const SendReactionButton = ({ selectedReaction, onSendReaction }: any) => (
   <button
     onClick={onSendReaction}
-    disabled={!selectedReaction}
-    className={`w-96 h-14 px-9 py-3 bg-stone-900/60 border-t border-b border-white/20 backdrop-blur-[6px] 
-                inline-flex justify-center items-center gap-2.5 transition-all my-[15px] ${
-      selectedReaction
-        ? 'hover:bg-stone-800/60 hover:border-[#ADFF00]/30 cursor-pointer'
-        : 'opacity-50 cursor-not-allowed'
-    }`}
+    className="w-96 h-14 px-9 py-3 bg-stone-900/60 border-t border-b border-white/20 backdrop-blur-[6px] 
+               inline-flex justify-center items-center gap-2.5 transition-all my-[15px] cursor-pointer"
   >
-    <div className={`text-xl font-semibold font-['Pretendard'] leading-9 transition-colors ${
-      selectedReaction ? 'text-[#ADFF00]' : 'text-gray-500'
-    }`}>
+    <div className="text-[#BEFF00] text-xl font-semibold font-['Pretendard'] leading-9">
       표현행위 보내기
     </div>
   </button>
