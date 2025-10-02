@@ -785,7 +785,11 @@ const MobileWisdomCard = ({
 // 카드 헤더
 const CardHeader = ({ card, isMobile = false }: { card: any; isMobile?: boolean }) => (
   <div className={`${isMobile ? 'w-full' : ''} inline-flex justify-start items-center gap-3.5`}>
-    <img className="w-12 h-12 rounded-full" src={card.avatarUrl} alt="프로필 이미지" />
+    <img 
+      className="w-12 h-12 rounded-full object-cover object-center" 
+      src={card.avatarUrl} 
+      alt="프로필 이미지" 
+    />
     <div className={`${isMobile ? 'flex-1 min-w-0' : 'w-[408px]'} text-neutral-400 text-sm font-medium leading-tight truncate`}>
       {card.userInfo}
     </div>

@@ -197,19 +197,19 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
               프로필 이미지
             </label>
             <div className="relative">
-              {avatarPreview ? (
-                <img 
-                  src={avatarPreview} 
-                  alt="프로필 미리보기" 
-                  className="w-32 h-32 rounded-full object-cover border-4 border-[#ADFF00]"
-                />
-              ) : (
-                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-[#ADFF00] to-[#7CB500] flex items-center justify-center border-4 border-stone-600">
-                  <span className="text-black font-bold text-4xl">
-                    {displayName.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-              )}
+            {avatarPreview ? (
+              <img 
+                src={avatarPreview} 
+                alt="프로필 미리보기" 
+                className="w-32 h-32 rounded-full object-cover border-4 border-[#ADFF00]"
+              />
+            ) : (
+              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-[#ADFF00] to-[#7CB500] flex items-center justify-center border-4 border-stone-600">
+                <span className="text-black font-bold text-4xl">
+                  {displayName.charAt(0).toUpperCase()}
+                </span>
+              </div>
+            )}
               <label 
                 htmlFor="avatar-upload"
                 className="absolute bottom-0 right-0 w-10 h-10 bg-[#ADFF00] rounded-full flex items-center justify-center cursor-pointer hover:bg-[#9AE600] transition-colors"
