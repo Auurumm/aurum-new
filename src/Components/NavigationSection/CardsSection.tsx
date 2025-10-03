@@ -460,25 +460,27 @@ export const WisdomCardGrid = ({
   // 표현행위 취소 핸들러
   const handleCancelReaction = async () => {
     if (!selectedCard) return;
-
+  
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-
-      // 취소하려는 반응 타입 찾기
+  
       const userReactionType = userReactedPosts.get(selectedCard.id);
       if (!userReactionType) {
         alert('취소할 표현행위를 찾을 수 없습니다.');
         return;
       }
-
+  
       const { error } = await WisdomService.removeReaction(selectedCard.id, user.id);
-
+  
       if (error) {
         console.error('표현행위 취소 실패:', error);
         alert('표현행위 취소에 실패했습니다.');
         return;
       }
+  
+      // ✅ 추가: alert 이미지 즉시 숨김
+      setShowAlertImage(false);
 
       // ✅ userReactedPosts에서 즉시 제거
       setUserReactedPosts(prev => {
@@ -561,12 +563,22 @@ export const WisdomCardGrid = ({
 
   return (
     <>
+      {/* ✅ 진행 상황 표시 */}
+      <div className="w-full flex justify-center mb-8">
+        <div className="px-8 py-4 bg-[#3B4236] rounded-full border border-[#ADFF00]">
+          <div className="text-white text-xl font-bold">
+            표현행위 진행: <span className="text-[#ADFF00]">{reactionCount}</span>/{TOTAL_REACTIONS_REQUIRED}
+          </div>
+        </div>
+      </div>
+  
       {/* 반응형 카드 그리드 */}
       <div className="w-full flex flex-col items-center mb-[120px]">
         <CardGrid
           wisdomPosts={displayedPosts}
           onCardClick={handleCardClick}
           convertToDisplayCard={convertToDisplayCard}
+          userReactedPosts={userReactedPosts}  // ✅ 이 줄 추가
         />
         
         {/* 더보기 버튼 */}
@@ -579,6 +591,8 @@ export const WisdomCardGrid = ({
           </button>
         )}
       </div>
+  
+      {/* 나머지 코드는 동일... */}
 
       {/* 상세 모달 */}
       {selectedCard && (
@@ -615,15 +629,17 @@ export const WisdomCardGrid = ({
   );
 };
 
-// 카드 그리드 컴포넌트
+// CardGrid 컴포넌트
 const CardGrid = ({
   wisdomPosts,
   onCardClick,
-  convertToDisplayCard
+  convertToDisplayCard,
+  userReactedPosts  // ✅ 추가
 }: {
   wisdomPosts: WisdomPost[];
   onCardClick: (post: WisdomPost, event: React.MouseEvent<HTMLElement>) => void;
   convertToDisplayCard: (post: WisdomPost) => any;
+  userReactedPosts: Map<string, ReactionType>;  // ✅ 추가
 }) => (
   <div className="w-full flex justify-center mb-[120px]">
     <div className="w-full max-w-[1480px] px-4 sm:px-6 lg:px-8">
@@ -632,6 +648,7 @@ const CardGrid = ({
         wisdomPosts={wisdomPosts}
         onCardClick={onCardClick}
         convertToDisplayCard={convertToDisplayCard}
+        userReactedPosts={userReactedPosts}  // ✅ 추가
       />
 
       {/* 모바일/태블릿 레이아웃 */}
@@ -639,6 +656,7 @@ const CardGrid = ({
         wisdomPosts={wisdomPosts}
         onCardClick={onCardClick}
         convertToDisplayCard={convertToDisplayCard}
+        userReactedPosts={userReactedPosts}  // ✅ 추가
       />
     </div>
   </div>
@@ -648,24 +666,26 @@ const CardGrid = ({
 const DesktopCardLayout = ({
   wisdomPosts,
   onCardClick,
-  convertToDisplayCard
+  convertToDisplayCard,
+  userReactedPosts  // ✅ 추가
 }: {
   wisdomPosts: WisdomPost[];
   onCardClick: (post: WisdomPost, event: React.MouseEvent<HTMLElement>) => void;
   convertToDisplayCard: (post: WisdomPost) => any;
+  userReactedPosts: Map<string, ReactionType>;  // ✅ 추가
 }) => {
   const [columnsPerRow, setColumnsPerRow] = useState(3);
 
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1440) {
-        setColumnsPerRow(3); // 1440px 이상: 3열
+        setColumnsPerRow(3);
       } else if (window.innerWidth >= 1024) {
-        setColumnsPerRow(2); // 1024~1439px: 2열
+        setColumnsPerRow(2);
       } else if (window.innerWidth >= 768) {
-        setColumnsPerRow(2); // 768~1023px: 2열
+        setColumnsPerRow(2);
       } else {
-        setColumnsPerRow(1); // 768px 미만: 1열
+        setColumnsPerRow(1);
       }
     };
     handleResize();
@@ -680,12 +700,14 @@ const DesktopCardLayout = ({
           <div key={rowIndex} className="w-full inline-flex justify-center items-center gap-3.5">
             {wisdomPosts.slice(rowIndex * columnsPerRow, (rowIndex + 1) * columnsPerRow).map((post) => {
               const card = convertToDisplayCard(post);
+              const isCompleted = userReactedPosts.has(post.id);  // ✅ 추가
               return (
                 <WisdomCard
                   key={post.id}
                   post={post}
                   card={card}
                   onClick={(e) => onCardClick(post, e)}
+                  isCompleted={isCompleted}  // ✅ 추가
                 />
               );
             })}
@@ -700,22 +722,26 @@ const DesktopCardLayout = ({
 const MobileCardLayout = ({
   wisdomPosts,
   onCardClick,
-  convertToDisplayCard
+  convertToDisplayCard,
+  userReactedPosts  // ✅ 추가
 }: {
   wisdomPosts: WisdomPost[];
   onCardClick: (post: WisdomPost, event: React.MouseEvent<HTMLElement>) => void;
   convertToDisplayCard: (post: WisdomPost) => any;
+  userReactedPosts: Map<string, ReactionType>;  // ✅ 추가
 }) => (
   <div className="lg:hidden pl-3">
     <div className="flex flex-col gap-6">
       {wisdomPosts.map((post) => {
         const card = convertToDisplayCard(post);
+        const isCompleted = userReactedPosts.has(post.id);  // ✅ 추가
         return (
           <MobileWisdomCard
             key={post.id}
             post={post}
             card={card}
             onClick={(e) => onCardClick(post, e)}
+            isCompleted={isCompleted}  // ✅ 추가
           />
         );
       })}
@@ -727,17 +753,30 @@ const MobileCardLayout = ({
 const WisdomCard = ({
   post,
   card,
-  onClick
+  onClick,
+  isCompleted = false
 }: {
   post: WisdomPost;
   card: any;
   onClick: (e: React.MouseEvent<HTMLElement>) => void;
+  isCompleted?: boolean;
 }) => (
   <div
-    className="w-[470px] h-[523px] p-[25px] bg-[#3B4236] rounded-[20px] border border-[#141612] 
-              inline-flex flex-col justify-start items-center gap-[35px] cursor-pointer"
+    className={`relative w-[470px] h-[523px] p-[25px] rounded-[20px] border
+              inline-flex flex-col justify-start items-center gap-[35px] cursor-pointer
+              transition-all duration-200
+              ${isCompleted 
+                ? 'bg-[#3B4236]/60 border-[#ADFF00]' 
+                : 'bg-[#3B4236] border-[#141612] hover:border-[#ADFF00]/50'
+              }`}
     onClick={onClick}
   >
+    {isCompleted && (
+      <div className="absolute top-6 right-6 px-4 py-2 bg-[#ADFF00] rounded-full z-10">
+        <span className="text-[#1C1F18] text-sm font-bold">완료</span>
+      </div>
+    )}
+    
     <div className="self-stretch flex flex-col justify-start items-center gap-5">
       <CardHeader card={card} />
       <CardContent post={post} timestamp={card.timestamp} />
@@ -755,17 +794,29 @@ const WisdomCard = ({
 const MobileWisdomCard = ({
   post,
   card,
-  onClick
+  onClick,
+  isCompleted = false
 }: {
   post: WisdomPost;
   card: any;
   onClick: (e: React.MouseEvent<HTMLElement>) => void;
+  isCompleted?: boolean;
 }) => (
   <div
-    className="w-[323px] mx-auto bg-[#3B4236] rounded-[20px] outline outline-1 outline-offset-[-0.50px] 
-              outline-neutral-900 p-6 flex flex-col gap-9 opacity-100 cursor-pointer "
+    className={`relative w-[323px] mx-auto rounded-[20px] outline outline-1 outline-offset-[-0.50px]
+              p-6 flex flex-col gap-9 cursor-pointer transition-all duration-200
+              ${isCompleted 
+                ? 'bg-[#3B4236]/60 outline-[#ADFF00]' 
+                : 'bg-[#3B4236] outline-neutral-900'
+              }`}
     onClick={onClick}
   >
+    {isCompleted && (
+      <div className="absolute top-4 right-4 px-3 py-1.5 bg-[#ADFF00] rounded-full z-10">
+        <span className="text-[#1C1F18] text-xs font-bold">완료</span>
+      </div>
+    )}
+    
     <div className="flex flex-col justify-start items-center gap-5">
       <div className="w-full flex flex-col justify-start items-start gap-4">
         <CardHeader card={card} isMobile />
@@ -891,12 +942,6 @@ const DetailModal = ({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* ✅ Alert 이미지 (11번째 완료 후) */}
-        {showAlertImage && (
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
-            <img src="/images/alert.png" alt="알림" className="w-16 h-16" />
-          </div>
-        )}
 
         <div className="inline-flex flex-col justify-start items-center gap-6 lg:gap-[10px]">
           <ModalHeader 
