@@ -135,7 +135,7 @@ const ProfileImageSection: React.FC<{
         <input
           id="avatar-upload"
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/jpg,image/png,image/webp"  // 변경
           onChange={handleFileChange}
           className="hidden"
           disabled={loading || uploadingAvatar}
@@ -143,13 +143,16 @@ const ProfileImageSection: React.FC<{
       </div>
       
       <p className="mt-2 text-xs text-gray-400 text-center">
-        JPG, PNG 파일 (최대 5MB)
+        JPG, PNG, WEBP (자동 압축됨)  // 변경
       </p>
       
       {uploadingAvatar && (
-        <div className="mt-2 flex items-center gap-2">
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#ADFF00]" />
-          <p className="text-sm text-[#ADFF00]">업로드 중...</p>
+        <div className="mt-2 flex flex-col items-center gap-2">  // flex-col 추가
+          <div className="flex items-center gap-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#ADFF00]" />
+            <p className="text-sm text-[#ADFF00]">이미지 처리 및 업로드 중...</p>  // 변경
+          </div>
+          <p className="text-xs text-gray-500">잠시만 기다려주세요</p>  // 추가
         </div>
       )}
     </div>
@@ -265,29 +268,121 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
     }
   }, [onClose]);
 
+  const resizeAndCompressImage = (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+        const img = new Image();
+        
+        img.onload = () => {
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 800;
+          let width = img.width;
+          let height = img.height;
+  
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+  
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          
+          if (!ctx) {
+            reject(new Error('Canvas context를 가져올 수 없습니다.'));
+            return;
+          }
+  
+          ctx.drawImage(img, 0, 0, width, height);
+  
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                reject(new Error('이미지 변환 실패'));
+                return;
+              }
+  
+              const resizedFile = new File(
+                [blob], 
+                file.name.replace(/\.\w+$/, '.jpg'),
+                { type: 'image/jpeg' }
+              );
+  
+              console.log(`✅ 이미지 리사이징 완료: ${(file.size / 1024).toFixed(1)}KB → ${(resizedFile.size / 1024).toFixed(1)}KB`);
+              resolve(resizedFile);
+            },
+            'image/jpeg',
+            0.8
+          );
+        };
+  
+        img.onerror = () => reject(new Error('이미지 로드 실패'));
+        img.src = e.target?.result as string;
+      };
+  
+      reader.onerror = () => reject(new Error('파일 읽기 실패'));
+      reader.readAsDataURL(file);
+    });
+  };
+
   // 아바타 변경 처리
-  const handleAvatarChange = useCallback((file: File) => {
-    // 파일 크기 체크 (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setErrors(prev => ({ ...prev, general: '이미지 크기는 5MB 이하여야 합니다.' }));
-      return;
+  const handleAvatarChange = useCallback(async (file: File) => {
+    try {
+      setUploadingAvatar(true);
+      setErrors({});
+
+      if (!file.type.startsWith('image/')) {
+        setErrors(prev => ({ ...prev, general: '이미지 파일만 업로드 가능합니다.' }));
+        setUploadingAvatar(false);
+        return;
+      }
+
+      if (file.size > 20 * 1024 * 1024) {
+        setErrors(prev => ({ ...prev, general: '원본 이미지가 너무 큽니다 (최대 20MB).' }));
+        setUploadingAvatar(false);
+        return;
+      }
+
+      console.log(`📸 원본 파일: ${file.name}, 크기: ${(file.size / 1024).toFixed(1)}KB`);
+
+      const resizedFile = await resizeAndCompressImage(file);
+
+      if (resizedFile.size > 5 * 1024 * 1024) {
+        setErrors(prev => ({ ...prev, general: '이미지를 더 압축해야 합니다.' }));
+        setUploadingAvatar(false);
+        return;
+      }
+
+      setAvatarFile(resizedFile);
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+        setUploadingAvatar(false);
+      };
+      reader.onerror = () => {
+        setErrors(prev => ({ ...prev, general: '미리보기 생성 실패' }));
+        setUploadingAvatar(false);
+      };
+      reader.readAsDataURL(resizedFile);
+    } catch (error) {
+      console.error('❌ 이미지 처리 오류:', error);
+      setErrors(prev => ({ 
+        ...prev, 
+        general: '이미지 처리 중 오류가 발생했습니다. 다른 사진을 선택해주세요.' 
+      }));
+      setUploadingAvatar(false);
     }
-
-    // 파일 타입 체크
-    if (!file.type.startsWith('image/')) {
-      setErrors(prev => ({ ...prev, general: '이미지 파일만 업로드 가능합니다.' }));
-      return;
-    }
-
-    setErrors({});
-    setAvatarFile(file);
-
-    // 미리보기 생성
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setAvatarPreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
   }, []);
 
   // 폼 제출 처리
@@ -310,16 +405,28 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
       // 아바타 이미지 업로드
       if (avatarFile) {
         setUploadingAvatar(true);
-        const { url, error: uploadError } = await ProfileService.uploadAvatar(avatarFile);
-        setUploadingAvatar(false);
-
-        if (uploadError) {
-          setErrors({ general: uploadError.message });
+        console.log('📤 이미지 업로드 시작...');
+        
+        try {
+          const { url, error: uploadError } = await ProfileService.uploadAvatar(avatarFile);
+          setUploadingAvatar(false);
+      
+          if (uploadError) {
+            console.error('❌ 업로드 실패:', uploadError);
+            setErrors({ general: uploadError.message });
+            setLoading(false);
+            return;
+          }
+      
+          avatarUrl = url || '';
+          console.log('✅ 이미지 업로드 성공:', avatarUrl);
+        } catch (error) {
+          console.error('❌ 업로드 예외:', error);
+          setUploadingAvatar(false);
+          setErrors({ general: '이미지 업로드 중 오류가 발생했습니다.' });
           setLoading(false);
           return;
         }
-
-        avatarUrl = url || '';
       }
 
       // 프로필 업데이트
@@ -469,10 +576,10 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
             <button
               type="button"
               onClick={handleSubmit}
-              className="flex-1 py-3 px-4 bg-[#ADFF00] hover:bg-[#9AE600] text-black font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="..."
               disabled={loading || uploadingAvatar}
             >
-              {loading ? '저장 중...' : '저장'}
+              {loading ? '저장 중...' : uploadingAvatar ? '이미지 처리 중...' : '저장'}  // 변경
             </button>
           </div>
         </div>
