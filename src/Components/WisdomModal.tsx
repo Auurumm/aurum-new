@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { WisdomService, WisdomFormData } from "../services/WisdomService.ts";
 
 // ==================== 타입 정의 ====================
