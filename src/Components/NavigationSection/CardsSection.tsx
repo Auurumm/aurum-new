@@ -425,12 +425,6 @@ export const WisdomCardGrid = ({
       return newMap;
     });
 
-    // 사용 횟수 증가
-    setReactionUsage(prev => ({
-      ...prev,
-      [reactionType]: prev[reactionType] + 1
-    }));
-
     // 로컬 상태 업데이트
     setWisdomPosts(prev => prev.map(post =>
       post.id === selectedCard.id
@@ -443,11 +437,12 @@ export const WisdomCardGrid = ({
     // 히스토리 즉시 다시 로드
     await loadReactionHistory(selectedCard.id);
 
-    // 반응 카운트 증가
-    const newCount = reactionCount + 1;
-    setReactionCount(newCount);
+    // ✅ 서버에서 최신 반응 사용 현황 다시 로드
+    await loadUserReactionUsage();
 
-    // 완료 체크
+    // 완료 체크 - reactionCount는 loadUserReactionUsage에서 업데이트됨
+    // useEffect로 처리하거나 여기서 직접 체크
+    const newCount = reactionCount + 1; // 임시로 계산
     setIsCompletePopup(newCount >= TOTAL_REACTIONS_REQUIRED);
     setShowReactionPopup(true);
 
@@ -460,25 +455,25 @@ export const WisdomCardGrid = ({
   // 표현행위 취소 핸들러
   const handleCancelReaction = async () => {
     if (!selectedCard) return;
-  
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-  
+
       const userReactionType = userReactedPosts.get(selectedCard.id);
       if (!userReactionType) {
         alert('취소할 표현행위를 찾을 수 없습니다.');
         return;
       }
-  
+
       const { error } = await WisdomService.removeReaction(selectedCard.id, user.id);
-  
+
       if (error) {
         console.error('표현행위 취소 실패:', error);
         alert('표현행위 취소에 실패했습니다.');
         return;
       }
-  
+
       // ✅ 추가: alert 이미지 즉시 숨김
       setShowAlertImage(false);
 
@@ -504,17 +499,11 @@ export const WisdomCardGrid = ({
         [reactionField]: Math.max(0, currentCount - 1) 
       } : null);
 
-      // 반응 사용 횟수 감소
-      setReactionUsage(prev => ({
-        ...prev,
-        [userReactionType]: Math.max(0, prev[userReactionType] - 1)
-      }));
-
-      // 전체 반응 카운트 감소
-      setReactionCount(prev => Math.max(0, prev - 1));
-
       // 히스토리 다시 로드
       await loadReactionHistory(selectedCard.id);
+
+      // ✅ 서버에서 최신 반응 사용 현황 다시 로드 (reactionCount와 reactionUsage 모두 업데이트)
+      await loadUserReactionUsage();
       
       alert('표현행위가 취소되었습니다.');
       closeModal();
@@ -965,11 +954,10 @@ const DetailModal = ({
           <div className="relative w-full flex flex-col items-center">
             {/* ✅ Alert 이미지 (11번째 완료 후) - 버튼 위에 절대 위치 */}
             {showAlertImage && (
-              <div className="absolute -top-20 left-1/2 transform -translate-x-1/2 z-10">
-                <img src="/images/alert.png" alt="마지막 표현행위" className="w-64 h-48" />
+              <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 z-10">
+                <img src="/images/alert.png" alt="마지막 표현행위" className="w-64 h-[150px] scale-150 transform" />
               </div>
             )}
-
             {/* ✅ Default 경고 이미지 - 버튼 위에 절대 위치 */}
             {showDefaultWarning && (
               <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 z-10">

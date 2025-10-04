@@ -733,41 +733,48 @@ export class WisdomService {
 
     static async removeReaction(postId: string, userId: string): Promise<{ error: Error | null }> {
       try {
+        console.log('🔴 1. 반응 찾기 시작');
         // 1. 해당 사용자의 반응 찾기
         const { data: existingReaction, error: findError } = await supabase
           .from('wisdom_reactions')
           .select('*')
-          .eq('wisdom_post_id', postId)  // ✅ post_id → wisdom_post_id로 수정
+          .eq('wisdom_post_id', postId)
           .eq('user_id', userId)
           .single();
     
         if (findError || !existingReaction) {
+          console.log('❌ 반응 찾기 실패');
           return { error: new Error('삭제할 표현행위를 찾을 수 없습니다.') };
         }
     
         const reactionType = existingReaction.reaction_type;
+        console.log('✅ 반응 타입:', reactionType);
     
         // 2. 반응 삭제
+        console.log('🔴 2. wisdom_reactions 삭제 시작');
         const { error: deleteError } = await supabase
           .from('wisdom_reactions')
           .delete()
-          .eq('wisdom_post_id', postId)  // ✅ post_id → wisdom_post_id로 수정
+          .eq('wisdom_post_id', postId)
           .eq('user_id', userId);
     
         if (deleteError) {
-          console.error('반응 삭제 실패:', deleteError);
+          console.error('❌ 반응 삭제 실패:', deleteError);
           return { error: new Error('표현행위 삭제에 실패했습니다.') };
         }
+        console.log('✅ wisdom_reactions 삭제 완료');
     
-        // 3. wisdom_posts 테이블의 카운트 감소 (RPC 함수 사용)
+        // 3. wisdom_posts 테이블의 카운트 감소
+        console.log('🔴 3. wisdom_posts 카운트 감소 시작');
         const { error: decrementError } = await supabase
           .rpc('decrement_reaction_count', {
             post_id: postId,
-            reaction_type: reactionType
+            reaction_type: reactionType,
+            user_id_param: userId  // ✅ userId 추가
           });
     
         if (decrementError) {
-          console.error('카운트 감소 실패:', decrementError);
+          console.error('❌ 카운트 감소 실패:', decrementError);
           // 롤백: 삭제한 반응 다시 추가
           await supabase
             .from('wisdom_reactions')
@@ -778,13 +785,15 @@ export class WisdomService {
             });
           return { error: new Error('카운트 업데이트에 실패했습니다.') };
         }
+        console.log('✅ wisdom_posts 카운트 감소 완료');
     
+        console.log('✅ 모든 삭제 작업 완료');
         return { error: null };
       } catch (error) {
-        console.error('표현행위 삭제 중 예외 발생:', error);
-      return { error: error instanceof Error ? error : new Error('알 수 없는 오류가 발생했습니다.') };
+        console.error('❌ 표현행위 삭제 중 예외 발생:', error);
+        return { error: error instanceof Error ? error : new Error('알 수 없는 오류가 발생했습니다.') };
+      }
     }
-  }
 }
 
 // ✅ Supabase에서 모든 위즈덤 포스트 가져오기 (프로필 정보 포함)
