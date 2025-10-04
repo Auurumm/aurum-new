@@ -146,10 +146,25 @@ const useDraftLoader = (isOpen: boolean, isLoggedIn: boolean, setFormData: React
 };
 
 // ==================== 커스텀 훅: 스크롤 관리 ====================
-const useScrollToTop = (isOpen: boolean, popupType: PopupType) => {
-  // 모달 열릴 때 스크롤
+const useScrollToTop = (isOpen: boolean, popupType: PopupType, onClose: () => void) => {
+  const scrollPositionRef = useRef<number>(0);
+
+  // 모달 열릴 때 현재 스크롤 위치 저장 및 스크롤
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      // 모달이 닫힐 때 스크롤 위치 복원
+      if (scrollPositionRef.current !== undefined) {
+        setTimeout(() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          document.documentElement.scrollTop = 0;
+          document.body.scrollTop = 0;
+        }, 100);
+      }
+      return;
+    }
+
+    // 현재 스크롤 위치 저장
+    scrollPositionRef.current = window.pageYOffset || document.documentElement.scrollTop;
 
     setTimeout(() => {
       const modalElement = document.querySelector('[data-modal="wisdom"]');
@@ -331,10 +346,17 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({
   useModalHistory(isOpen, onClose);
   usePopupHistory(popupType);
   useDraftLoader(isOpen, isLoggedIn, setFormData);
-  useScrollToTop(isOpen, popupType);
+  useScrollToTop(isOpen, popupType, onClose);
 
   // 히스토리를 고려한 닫기 함수
   const handleClose = useCallback(() => {
+    // 스크롤을 맨 위로 복원
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }, 100);
+
     if (window.history.state?.modal === 'wisdom') {
       window.history.back();
     } else {
@@ -455,6 +477,13 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({
       if (onComplete) {
         onComplete();
       }
+
+      // 스크롤을 맨 위로
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }, 100);
 
       handleClose();
     }
