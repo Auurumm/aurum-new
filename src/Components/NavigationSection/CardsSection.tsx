@@ -979,8 +979,11 @@ const DetailModal = ({
     >
       <div
         ref={modalRef}
-        className="w-full max-w-[545px] lg:w-[589px] bg-[#3B4236] rounded-[20px] outline outline-1 outline-offset-[-1px] 
-                  outline-stone-500 my-4 sm:my-8 p-7 lg:p-[45px] relative"  // ✅ relative 추가
+        className="w-full max-w-[340px] sm:max-w-[420px] lg:max-w-[589px] 
+                  bg-[#3B4236] rounded-[20px] 
+                  outline outline-1 outline-offset-[-1px] outline-stone-500 
+                  my-4 sm:my-6 lg:my-8 
+                  p-4 sm:p-6 lg:p-[45px] relative" // ✅ relative 추가
         style={{
           marginTop: `${modalTopPosition}px`,
           marginBottom: '10px'
@@ -1119,18 +1122,23 @@ const ReactionSelector = ({
   ];
 
   return (
-    <div className="bg-[#3B4236] rounded-[20px] inline-flex justify-center items-center">
-      <div className="w-96 h-32 rounded-[20px] flex justify-center items-center">
+    <div className="w-full bg-[#3B4236] rounded-[20px] flex justify-center items-center">
+      <div className="w-full max-w-[320px] sm:max-w-sm lg:max-w-96 
+                    h-auto sm:h-32 rounded-[20px] 
+                    grid grid-cols-4 gap-1 sm:gap-0 sm:flex justify-center items-center 
+                    p-2 sm:p-0">
         {reactions.map(({ type, count, icon }) => (
-          <div key={type} className="relative">
-            {/* Cancel 버튼 (사용자가 이미 보낸 반응인 경우) */}
+          <div key={type} className="relative w-full sm:w-auto">
+            {/* Cancel 버튼 */}
             {userReactionType === type && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onCancelReaction();
                 }}
-                className="absolute -top-2 -right-2 w-7 h-7 z-10 hover:opacity-80 transition-opacity"
+                className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 
+                         w-5 h-5 sm:w-7 sm:h-7 z-10 
+                         hover:opacity-80 transition-opacity"
                 title="표현행위 취소"
               >
                 <img src="/images/cancel.png" alt="취소" className="w-full h-full" />
@@ -1140,17 +1148,28 @@ const ReactionSelector = ({
             <button
               onClick={() => !userReactionType && onReactionSelect(type as ReactionType)}
               disabled={!!userReactionType}
-              className={`w-28 p-3.5 inline-flex flex-col justify-center items-center gap-[5px] transition-all duration-200 ${
-                // ✅ selectedReaction이거나 userReactionType인 경우 모두 lime 스타일 적용
+              className={`w-full sm:w-20 lg:w-28 
+                        p-2 sm:p-2.5 lg:p-3.5 
+                        inline-flex flex-col justify-center items-center 
+                        gap-1 sm:gap-[5px] 
+                        transition-all duration-200 ${
                 selectedReaction === type || userReactionType === type
                   ? 'bg-lime-400/20 outline outline-1 outline-offset-[-1px] outline-lime-400'
                   : 'bg-[#3B4236] hover:bg-stone-600'
               }`}
             >
-              <img className="w-7 h-7" src={icon} alt={REACTION_LABELS[type as ReactionType]} />
+              <img className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" 
+                   src={icon} 
+                   alt={REACTION_LABELS[type as ReactionType]} />
               <div className="self-stretch flex flex-col justify-center items-center">
-                <div className="text-center text-white text-3xl font-bold leading-10">{count}</div>
-                <div className="text-center text-gray-400 text-sm font-semibold capitalize leading-none">
+                <div className="text-center text-white 
+                              text-lg sm:text-2xl lg:text-3xl 
+                              font-bold leading-tight sm:leading-10">
+                  {count}
+                </div>
+                <div className="text-center text-gray-400 
+                              text-xs sm:text-sm 
+                              font-semibold capitalize leading-none">
                   {REACTION_LABELS[type as ReactionType]}
                 </div>
               </div>
@@ -1166,10 +1185,17 @@ const ReactionSelector = ({
 const SendReactionButton = ({ selectedReaction, onSendReaction }: any) => (
   <button
     onClick={onSendReaction}
-    className="w-96 h-14 px-9 py-3 bg-stone-900/60 border-t border-b border-white/20 backdrop-blur-[6px] 
-               inline-flex justify-center items-center gap-2.5 transition-all my-[15px] cursor-pointer"
+    className="w-full max-w-[320px] sm:max-w-sm lg:max-w-96 
+               h-12 sm:h-14 
+               px-6 sm:px-9 py-2.5 sm:py-3 
+               bg-stone-900/60 border-t border-b border-white/20 
+               backdrop-blur-[6px] inline-flex justify-center items-center gap-2.5 
+               transition-all my-3 sm:my-[15px] cursor-pointer"
   >
-    <div className="text-[#BEFF00] text-xl font-semibold font-['Pretendard'] leading-9">
+    <div className="text-[#BEFF00] 
+                  text-base sm:text-lg lg:text-xl 
+                  font-semibold font-['Pretendard'] 
+                  leading-tight sm:leading-9">
       표현행위 보내기
     </div>
   </button>
