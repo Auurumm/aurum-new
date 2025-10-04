@@ -158,18 +158,23 @@ export const WisdomCardGrid = ({
     loadUserReactedPosts();
   }, []);
 
-  // ✅ 11번째 달성 감지 (이전 카운트와 비교)
+  // 기존 useEffect (11번째 달성 순간 감지)
   useEffect(() => {
-    // 10 → 11로 변경될 때만 팝업 표시
     if (prevReactionCountRef.current < 11 && reactionCount === 11) {
       setShowAlertImage(true);
       setTimeout(() => setShowAlertImage(false), 3000);
     }
-    
-    // 현재 카운트를 이전 카운트로 저장
     prevReactionCountRef.current = reactionCount;
   }, [reactionCount]);
-  
+
+  // ✅ 추가: 카드를 열 때도 11번째 상태면 alert 표시
+  useEffect(() => {
+    if (selectedCard && reactionCount === 11) {
+      setShowAlertImage(true);
+      setTimeout(() => setShowAlertImage(false), 3000);
+    }
+  }, [selectedCard]);
+
   // 위즈덤 포스트 로드
   const loadWisdomPosts = async () => {
     try {
