@@ -42,6 +42,7 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick, onLogoutClick }) =
   const handleProfileEditClick = () => {
     setShowProfileMenu(false);
     setShowProfileEditModal(true);
+    window.history.pushState({ modal: 'profile-edit' }, '', window.location.href);
   };
 
   const handleLogoutClick = async () => {
@@ -89,7 +90,7 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick, onLogoutClick }) =
         <nav className="w-full h-16 sm:h-20 lg:h-24 top-0 absolute bg-stone-900/60 border-b border-white/20 backdrop-blur-[6px] z-20">
           
           {/* Logo */}
-          <div className="w-8 h-5 sm:w-9 sm:h-6 lg:w-11 lg:h-7 left-3 sm:left-4 lg:left-[23px] top-1/2 -translate-y-1/2 absolute">
+          <div className="w-8 h-5 sm:w-9 sm:h-6 lg:w-11 lg:h-7 left-3 sm:left-4 lg:left-[10px] top-1/2 -translate-y-1/2 absolute">
             <img 
               src="/images/Logo.png" 
               alt="Logo" 
