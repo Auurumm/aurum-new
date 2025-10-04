@@ -175,6 +175,25 @@ export const WisdomCardGrid = ({
     }
   }, [selectedCard]);
 
+  // ✅ 추가: selectedCard가 열릴 때 히스토리 관리
+  useEffect(() => {
+    if (!selectedCard) return;
+
+    // 히스토리에 모달 상태 추가
+    window.history.pushState({ modal: 'wisdom-detail' }, '', window.location.href);
+
+    // 뒤로 가기 이벤트 처리
+    const handlePopState = () => {
+      closeModal();
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [selectedCard]);
+
   // 위즈덤 포스트 로드
   const loadWisdomPosts = async () => {
     try {
@@ -312,7 +331,14 @@ export const WisdomCardGrid = ({
     const elementTop = elementRect.top + window.pageYOffset;
 
     setModalTopPosition(Math.max(50, elementTop - 50));
-    setSelectedCard(post);
+    
+    // 이미 모달이 열려있는 경우 히스토리 중복 추가 방지
+    if (!selectedCard) {
+      setSelectedCard(post);
+    } else {
+      // 다른 카드 선택 시 히스토리는 유지하고 카드만 변경
+      setSelectedCard(post);
+    }
   };
 
   // 모달 닫기
@@ -921,10 +947,19 @@ const DetailModal = ({
   const hasUserReacted = !!userReactionType;
   const card = convertToDisplayCard(selectedCard);
 
+  const handleBackdropClick = () => {
+    // 히스토리를 고려한 닫기
+    if (window.history.state?.modal === 'wisdom-detail') {
+      window.history.back();
+    } else {
+      onClose();
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-start justify-center px-2 sm:px-4 overflow-x-hidden bg-black/70 backdrop-blur-sm"
-      onClick={onClose}
+      onClick={handleBackdropClick}
     >
       <div
         ref={modalRef}
@@ -987,23 +1022,33 @@ const DetailModal = ({
 };
 
 // 모달 헤더
-const ModalHeader = ({ card, onClose, hasUserReacted, onCancelReaction }: any) => (
-  <div className="w-full flex flex-col justify-start items-start gap-6">
-    <div className="self-stretch inline-flex justify-between items-center gap-2.5">
-      <div className="flex-1 flex justify-start items-center gap-3.5">
-        <img className="w-12 h-12 rounded-full" src={card.avatarUrl} alt="프로필 이미지" />
-        <div className="text-neutral-400 text-sm font-medium leading-tight">{card.userInfo}</div>
+const ModalHeader = ({ card, onClose, hasUserReacted, onCancelReaction }: any) => {
+  const handleClose = () => {
+    // 히스토리를 고려한 닫기
+    if (window.history.state?.modal === 'wisdom-detail') {
+      window.history.back();
+    } else {
+      onClose();
+    }
+  };
+  
+  return (
+    <div className="w-full flex flex-col justify-start items-start gap-6">
+      <div className="self-stretch inline-flex justify-between items-center gap-2.5">
+        <div className="flex-1 flex justify-start items-center gap-3.5">
+          <img className="w-12 h-12 rounded-full" src={card.avatarUrl} alt="프로필 이미지" />
+          <div className="text-neutral-400 text-sm font-medium leading-tight">{card.userInfo}</div>
+        </div>
+        <button
+          onClick={handleClose}
+          className="w-6 h-6 relative overflow-hidden text-white hover:bg-[#3B4236] rounded flex items-center justify-center"
+        >
+          ✕
+        </button>
       </div>
-      {/* ✅ 취소 버튼 제거 */}
-      <button
-        onClick={onClose}
-        className="w-6 h-6 relative overflow-hidden text-white hover:bg-[#3B4236] rounded flex items-center justify-center"
-      >
-        ✕
-      </button>
     </div>
-  </div>
-);
+  );
+};
 
 // 모달 내용
 const ModalContent = ({ selectedCard, formatTimestamp }: any) => (
