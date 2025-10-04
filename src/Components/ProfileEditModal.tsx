@@ -268,6 +268,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
     }
   }, [onClose]);
 
+  // 이미지 리사이징 및 압축 함수
   const resizeAndCompressImage = (file: File): Promise<File> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -276,11 +277,13 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
         const img = new Image();
         
         img.onload = () => {
+          // 최대 크기 설정 (800x800)
           const MAX_WIDTH = 800;
           const MAX_HEIGHT = 800;
           let width = img.width;
           let height = img.height;
-  
+
+          // 비율 유지하며 리사이징
           if (width > height) {
             if (width > MAX_WIDTH) {
               height *= MAX_WIDTH / width;
@@ -292,7 +295,8 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
               height = MAX_HEIGHT;
             }
           }
-  
+
+          // Canvas에 그리기
           const canvas = document.createElement('canvas');
           canvas.width = width;
           canvas.height = height;
@@ -302,35 +306,44 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
             reject(new Error('Canvas context를 가져올 수 없습니다.'));
             return;
           }
-  
+
+          // 이미지 그리기
           ctx.drawImage(img, 0, 0, width, height);
-  
+
+          // Blob으로 변환 (JPEG, 품질 0.8)
           canvas.toBlob(
             (blob) => {
               if (!blob) {
                 reject(new Error('이미지 변환 실패'));
                 return;
               }
-  
+
+              // File 객체 생성
               const resizedFile = new File(
                 [blob], 
                 file.name.replace(/\.\w+$/, '.jpg'),
                 { type: 'image/jpeg' }
               );
-  
+
               console.log(`✅ 이미지 리사이징 완료: ${(file.size / 1024).toFixed(1)}KB → ${(resizedFile.size / 1024).toFixed(1)}KB`);
               resolve(resizedFile);
             },
             'image/jpeg',
-            0.8
+            0.8 // 품질 80%
           );
         };
-  
-        img.onerror = () => reject(new Error('이미지 로드 실패'));
+
+        img.onerror = () => {
+          reject(new Error('이미지 로드 실패'));
+        };
+
         img.src = e.target?.result as string;
       };
-  
-      reader.onerror = () => reject(new Error('파일 읽기 실패'));
+
+      reader.onerror = () => {
+        reject(new Error('파일 읽기 실패'));
+      };
+
       reader.readAsDataURL(file);
     });
   };
@@ -341,12 +354,14 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
       setUploadingAvatar(true);
       setErrors({});
 
+      // 파일 타입 체크
       if (!file.type.startsWith('image/')) {
         setErrors(prev => ({ ...prev, general: '이미지 파일만 업로드 가능합니다.' }));
         setUploadingAvatar(false);
         return;
       }
 
+      // 원본 파일 크기 체크 (20MB)
       if (file.size > 20 * 1024 * 1024) {
         setErrors(prev => ({ ...prev, general: '원본 이미지가 너무 큽니다 (최대 20MB).' }));
         setUploadingAvatar(false);
@@ -355,8 +370,10 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
 
       console.log(`📸 원본 파일: ${file.name}, 크기: ${(file.size / 1024).toFixed(1)}KB`);
 
+      // 이미지 리사이징 및 압축
       const resizedFile = await resizeAndCompressImage(file);
 
+      // 리사이징된 파일 크기 재확인
       if (resizedFile.size > 5 * 1024 * 1024) {
         setErrors(prev => ({ ...prev, general: '이미지를 더 압축해야 합니다.' }));
         setUploadingAvatar(false);
@@ -365,6 +382,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
 
       setAvatarFile(resizedFile);
 
+      // 미리보기 생성
       const reader = new FileReader();
       reader.onloadend = () => {
         setAvatarPreview(reader.result as string);
