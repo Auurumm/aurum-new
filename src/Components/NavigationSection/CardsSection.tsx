@@ -568,12 +568,24 @@ export const WisdomCardGrid = ({
       setSelectedCard(null);
       setSelectedReaction(null);
 
+      // ✅ 개선: 즉시 최상단으로 스크롤 시작
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+      
+      // ✅ 추가: 확실하게 최상단 고정 (여러 번 시도)
       setTimeout(() => {
-        window.scrollTo({
-          top: 0,
-          behavior: 'smooth'
-        });
-      }, 500);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }, 100);
+      
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }, 300);
 
       onAllReactionsComplete();
     }

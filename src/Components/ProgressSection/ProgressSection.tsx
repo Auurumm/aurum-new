@@ -30,6 +30,28 @@ export const ProgressSection: React.FC<ProgressSectionProps> = ({ isCompleted = 
     }
   };
 
+  const handleShowMotion = () => {
+    console.log('🎉 완료 버튼 클릭 - 모션 효과 실행');
+    
+    // ✅ 추가: 최상단으로 스크롤
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+    
+    // ✅ 추가: 확실하게 최상단 고정
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }, 100);
+    
+    // ✅ 부모 컴포넌트의 onShowMotion 호출
+    if (onShowMotion) {
+      onShowMotion();
+    }
+  };
+  
   // 프로그레스 바 이미지 결정 (데스크탑용)
   const getProgressBarImage = () => {
     if (isAllReactionsCompleted) return "/images/ProgressBar3.png";

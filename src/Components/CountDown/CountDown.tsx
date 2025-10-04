@@ -335,8 +335,8 @@ export const CountDown: React.FC<CountDownProps> = ({ isCompleted = false, onCom
           {/* 하단 영역 - 영상과 같은 위치에서 종료 */}
           <div className="w-full flex flex-col justify-start items-center lg:items-start gap-3.5 lg:mt-auto">
             
-            {/* 날짜 영역 */}
-            <div className="inline-flex justify-center items-center gap-[10px]">
+            {/* 날짜 영역 - 모바일: 왼쪽 정렬, 데스크톱: 중앙 정렬 */}
+            <div className="w-full lg:w-auto inline-flex justify-start lg:justify-center items-center gap-[10px]">
               <div className="w-6 h-6 relative overflow-hidden flex items-center justify-center">
                 <img 
                   src="/images/arrow.png" 
@@ -349,9 +349,9 @@ export const CountDown: React.FC<CountDownProps> = ({ isCompleted = false, onCom
               </div>
             </div>
 
-            {/* 버튼 - 완료 상태에 따라 이미지와 클릭 가능 여부 변경 */}
+            {/* 버튼 - 모바일: 더 넓게 (320px), 데스크톱: 전체 너비 */}
             {isWisdomCompleted ? (
-              <div className="w-64 lg:w-full h-12 lg:h-14 flex justify-center items-center">
+              <div className="w-80 lg:w-full h-12 lg:h-14 flex justify-center items-center">
                 <img 
                   src="/images/complete.png" 
                   alt="작성 완료됨" 
@@ -360,7 +360,7 @@ export const CountDown: React.FC<CountDownProps> = ({ isCompleted = false, onCom
               </div>
             ) : (
               <button 
-                className="w-64 lg:w-full h-12 lg:h-14 flex justify-center items-center hover:scale-[1.02] transition-transform"
+                className="w-80 lg:w-full h-12 lg:h-14 flex justify-center items-center hover:scale-[1.02] transition-transform"
                 onClick={handleWisdomButtonClick}
                 aria-label="위즈덤 작성하기"
               >
