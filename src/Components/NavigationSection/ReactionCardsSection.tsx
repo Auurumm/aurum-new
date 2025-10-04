@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 
 const reactionCards = [
   {
@@ -32,19 +32,38 @@ const reactionCards = [
 ];
 
 export const ReactionCardsSection = (): JSX.Element => {
-  const [isMobile, setIsMobile] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isAtStart, setIsAtStart] = useState(true);
+  const [isAtEnd, setIsAtEnd] = useState(false);
 
-  // 브레이크포인트 감지
+  // 스크롤 위치 추적
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollLeft, scrollWidth, clientWidth } = container;
+      
+      setIsAtStart(scrollLeft <= 10);
+      setIsAtEnd(scrollLeft + clientWidth >= scrollWidth - 10);
+      
+      // 현재 카드 인덱스 계산
+      const cardElement = container.querySelector('.card-item') as HTMLElement;
+      if (cardElement) {
+        const cardWidth = cardElement.offsetWidth;
+        const newIndex = Math.round(scrollLeft / (cardWidth + 20));
+        setCurrentIndex(Math.min(newIndex, reactionCards.length - 1));
+      }
     };
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+
+    container.addEventListener('scroll', handleScroll);
+    handleScroll(); // 초기 상태
+
+    return () => container.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // CSS 애니메이션을 위한 스타일 추가
+  // CSS 애니메이션
   useEffect(() => {
     const style = document.createElement('style');
     style.textContent = `
@@ -56,11 +75,50 @@ export const ReactionCardsSection = (): JSX.Element => {
       .wiggle-animation:hover {
         animation: wiggle 0.6s ease-in-out infinite;
       }
+
+      /* 스크롤바 숨기기 */
+      .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+
+      /* 오른쪽 페이드 효과 - "더 있어요" 암시 */
+      .scroll-fade-right::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 60px;
+        height: 100%;
+        background: linear-gradient(to left, rgba(17,20,16,1) 0%, rgba(17,20,16,0) 100%);
+        pointer-events: none;
+        transition: opacity 0.3s;
+        z-index: 1;
+      }
+
+      .scroll-fade-right.at-end::after {
+        opacity: 0;
+      }
+
+      /* 스크롤 힌트 애니메이션 */
+      @keyframes swipe-hint {
+        0%, 100% { transform: translateX(0); }
+        50% { transform: translateX(10px); }
+      }
+
+      .swipe-hint {
+        animation: swipe-hint 2s ease-in-out infinite;
+      }
     `;
     document.head.appendChild(style);
     
     return () => {
-      document.head.removeChild(style);
+      if (document.head.contains(style)) {
+        document.head.removeChild(style);
+      }
     };
   }, []);
 
@@ -94,34 +152,64 @@ export const ReactionCardsSection = (): JSX.Element => {
           </div>
         </div>
 
-        {/* 모바일/태블릿: 수평 스크롤 - 1279px 이하, rotate 없음 */}
+        {/* 모바일/태블릿: 개선된 수평 스크롤 */}
         <div className="block xl:hidden w-full">
           <div 
-            className="flex overflow-x-auto py-6 md:py-8"
-            style={{ 
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none',
-              WebkitOverflowScrolling: 'touch',
-              paddingLeft: '16px',
-              paddingRight: '60px'
-            }}
+            className={`relative scroll-fade-left scroll-fade-right ${
+              isAtStart ? 'at-start' : ''
+            } ${isAtEnd ? 'at-end' : ''}`}
           >
-            {reactionCards.map((card, index) => (
-              <div
-                key={card.id}
-                className="flex-shrink-0"
-                style={{ 
-                  width: 'min(280px, calc(100vw - 80px))',
-                  marginRight: index < reactionCards.length - 1 ? '20px' : '0' 
-                }}
-              >
-                <img
-                  src={card.mobileImage}
-                  alt={card.title}
-                  className="w-full h-auto object-contain"
-                />
+            {/* 스크롤 컨테이너 */}
+            <div 
+              ref={scrollContainerRef}
+              className="flex overflow-x-auto hide-scrollbar py-6 md:py-8 snap-x snap-mandatory"
+              style={{ 
+                WebkitOverflowScrolling: 'touch',
+                paddingLeft: '16px',
+                paddingRight: '16px',
+                scrollBehavior: 'smooth'
+              }}
+            >
+              {reactionCards.map((card, index) => (
+                <div
+                  key={card.id}
+                  className="card-item flex-shrink-0 snap-start"
+                  style={{ 
+                    // 🎯 핵심: 다음 카드 미리보기 효과
+                    width: 'min(72vw, 260px)', // 조정된 너비
+                    marginRight: index < reactionCards.length - 1 ? '20px' : '16px' 
+                  }}
+                >
+                  <img
+                    src={card.mobileImage}
+                    alt={card.title}
+                    className="w-full h-auto object-contain"
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* 스크롤 힌트 (처음에만 3초간 표시) */}
+            {isAtStart && !isAtEnd && (
+              <div className="absolute right-6 top-1/2 -translate-y-1/2 z-10 pointer-events-none swipe-hint">
+                <div className="flex items-center gap-2 px-3 py-2 bg-black/60 rounded-full backdrop-blur-sm">
+                  <span className="text-white/90 text-sm font-medium">스와이프</span>
+                  <svg 
+                    className="w-5 h-5 text-[#ADFF00]" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth={2.5} 
+                      d="M9 5l7 7-7 7" 
+                    />
+                  </svg>
+                </div>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>
