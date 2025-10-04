@@ -13,6 +13,18 @@ export const MainContentSection = (): JSX.Element => {
   // 모바일 슬라이더 상태
   const [currentIndex, setCurrentIndex] = useState(0);
   
+  const getMobileCardWidth = () => {
+    if (typeof window !== 'undefined') {
+      // 화면 너비의 75%를 카드 너비로 사용 (패딩 고려)
+      return Math.min(280, window.innerWidth * 0.75);
+    }
+    return 256;
+  };
+
+  // ✅ 모바일 카드 너비 상태 추가
+  const [mobileCardWidth, setMobileCardWidth] = useState(getMobileCardWidth());
+
+
   // 반응형 상태
   const [isMobile, setIsMobile] = useState(false);
   const [cardWidth, setCardWidth] = useState(490);
@@ -46,6 +58,7 @@ export const MainContentSection = (): JSX.Element => {
     const handleResize = () => {
       setCardWidth(getCardWidth());
       setIsMobile(window.innerWidth < 640);
+      setMobileCardWidth(getMobileCardWidth());
     };
 
     handleResize();
@@ -105,13 +118,14 @@ export const MainContentSection = (): JSX.Element => {
   const goToNext = () => {
     const nextIndex = currentIndex < rankings.length - 1 ? currentIndex + 1 : 0;
     setCurrentIndex(nextIndex);
-    setTranslateX(-nextIndex * 304);
+    // 카드 너비 + 마진(48px = mr-12)을 동적으로 계산
+    setTranslateX(-nextIndex * (mobileCardWidth + 48));
   };
-
+  
   const goToPrev = () => {
     const prevIndex = currentIndex > 0 ? currentIndex - 1 : rankings.length - 1;
     setCurrentIndex(prevIndex);
-    setTranslateX(-prevIndex * 304);
+    setTranslateX(-prevIndex * (mobileCardWidth + 48));
   };
 
   // 사용자 정보 포맷팅 - 우선순위 변경
