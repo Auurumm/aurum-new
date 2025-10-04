@@ -71,6 +71,7 @@ export const WisdomCardGrid = ({
   const [modalTopPosition, setModalTopPosition] = useState<number>(0);
   const modalRef = useRef<HTMLDivElement>(null);
   const prevReactionCountRef = useRef<number>(0); // ✅ 추가
+  const scrollPositionRef = useRef<number>(0);
   const [showAll, setShowAll] = useState(false);
 
 
@@ -98,6 +99,7 @@ export const WisdomCardGrid = ({
   const [showAlertImage, setShowAlertImage] = useState(false);
   const [userReactedPosts, setUserReactedPosts] = useState<Map<string, ReactionType>>(new Map());
 
+
   // 초기 위즈덤 포스트 로드
   useEffect(() => {
     loadWisdomPosts();
@@ -124,9 +126,12 @@ export const WisdomCardGrid = ({
     loadUserReactionUsage();
   }, []);
 
-  // 모달이 열릴 때 스크롤 위치 조정
+  // 모달이 열릴 때 스크롤 위치 저장 및 조정
   useEffect(() => {
     if (selectedCard && modalTopPosition > 0) {
+      // 현재 스크롤 위치 저장
+      scrollPositionRef.current = window.pageYOffset || document.documentElement.scrollTop;
+      
       const scrollToModal = () => {
         const targetScrollTop = modalTopPosition - 80;
         window.scrollTo({
@@ -346,6 +351,17 @@ export const WisdomCardGrid = ({
     setSelectedCard(null);
     setSelectedReaction(null);
     setModalTopPosition(0);
+    
+    // 저장된 스크롤 위치로 복원
+    setTimeout(() => {
+      const savedPosition = scrollPositionRef.current;
+      if (savedPosition !== undefined) {
+        window.scrollTo({
+          top: savedPosition,
+          behavior: 'smooth'
+        });
+      }
+    }, 100);
   };
 
   // 반응 선택 핸들러
