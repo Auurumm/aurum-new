@@ -81,126 +81,150 @@ export interface ImageProcessorConfig {
   /**
    * Resizes and compresses image file
    */
+  /**
+   * Resizes and compresses image file (Android-compatible version)
+   */
   export const resizeAndCompressImage = async (
     file: File,
     config: ImageProcessorConfig = DEFAULT_IMAGE_CONFIG
   ): Promise<File> => {
     return new Promise((resolve, reject) => {
+      console.log('  📂 Starting image processing...');
+      console.log('  📊 File details:', {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+      });
+      
       const timeoutId = setTimeout(() => {
+        console.error('  ⏰ TIMEOUT after 30 seconds');
         reject(new ImageProcessorError(
           '이미지 처리 시간이 초과되었습니다.',
           'TIMEOUT'
         ));
       }, config.timeout);
   
-      const reader = new FileReader();
-  
-      reader.onload = (e) => {
-        console.log('📖 File read complete');
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-  
-        img.onload = () => {
-          console.log(`🖼️ Image loaded: ${img.width}x${img.height}`);
-  
-          try {
-            const { width, height } = calculateDimensions(
-              img.width,
-              img.height,
-              config.maxWidth,
-              config.maxHeight
-            );
-  
-            console.log(`📐 Resizing to: ${width}x${height}`);
-  
-            const canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-  
-            const ctx = canvas.getContext('2d', { alpha: false });
-            if (!ctx) {
-              throw new ImageProcessorError(
-                'Canvas context를 생성할 수 없습니다.',
-                'CANVAS_ERROR'
-              );
-            }
-  
-            // White background for JPEG
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(0, 0, width, height);
-            ctx.drawImage(img, 0, 0, width, height);
-  
-            console.log('🎨 Canvas rendering complete');
-  
-            // Convert to data URL (better Android compatibility)
-            const dataUrl = canvas.toDataURL('image/jpeg', config.quality);
-            console.log('📸 DataURL generated');
-  
-            // Convert data URL to Blob
-            fetch(dataUrl)
-              .then((res) => res.blob())
-              .then((blob) => {
-                const resizedFile = new File(
-                  [blob],
-                  file.name.replace(/\.\w+$/, '.jpg'),
-                  { type: 'image/jpeg' }
-                );
-  
-                console.log(
-                  `✅ Resize complete: ${(file.size / 1024).toFixed(1)}KB → ${(resizedFile.size / 1024).toFixed(1)}KB`
-                );
-  
-                clearTimeout(timeoutId);
-                resolve(resizedFile);
-              })
-              .catch((err) => {
-                clearTimeout(timeoutId);
-                reject(new ImageProcessorError(
-                  '이미지 변환 중 오류가 발생했습니다.',
-                  'CONVERSION_ERROR'
-                ));
-              });
-          } catch (error) {
-            clearTimeout(timeoutId);
-            reject(
-              error instanceof ImageProcessorError
-                ? error
-                : new ImageProcessorError('알 수 없는 오류가 발생했습니다.', 'UNKNOWN_ERROR')
-            );
-          }
-        };
-  
-        img.onerror = () => {
-          clearTimeout(timeoutId);
-          reject(new ImageProcessorError(
-            '이미지를 로드할 수 없습니다.',
-            'IMAGE_LOAD_ERROR'
-          ));
-        };
-  
-        const result = e.target?.result as string;
-        if (!result) {
-          clearTimeout(timeoutId);
-          reject(new ImageProcessorError(
-            '파일 데이터를 읽을 수 없습니다.',
-            'READ_ERROR'
-          ));
-          return;
-        }
-  
-        img.src = result;
-      };
-  
-      reader.onerror = () => {
+      // 🔥 안드로이드 호환성: FileReader 대신 createObjectURL 사용
+      console.log('  🔄 Creating Blob URL...');
+      let blobUrl: string;
+      try {
+        blobUrl = URL.createObjectURL(file);
+        console.log('  ✅ Blob URL created:', blobUrl.substring(0, 50) + '...');
+      } catch (blobError) {
+        console.error('  ❌ Blob URL creation failed:', blobError);
         clearTimeout(timeoutId);
         reject(new ImageProcessorError(
-          '파일을 읽을 수 없습니다.',
-          'FILE_READ_ERROR'
+          'Blob URL 생성 실패',
+          'BLOB_URL_ERROR'
+        ));
+        return;
+      }
+  
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+  
+      img.onload = () => {
+        console.log(`  ✅ Image loaded: ${img.width}x${img.height}`);
+        
+        // Blob URL 해제
+        URL.revokeObjectURL(blobUrl);
+        console.log('  🗑️ Blob URL revoked');
+  
+        try {
+          const { width, height } = calculateDimensions(
+            img.width,
+            img.height,
+            config.maxWidth,
+            config.maxHeight
+          );
+  
+          console.log(`  📐 Target dimensions: ${width}x${height}`);
+  
+          const canvas = document.createElement('canvas');
+          console.log('  ✅ Canvas created');
+          
+          canvas.width = width;
+          canvas.height = height;
+  
+          const ctx = canvas.getContext('2d', { 
+            alpha: false,
+            willReadFrequently: false 
+          });
+          
+          if (!ctx) {
+            console.error('  ❌ Failed to get canvas context');
+            clearTimeout(timeoutId);
+            reject(new ImageProcessorError(
+              'Canvas context를 생성할 수 없습니다.',
+              'CANVAS_ERROR'
+            ));
+            return;
+          }
+          console.log('  ✅ Canvas context acquired');
+  
+          // White background for JPEG
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, width, height);
+          console.log('  ✅ Background filled');
+          
+          ctx.drawImage(img, 0, 0, width, height);
+          console.log('  ✅ Image drawn to canvas');
+  
+          // Convert to blob directly (better than dataURL)
+          console.log('  🔄 Converting canvas to blob...');
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                console.error('  ❌ toBlob returned null');
+                clearTimeout(timeoutId);
+                reject(new ImageProcessorError(
+                  'Canvas를 Blob으로 변환할 수 없습니다.',
+                  'TOBLOB_ERROR'
+                ));
+                return;
+              }
+  
+              console.log('  ✅ Blob created, size:', blob.size);
+              
+              const resizedFile = new File(
+                [blob],
+                file.name.replace(/\.\w+$/, '.jpg'),
+                { type: 'image/jpeg', lastModified: Date.now() }
+              );
+  
+              console.log(
+                `  ✅ Final: ${(file.size / 1024).toFixed(1)}KB → ${(resizedFile.size / 1024).toFixed(1)}KB`
+              );
+  
+              clearTimeout(timeoutId);
+              resolve(resizedFile);
+            },
+            'image/jpeg',
+            config.quality
+          );
+        } catch (error) {
+          console.error('  ❌ Canvas processing error:', error);
+          clearTimeout(timeoutId);
+          reject(
+            error instanceof ImageProcessorError
+              ? error
+              : new ImageProcessorError('Canvas 처리 중 오류', 'CANVAS_PROCESSING_ERROR')
+          );
+        }
+      };
+  
+      img.onerror = (imgError) => {
+        console.error('  ❌ Image load error:', imgError);
+        URL.revokeObjectURL(blobUrl);
+        clearTimeout(timeoutId);
+        reject(new ImageProcessorError(
+          '이미지를 로드할 수 없습니다.',
+          'IMAGE_LOAD_ERROR'
         ));
       };
   
-      console.log('📂 Starting file read...');
-      reader.readAsDataURL(file);
+      console.log('  🔄 Setting image src to Blob URL...');
+      img.src = blobUrl;
     });
   };
   
