@@ -966,7 +966,7 @@ const DetailModal = ({
             {/* ✅ Alert 이미지 (11번째 완료 후) - 버튼 위에 절대 위치 */}
             {showAlertImage && (
               <div className="absolute -top-20 left-1/2 transform -translate-x-1/2 z-10">
-                <img src="/images/alert.png" alt="마지막 표현행위" className="w-32 h-auto" />
+                <img src="/images/alert.png" alt="마지막 표현행위" className="w-64 h-48" />
               </div>
             )}
 
