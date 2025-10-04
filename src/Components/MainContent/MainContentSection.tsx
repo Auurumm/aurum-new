@@ -176,11 +176,11 @@ export const MainContentSection = (): JSX.Element => {
 
       {/* 모바일 레이아웃 */}
       {isMobile ? (
-        <div className="relative flex items-center justify-center px-2">
-          {/* 이전 버튼 */}
+        <div className="relative w-full flex items-center justify-center">
+          {/* 이전 버튼 - 카드 밖에 배치 */}
           <button 
             onClick={goToPrev}
-            className="absolute left-2 z-10 w-10 h-10 flex items-center justify-center transition-opacity"
+            className="absolute left-0 z-10 w-10 h-10 flex items-center justify-center bg-black/50 rounded-full"
             aria-label="이전 카드"
           >
             <img 
@@ -190,19 +190,22 @@ export const MainContentSection = (): JSX.Element => {
             />
           </button>
           
-          {/* 카드 영역 */}
-          <div className="w-64 overflow-hidden mx-8">
+          {/* 카드 영역 - 화면 전체 너비에서 버튼 공간만 제외 */}
+          <div className="overflow-hidden" style={{ width: `${mobileCardWidth}px` }}>
             <div 
               className="flex transition-transform duration-300"
               style={{ 
                 transform: `translateX(${translateX}px)`,
-                width: `${rankings.length * 296}px`
               }}
             >
               {rankings.map((user) => (
                 <div 
                   key={user.id} 
-                  className="w-64 flex-shrink-0 flex flex-col relative mr-12"
+                  className="flex-shrink-0 flex flex-col"
+                  style={{ 
+                    width: `${mobileCardWidth}px`,
+                    marginRight: '48px' // 카드 간 간격
+                  }}
                 >
                   {/* 상단 프로필 영역 */}
                   <div className="w-full h-28 px-4 py-3 bg-gradient-to-b from-black/0 to-black/50 rounded-tl-[20px] rounded-tr-[20px] outline outline-1 outline-offset-[-1px] outline-white/20 flex flex-col justify-end items-center relative overflow-hidden">
@@ -311,10 +314,10 @@ export const MainContentSection = (): JSX.Element => {
             </div>
           </div>
           
-          {/* 다음 버튼 */}
+          {/* 다음 버튼 - 카드 밖에 배치 */}
           <button 
             onClick={goToNext}
-            className="absolute right-2 z-10 w-10 h-10 flex items-center justify-center transition-opacity"
+            className="absolute right-0 z-10 w-10 h-10 flex items-center justify-center bg-black/50 rounded-full"
             aria-label="다음 카드"
           >
             <img 
