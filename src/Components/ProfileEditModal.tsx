@@ -143,7 +143,7 @@ const ProfileImageSection: React.FC<{
       </div>
       
       <p className="mt-2 text-xs text-gray-400 text-center">
-        JPG, PNG, WEBP (자동 압축됨)  // 변경
+        JPG, PNG, WEBP (자동 압축됨)  
       </p>
       
       {uploadingAvatar && (
@@ -597,7 +597,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
               className="..."
               disabled={loading || uploadingAvatar}
             >
-              {loading ? '저장 중...' : uploadingAvatar ? '이미지 처리 중...' : '저장'}  // 변경
+              {loading ? '저장 중...' : uploadingAvatar ? '이미지 처리 중...' : '저장'}  
             </button>
           </div>
         </div>
