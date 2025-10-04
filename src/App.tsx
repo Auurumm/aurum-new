@@ -161,6 +161,17 @@ const AppContent = () => {
     }, 10000);
   };
 
+  // 완료 버튼 클릭 시 모션 효과
+  const handleShowMotion = () => {
+    console.log('🎉 완료 버튼 클릭 - 모션 효과 실행');
+    setShowMotionEffect(true);
+    
+    setTimeout(() => {
+      console.log('10초 후 모션 효과 제거');
+      setShowMotionEffect(false);
+    }, 10000);
+  };
+
   // 인증이 필요한 액션 처리
   const handleAuthRequired = () => {
     if (!user) {
@@ -431,6 +442,7 @@ const AppContent = () => {
             <ProgressSection 
               isCompleted={isWisdomCompleted} 
               isAllReactionsCompleted={isAllReactionsCompleted}
+              onShowMotion={handleShowMotion}  // ✅ 추가
             />
           </div>
           

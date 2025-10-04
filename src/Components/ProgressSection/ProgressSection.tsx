@@ -3,9 +3,10 @@ import React from "react";
 interface ProgressSectionProps {
   isCompleted?: boolean;
   isAllReactionsCompleted?: boolean;
+  onShowMotion?: () => void;
 }
 
-export const ProgressSection: React.FC<ProgressSectionProps> = ({ isCompleted = false, isAllReactionsCompleted = false }) => {
+export const ProgressSection: React.FC<ProgressSectionProps> = ({ isCompleted = false, isAllReactionsCompleted = false, onShowMotion }) => {
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
@@ -77,11 +78,32 @@ export const ProgressSection: React.FC<ProgressSectionProps> = ({ isCompleted = 
                 </div>
               </div>
               
-              {/* Message 버튼 영역 - 3단계 완료 시 숨김 */}
-              {!isAllReactionsCompleted && (
+              {/* Message 버튼 영역 - 3단계 완료 시 "완료" 버튼 표시 */}
+              {isAllReactionsCompleted ? (
+                // 3단계 완료 - "완료" 버튼
+                <div className="absolute bottom-4 right-12">
+                  <button
+                    onClick={onShowMotion}
+                    className="px-5 py-2 bg-[#ADFF00] 
+                      shadow-[inset_-3px_-5px_10px_0px_rgba(0,0,0,0.40)] 
+                      shadow-[inset_2px_3px_4px_0px_rgba(173,255,0,0.20)] 
+                      outline outline-1 outline-offset-[-0.50px] outline-stone-500 
+                      inline-flex justify-center items-center gap-2.5
+                      transition-all duration-200 hover:scale-105 hover:brightness-110
+                      focus:outline-none focus:ring-2 focus:ring-[#ADFF00] focus:ring-opacity-50
+                      cursor-pointer"
+                    aria-label="완료 - 축하 효과 보기"
+                  >
+                    <div className="text-center text-neutral-900 text-sm lg:text-base font-medium font-['Pretendard'] leading-tight">
+                      완료
+                    </div>
+                  </button>
+                </div>
+              ) : (
                 <div className={`absolute bottom-0 ${
                   isCompleted ? 'left-[50%] transform -translate-x-1/2' : 'left-0 lg:left-[2px]'
                 }`}>
+                  {/* 기존 1단계, 2단계 메시지 버튼들 */}
                   {isCompleted ? (
                     // 2단계 메시지 (완료 시)
                     <button 
@@ -143,8 +165,28 @@ export const ProgressSection: React.FC<ProgressSectionProps> = ({ isCompleted = 
               </div>
             </div>
             
-            {/* Message 버튼 - 3단계 완료 시 숨김 */}
-            {!isAllReactionsCompleted && (
+            {/* Message 버튼 - 3단계 완료 시 "완료" 버튼 표시 */}
+            {isAllReactionsCompleted ? (
+              // 3단계 완료 - "완료" 버튼 (모바일)
+              <div className="w-full flex justify-end px-4">
+                <button
+                  onClick={onShowMotion}
+                  className="px-4 py-1.5 bg-[#ADFF00] 
+                    shadow-[inset_-3px_-5px_10px_0px_rgba(0,0,0,0.40)] 
+                    shadow-[inset_2px_3px_4px_0px_rgba(173,255,0,0.20)] 
+                    outline outline-1 outline-offset-[-0.50px] outline-stone-500 
+                    inline-flex justify-center items-center gap-2.5
+                    transition-all duration-200 active:scale-95
+                    cursor-pointer"
+                  aria-label="완료 - 축하 효과 보기"
+                >
+                  <div className="text-center text-neutral-900 text-sm font-medium font-['Pretendard'] leading-tight">
+                    완료
+                  </div>
+                </button>
+              </div>
+            ) : (
+              // 1단계, 2단계 - 기존 메시지 버튼
               <div className="w-36 h-11 relative">
                 <button
                   onClick={handleMessageClick}
