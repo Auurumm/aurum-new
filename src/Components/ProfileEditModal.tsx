@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { ProfileService } from '../services/ProfileService.ts';
+// 🔥 추가: imageProcessor import
+import { 
+  resizeAndCompressImage, 
+  validateImageFile, 
+  getImageErrorMessage,
+  ImageProcessorError 
+} from '../utils/imageProcessor.ts';
 
 // ==================== 타입 정의 ====================
 interface ProfileEditModalProps {
@@ -51,17 +58,10 @@ const validateForm = (data: FormData): FormErrors => {
 const useModalHistory = (isOpen: boolean, onClose: () => void) => {
   useEffect(() => {
     if (!isOpen) return;
-
-    // 히스토리 엔트리 추가
     window.history.pushState({ modal: 'profile-edit' }, '', window.location.href);
-
-    // 뒤로 가기 처리
     const handlePopState = () => onClose();
     window.addEventListener('popstate', handlePopState);
-
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
+    return () => window.removeEventListener('popstate', handlePopState);
   }, [isOpen, onClose]);
 };
 
@@ -135,7 +135,7 @@ const ProfileImageSection: React.FC<{
         <input
           id="avatar-upload"
           type="file"
-          accept="image/jpeg,image/jpg,image/png,image/webp"  // 변경
+          accept="image/jpeg,image/jpg,image/png,image/webp"
           onChange={handleFileChange}
           className="hidden"
           disabled={loading || uploadingAvatar}
@@ -143,16 +143,16 @@ const ProfileImageSection: React.FC<{
       </div>
       
       <p className="mt-2 text-xs text-gray-400 text-center">
-        JPG, PNG, WEBP (자동 압축됨)  
+        JPG, PNG, WEBP (자동 압축됨)
       </p>
       
       {uploadingAvatar && (
-        <div className="mt-2 flex flex-col items-center gap-2">  // flex-col 추가
+        <div className="mt-2 flex flex-col items-center gap-2">
           <div className="flex items-center gap-2">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#ADFF00]" />
-            <p className="text-sm text-[#ADFF00]">이미지 처리 및 업로드 중...</p>  // 변경
+            <p className="text-sm text-[#ADFF00]">이미지 처리 및 업로드 중...</p>
           </div>
-          <p className="text-xs text-gray-500">잠시만 기다려주세요</p>  // 추가
+          <p className="text-xs text-gray-500">잠시만 기다려주세요</p>
         </div>
       )}
     </div>
@@ -233,7 +233,6 @@ const GenderSelector: React.FC<{
 export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onClose }) => {
   const { user, profile, refreshProfile } = useAuth();
   
-  // 상태 관리
   const [formData, setFormData] = useProfileData(isOpen, profile);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>('');
@@ -241,17 +240,14 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
 
-  // 히스토리 관리
   useModalHistory(isOpen, onClose);
 
-  // 프로필 이미지 미리보기 업데이트
   useEffect(() => {
     if (isOpen && profile?.avatar_url) {
       setAvatarPreview(profile.avatar_url);
     }
   }, [isOpen, profile?.avatar_url]);
 
-  // 모달 열릴 때 초기화
   useEffect(() => {
     if (isOpen) {
       setErrors({});
@@ -259,7 +255,6 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
     }
   }, [isOpen]);
 
-  // 히스토리를 고려한 닫기 함수
   const handleClose = useCallback(() => {
     if (window.history.state?.modal === 'profile-edit') {
       window.history.back();
@@ -268,146 +263,47 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
     }
   }, [onClose]);
 
-  // 이미지 리사이징 및 압축 함수
-  const resizeAndCompressImage = (file: File): Promise<File> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      
-      reader.onload = (e) => {
-        const img = new Image();
-        
-        img.onload = () => {
-          // 최대 크기 설정 (800x800)
-          const MAX_WIDTH = 800;
-          const MAX_HEIGHT = 800;
-          let width = img.width;
-          let height = img.height;
-
-          // 비율 유지하며 리사이징
-          if (width > height) {
-            if (width > MAX_WIDTH) {
-              height *= MAX_WIDTH / width;
-              width = MAX_WIDTH;
-            }
-          } else {
-            if (height > MAX_HEIGHT) {
-              width *= MAX_HEIGHT / height;
-              height = MAX_HEIGHT;
-            }
-          }
-
-          // Canvas에 그리기
-          const canvas = document.createElement('canvas');
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          
-          if (!ctx) {
-            reject(new Error('Canvas context를 가져올 수 없습니다.'));
-            return;
-          }
-
-          // 이미지 그리기
-          ctx.drawImage(img, 0, 0, width, height);
-
-          // Blob으로 변환 (JPEG, 품질 0.8)
-          canvas.toBlob(
-            (blob) => {
-              if (!blob) {
-                reject(new Error('이미지 변환 실패'));
-                return;
-              }
-
-              // File 객체 생성
-              const resizedFile = new File(
-                [blob], 
-                file.name.replace(/\.\w+$/, '.jpg'),
-                { type: 'image/jpeg' }
-              );
-
-              console.log(`✅ 이미지 리사이징 완료: ${(file.size / 1024).toFixed(1)}KB → ${(resizedFile.size / 1024).toFixed(1)}KB`);
-              resolve(resizedFile);
-            },
-            'image/jpeg',
-            0.8 // 품질 80%
-          );
-        };
-
-        img.onerror = () => {
-          reject(new Error('이미지 로드 실패'));
-        };
-
-        img.src = e.target?.result as string;
-      };
-
-      reader.onerror = () => {
-        reject(new Error('파일 읽기 실패'));
-      };
-
-      reader.readAsDataURL(file);
-    });
-  };
-
-  // 아바타 변경 처리
+  // 🔥 수정: imageProcessor 사용
   const handleAvatarChange = useCallback(async (file: File) => {
     try {
       setUploadingAvatar(true);
       setErrors({});
 
-      // 파일 타입 체크
-      if (!file.type.startsWith('image/')) {
-        setErrors(prev => ({ ...prev, general: '이미지 파일만 업로드 가능합니다.' }));
-        setUploadingAvatar(false);
-        return;
-      }
+      console.log('📸 이미지 처리 시작:', file.name);
 
-      // 원본 파일 크기 체크 (20MB)
-      if (file.size > 20 * 1024 * 1024) {
-        setErrors(prev => ({ ...prev, general: '원본 이미지가 너무 큽니다 (최대 20MB).' }));
-        setUploadingAvatar(false);
-        return;
-      }
+      // 1단계: 파일 유효성 검사
+      validateImageFile(file);
 
-      console.log(`📸 원본 파일: ${file.name}, 크기: ${(file.size / 1024).toFixed(1)}KB`);
-
-      // 이미지 리사이징 및 압축
+      // 2단계: 리사이징 및 압축 (Android 호환 버전)
       const resizedFile = await resizeAndCompressImage(file);
 
-      // 리사이징된 파일 크기 재확인
-      if (resizedFile.size > 5 * 1024 * 1024) {
-        setErrors(prev => ({ ...prev, general: '이미지를 더 압축해야 합니다.' }));
-        setUploadingAvatar(false);
-        return;
-      }
-
+      // 3단계: 상태 업데이트
       setAvatarFile(resizedFile);
 
-      // 미리보기 생성
+      // 4단계: 미리보기 생성
       const reader = new FileReader();
       reader.onloadend = () => {
         setAvatarPreview(reader.result as string);
         setUploadingAvatar(false);
+        console.log('✅ 이미지 처리 완료');
       };
       reader.onerror = () => {
         setErrors(prev => ({ ...prev, general: '미리보기 생성 실패' }));
         setUploadingAvatar(false);
       };
       reader.readAsDataURL(resizedFile);
+
     } catch (error) {
       console.error('❌ 이미지 처리 오류:', error);
-      setErrors(prev => ({ 
-        ...prev, 
-        general: '이미지 처리 중 오류가 발생했습니다. 다른 사진을 선택해주세요.' 
-      }));
+      const errorMessage = getImageErrorMessage(error);
+      setErrors(prev => ({ ...prev, general: errorMessage }));
       setUploadingAvatar(false);
     }
   }, []);
 
-  // 폼 제출 처리
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 유효성 검사
     const validationErrors = validateForm(formData);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -420,7 +316,6 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
     try {
       let avatarUrl = profile?.avatar_url;
 
-      // 아바타 이미지 업로드
       if (avatarFile) {
         setUploadingAvatar(true);
         console.log('📤 이미지 업로드 시작...');
@@ -447,7 +342,6 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
         }
       }
 
-      // 프로필 업데이트
       const { error: updateError } = await ProfileService.updateProfile({
         username: formData.fullName.trim(),
         gender: formData.gender,
@@ -461,7 +355,6 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
         return;
       }
 
-      // 프로필 새로고침
       if (refreshProfile) {
         await refreshProfile();
       }
@@ -477,10 +370,8 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
     }
   };
 
-  // 폼 필드 업데이트
   const updateField = useCallback((field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // 필드 변경 시 해당 필드의 에러 제거
     setErrors(prev => {
       const newErrors = { ...prev };
       delete newErrors[field];
@@ -501,7 +392,6 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
         className="w-full max-w-md bg-[#3B4236] rounded-[20px] p-6 sm:p-8 relative my-8"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* 닫기 버튼 */}
         <button
           onClick={handleClose}
           className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-white hover:bg-white/10 rounded-full transition-colors"
@@ -510,21 +400,17 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
           ✕
         </button>
 
-        {/* 제목 */}
         <h2 className="text-white text-2xl font-bold font-['Pretendard'] mb-6">
           프로필 수정
         </h2>
 
-        {/* 일반 에러 메시지 */}
         {errors.general && (
           <div className="mb-4 p-3 bg-red-500/20 border border-red-500 rounded-lg text-red-200 text-sm">
             {errors.general}
           </div>
         )}
 
-        {/* 폼 */}
         <div className="space-y-5">
-          {/* 프로필 이미지 */}
           <ProfileImageSection
             avatarPreview={avatarPreview}
             displayName={displayName}
@@ -533,7 +419,6 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
             onAvatarChange={handleAvatarChange}
           />
 
-          {/* 이름 */}
           <TextInput
             label="이름"
             value={formData.fullName}
@@ -544,7 +429,6 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
             maxLength={30}
           />
 
-          {/* 성별 */}
           <GenderSelector
             value={formData.gender}
             onChange={(value) => updateField('gender', value)}
@@ -552,7 +436,6 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
             disabled={loading}
           />
 
-          {/* 나이 */}
           <TextInput
             label="나이"
             type="number"
@@ -565,7 +448,6 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
             max="120"
           />
 
-          {/* 관심 기업 */}
           <div>
             <TextInput
               label="관심 기업"
@@ -581,7 +463,6 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
             </p>
           </div>
 
-          {/* 버튼 */}
           <div className="flex gap-3 pt-4">
             <button
               type="button"
@@ -594,10 +475,10 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
             <button
               type="button"
               onClick={handleSubmit}
-              className="..."
+              className="flex-1 py-3 px-4 bg-[#ADFF00] hover:bg-[#9AE600] text-black font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading || uploadingAvatar}
             >
-              {loading ? '저장 중...' : uploadingAvatar ? '이미지 처리 중...' : '저장'}  
+              {loading ? '저장 중...' : uploadingAvatar ? '이미지 처리 중...' : '저장'}
             </button>
           </div>
         </div>
