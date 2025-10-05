@@ -256,6 +256,8 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
   }, [isOpen]);
 
   const handleClose = useCallback(() => {
+    // ✅ 모달 닫기 전에 body에서 속성 제거
+    document.body.removeAttribute('data-modal-open');
     if (window.history.state?.modal === 'profile-edit') {
       window.history.back();
     } else {

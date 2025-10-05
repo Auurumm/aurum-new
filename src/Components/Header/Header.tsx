@@ -41,6 +41,8 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick, onLogoutClick }) =
 
   const handleProfileEditClick = () => {
     setShowProfileMenu(false);
+    // ✅ 모달 열기 전에 body에 속성 추가
+    document.body.setAttribute('data-modal-open', 'true');
     setShowProfileEditModal(true);
     window.history.pushState({ modal: 'profile-edit' }, '', window.location.href);
   };
