@@ -331,10 +331,14 @@ export const WisdomCardGrid = ({
 
   // 카드 클릭 핸들러
   const handleCardClick = (post: WisdomPost, event: React.MouseEvent<HTMLElement>) => {
+    // ✅ 현재 스크롤 위치 저장 (가장 먼저)
+    scrollPositionRef.current = window.pageYOffset || document.documentElement.scrollTop;
+    console.log('📍 스크롤 위치 저장:', scrollPositionRef.current);
+    
     const clickedElement = event.currentTarget;
     const elementRect = clickedElement.getBoundingClientRect();
     const elementTop = elementRect.top + window.pageYOffset;
-
+  
     setModalTopPosition(Math.max(50, elementTop - 50));
     
     // 이미 모달이 열려있는 경우 히스토리 중복 추가 방지
@@ -345,26 +349,27 @@ export const WisdomCardGrid = ({
       setSelectedCard(post);
     }
   };
-
   // 모달 닫기
   const closeModal = () => {
+    const savedPosition = scrollPositionRef.current;
+    console.log('🔙 복원할 스크롤 위치:', savedPosition);
+    
     setSelectedCard(null);
     setSelectedReaction(null);
     setModalTopPosition(0);
     
-    // ✅ 스크롤을 최상단으로 이동 (헤더가 보이도록)
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-    
-    // ✅ 확실하게 최상단 고정
-    setTimeout(() => {
-      window.scrollTo({ top: 0 });
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-    }, 100);
+    // 즉시 복원 (setTimeout 제거)
+    if (savedPosition !== undefined && savedPosition !== null) {
+      // requestAnimationFrame으로 더 정확한 타이밍
+      requestAnimationFrame(() => {
+        window.scrollTo({
+          top: savedPosition,
+          behavior: 'smooth'
+        });
+      });
+    }
   };
+  
   // 반응 선택 핸들러
   const handleReactionSelect = (reactionType: ReactionType) => {
     setSelectedReaction(reactionType);
