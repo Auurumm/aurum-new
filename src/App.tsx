@@ -18,8 +18,25 @@ import { supabase } from './lib/supabase.ts';
 
 // 메인 앱 컴포넌트 - 실제 인증 로직 사용
 const AppContent = () => {
-  // 인증 관련 상태
   const { user, profile, signOut, loading } = useAuth();
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+
+  // ✅ 최초 로딩이 완료되면 다시는 로딩 화면을 보여주지 않음
+  useEffect(() => {
+    if (!loading && !initialLoadComplete) {
+      setInitialLoadComplete(true);
+    }
+  }, [loading, initialLoadComplete]);
+
+  // ✅ 최초 1회만 로딩 화면 표시
+  if (!initialLoadComplete && loading) {
+    return (
+      <div className="w-full min-h-screen bg-gradient-to-b from-[#111410] to-black flex items-center justify-center">
+        <div className="text-white text-xl">로딩 중...</div>
+      </div>
+    );
+  }
+  // 인증 관련 상태
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 

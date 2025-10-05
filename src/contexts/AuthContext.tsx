@@ -153,14 +153,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     let mounted = true;
     let initializing = true;
-
+  
     const hardStop = setTimeout(() => {
       if (mounted && initializing) {
         console.warn('인증 초기화 타임아웃');
         setLoading(false);
       }
     }, 5000);
-
+  
     // 초기 세션 확인
     const initSession = async () => {
       try {
@@ -183,7 +183,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         clearTimeout(hardStop);
       }
     };
-
+  
     initSession();
 
     // 인증 상태 변경 리스너
@@ -191,26 +191,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       async (event, currentSession) => {
         console.log('인증 상태 변경:', event);
         
+        // ✅ 초기화 중이거나 unmount된 경우 무시
         if (!mounted || initializing) return;
-
+  
+        // ✅ TOKEN_REFRESHED 이벤트는 loading 상태 변경 안 함
+        if (event === 'TOKEN_REFRESHED') {
+          console.log('토큰 갱신됨 - loading 상태 유지');
+          return;
+        }
+  
         if (event === 'SIGNED_IN' && currentSession) {
-          // 로그인 시
           await initializeAuth(currentSession);
         } else if (event === 'SIGNED_OUT') {
-          // 로그아웃 시
           setUser(null);
           setProfile(null);
           setSession(null);
+          setLoading(false);
         } else if (event === 'USER_UPDATED' && currentSession) {
-          // 사용자 정보 업데이트 시
           setUser(currentSession.user);
           await refreshProfile();
         }
-        
-        setLoading(false);
       }
     );
-
+  
     return () => {
       mounted = false;
       clearTimeout(hardStop);
