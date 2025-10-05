@@ -276,22 +276,47 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
 
       // 2단계: 리사이징 및 압축 (Android 호환 버전)
       const resizedFile = await resizeAndCompressImage(file);
+      console.log('✅ 리사이징 완료:', resizedFile.name, resizedFile.size);
 
       // 3단계: 상태 업데이트
       setAvatarFile(resizedFile);
 
       // 4단계: 미리보기 생성
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatarPreview(reader.result as string);
+      try {
+        const reader = new FileReader();
+        
+        const loadPromise = new Promise<string>((resolve, reject) => {
+          reader.onloadend = () => {
+            if (reader.result) {
+              resolve(reader.result as string);
+            } else {
+              reject(new Error('미리보기 생성 실패'));
+            }
+          };
+          reader.onerror = () => reject(new Error('파일 읽기 실패'));
+          
+          // 타임아웃 설정 (10초)
+          setTimeout(() => reject(new Error('미리보기 생성 시간 초과')), 10000);
+        });
+
+        reader.readAsDataURL(resizedFile);
+        
+        const previewUrl = await loadPromise;
+        setAvatarPreview(previewUrl);
+        console.log('✅ 미리보기 생성 완료');
+        
+      } catch (previewError) {
+        console.error('❌ 미리보기 생성 오류:', previewError);
+        // 미리보기 실패해도 파일은 저장되어 있으므로 계속 진행
+        setErrors(prev => ({ 
+          ...prev, 
+          general: '미리보기 생성에 실패했지만 이미지는 저장됩니다.' 
+        }));
+      } finally {
+        // 어떤 경우든 로딩 종료
         setUploadingAvatar(false);
-        console.log('✅ 이미지 처리 완료');
-      };
-      reader.onerror = () => {
-        setErrors(prev => ({ ...prev, general: '미리보기 생성 실패' }));
-        setUploadingAvatar(false);
-      };
-      reader.readAsDataURL(resizedFile);
+        console.log('✅ 이미지 처리 완료 - 저장 버튼을 눌러주세요');
+      }
 
     } catch (error) {
       console.error('❌ 이미지 처리 오류:', error);
