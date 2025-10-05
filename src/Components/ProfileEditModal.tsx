@@ -265,10 +265,11 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
 
   // 🔥 수정: imageProcessor 사용
   const handleAvatarChange = useCallback(async (file: File) => {
-    try {
-      setUploadingAvatar(true);
-      setErrors({});
+    console.log('🎬 handleAvatarChange 시작');
+    setUploadingAvatar(true);
+    setErrors({});
 
+    try {
       console.log('📸 이미지 처리 시작:', file.name);
 
       // 1단계: 파일 유효성 검사
@@ -282,41 +283,26 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
       setAvatarFile(resizedFile);
 
       // 4단계: 미리보기 생성
-      try {
-        const reader = new FileReader();
-        
-        const loadPromise = new Promise<string>((resolve, reject) => {
-          reader.onloadend = () => {
-            if (reader.result) {
-              resolve(reader.result as string);
-            } else {
-              reject(new Error('미리보기 생성 실패'));
-            }
-          };
-          reader.onerror = () => reject(new Error('파일 읽기 실패'));
-          
-          // 타임아웃 설정 (10초)
-          setTimeout(() => reject(new Error('미리보기 생성 시간 초과')), 10000);
-        });
-
-        reader.readAsDataURL(resizedFile);
-        
-        const previewUrl = await loadPromise;
-        setAvatarPreview(previewUrl);
-        console.log('✅ 미리보기 생성 완료');
-        
-      } catch (previewError) {
-        console.error('❌ 미리보기 생성 오류:', previewError);
-        // 미리보기 실패해도 파일은 저장되어 있으므로 계속 진행
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        console.log('📸 미리보기 생성 완료');
+        if (reader.result) {
+          setAvatarPreview(reader.result as string);
+        }
+        // ✅ 여기서 로딩 종료
+        setUploadingAvatar(false);
+        console.log('✅ 이미지 처리 완료 - 저장 버튼을 눌러주세요');
+      };
+      reader.onerror = () => {
+        console.error('❌ 미리보기 생성 오류');
         setErrors(prev => ({ 
           ...prev, 
           general: '미리보기 생성에 실패했지만 이미지는 저장됩니다.' 
         }));
-      } finally {
-        // 어떤 경우든 로딩 종료
+        // ✅ 에러여도 로딩 종료
         setUploadingAvatar(false);
-        console.log('✅ 이미지 처리 완료 - 저장 버튼을 눌러주세요');
-      }
+      };
+      reader.readAsDataURL(resizedFile);
 
     } catch (error) {
       console.error('❌ 이미지 처리 오류:', error);
