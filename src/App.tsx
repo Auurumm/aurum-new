@@ -401,7 +401,9 @@ const AppContent = () => {
   };
 
   // ✅ 로딩 중일 때 (인증 로딩 또는 위즈덤 확인 중)
-  if (loading || checkingWisdom) {
+  const isModalOpen = document.body.getAttribute('data-modal-open') === 'true';
+
+  if ((loading || checkingWisdom) && !isModalOpen) {
     return (
       <div className="w-full min-h-screen bg-gradient-to-b from-[#111410] to-black flex items-center justify-center">
         <div className="text-white text-xl">로딩 중...</div>
