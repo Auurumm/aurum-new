@@ -352,18 +352,19 @@ export const WisdomCardGrid = ({
     setSelectedReaction(null);
     setModalTopPosition(0);
     
-    // 저장된 스크롤 위치로 복원
+    // ✅ 스크롤을 최상단으로 이동 (헤더가 보이도록)
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+    
+    // ✅ 확실하게 최상단 고정
     setTimeout(() => {
-      const savedPosition = scrollPositionRef.current;
-      if (savedPosition !== undefined) {
-        window.scrollTo({
-          top: savedPosition,
-          behavior: 'smooth'
-        });
-      }
+      window.scrollTo({ top: 0 });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
     }, 100);
   };
-
   // 반응 선택 핸들러
   const handleReactionSelect = (reactionType: ReactionType) => {
     setSelectedReaction(reactionType);
