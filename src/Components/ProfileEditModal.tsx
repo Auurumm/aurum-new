@@ -282,27 +282,65 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
       // 3단계: 상태 업데이트
       setAvatarFile(resizedFile);
 
-      // 4단계: 미리보기 생성
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        console.log('📸 미리보기 생성 완료');
-        if (reader.result) {
-          setAvatarPreview(reader.result as string);
-        }
-        // ✅ 여기서 로딩 종료
-        setUploadingAvatar(false);
-        console.log('✅ 이미지 처리 완료 - 저장 버튼을 눌러주세요');
-      };
-      reader.onerror = () => {
-        console.error('❌ 미리보기 생성 오류');
-        setErrors(prev => ({ 
-          ...prev, 
-          general: '미리보기 생성에 실패했지만 이미지는 저장됩니다.' 
-        }));
-        // ✅ 에러여도 로딩 종료
-        setUploadingAvatar(false);
-      };
-      reader.readAsDataURL(resizedFile);
+      // 4단계: 미리보기 생성 (Android 버그 우회)
+      try {
+        const previewUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          let completed = false;
+
+          const cleanup = () => {
+            completed = true;
+          };
+
+          reader.onload = () => {
+            if (!completed && reader.result) {
+              cleanup();
+              console.log('📸 미리보기 생성 완료 (onload)');
+              resolve(reader.result as string);
+            }
+          };
+
+          reader.onloadend = () => {
+            if (!completed && reader.result) {
+              cleanup();
+              console.log('📸 미리보기 생성 완료 (onloadend)');
+              resolve(reader.result as string);
+            }
+          };
+
+          reader.onerror = () => {
+            if (!completed) {
+              cleanup();
+              reject(new Error('파일 읽기 실패'));
+            }
+          };
+
+          // Android 타임아웃 대응
+          setTimeout(() => {
+            if (!completed && reader.result) {
+              cleanup();
+              console.log('📸 미리보기 생성 완료 (timeout fallback)');
+              resolve(reader.result as string);
+            } else if (!completed) {
+              cleanup();
+              reject(new Error('미리보기 생성 시간 초과'));
+            }
+          }, 3000);
+
+          reader.readAsDataURL(resizedFile);
+        });
+
+        setAvatarPreview(previewUrl);
+        console.log('✅ 미리보기 설정 완료');
+
+      } catch (previewError) {
+        console.error('❌ 미리보기 생성 오류:', previewError);
+        // 미리보기 실패해도 파일은 저장됨
+      }
+
+      // 5단계: 로딩 종료 (반드시 실행)
+      setUploadingAvatar(false);
+      console.log('✅ 이미지 처리 완료 - 저장 버튼을 눌러주세요');
 
     } catch (error) {
       console.error('❌ 이미지 처리 오류:', error);
