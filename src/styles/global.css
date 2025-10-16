@@ -544,3 +544,21 @@ body::after {
 .history-scrollbar::-webkit-scrollbar-button {
   display: none;  /* 위아래 삼각형 버튼 제거 */
 }
+
+/* body가 항상 최소 패딩을 유지하도록 */
+body {
+  padding-top: env(safe-area-inset-top);
+  min-height: 100vh;
+}
+
+/* iOS Safari에서 발생하는 스크롤 문제 해결 */
+html, body {
+  overscroll-behavior-y: none;
+  position: relative;
+}
+
+/* 헤더가 최상단에 고정되도록 */
+header {
+  position: relative;
+  z-index: 10;
+}

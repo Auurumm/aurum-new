@@ -1095,17 +1095,17 @@ const ModalHeader = ({ card, onClose, hasUserReacted, onCancelReaction }: any) =
 const ModalContent = ({ selectedCard, formatTimestamp }: any) => (
   <div className="self-stretch flex flex-col justify-start items-start gap-3">
     <div className="self-stretch flex flex-col justify-start items-start gap-3.5">
-      <div className="self-stretch text-white text-base lg:text-xl font-extralight leading-relaxed lg:leading-9">
+      <div className="self-stretch text-white text-base lg:text-xl font-semibold leading-relaxed lg:leading-9">
         - {selectedCard.request_a}
       </div>
-      <div className="self-stretch text-white text-base lg:text-xl font-extralight leading-relaxed lg:leading-9 whitespace-pre-line">
+      <div className="self-stretch text-white text-base lg:text-xl font-semibold leading-relaxed lg:leading-9 whitespace-pre-line">
         - {selectedCard.request_b}
       </div>
-      <div className="self-stretch text-white text-base lg:text-xl font-extralight leading-relaxed lg:leading-9">
+      <div className="self-stretch text-white text-base lg:text-xl font-semibold leading-relaxed lg:leading-9">
         - {selectedCard.request_c}
       </div>
     </div>
-    <div className="self-stretch text-left text-neutral-400 text-sm font-extralight leading-tight">
+    <div className="self-stretch text-left text-neutral-400 text-sm font-semibold leading-tight">
       {formatTimestamp(selectedCard.created_at)}
     </div>
   </div>
