@@ -159,15 +159,21 @@ const useDraftLoader = (isOpen: boolean, isLoggedIn: boolean, setFormData: React
 const useScrollToTop = (isOpen: boolean, popupType: PopupType, onClose: () => void) => {
   const scrollPositionRef = useRef<number>(0);
 
-  // 모달 열릴 때 현재 스크롤 위치 저장만 수행
+  // 모달 열릴 때 현재 스크롤 위치 저장 및 최상단으로 이동
   useEffect(() => {
     if (isOpen) {
       scrollPositionRef.current = window.pageYOffset || document.documentElement.scrollTop;
+      
+      // 모달 열릴 때 스크롤을 최상단으로 이동
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }, 100);
     }
-    // 모달이 닫힐 때는 아무 작업도 하지 않음
   }, [isOpen]);
 
-  // 팝업(임시저장/완료) 뜰 때만 스크롤
+  // 팝업(임시저장/완료) 뜰 때도 스크롤
   useEffect(() => {
     if (!popupType) return;
 
@@ -488,7 +494,7 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({
       >
         <div 
           data-modal="wisdom"
-          className="px-8 lg:px-16 xl:px-28 py-8 lg:py-12 xl:py-16 bg-neutral-900 rounded-[20px] outline outline-1 outline-offset-[-1px] outline-stone-500 inline-flex flex-col justify-start items-start gap-2.5 max-h-[90vh] overflow-y-auto w-full max-w-[1000px] mx-4 mt-16"
+          className="px-8 lg:px-16 xl:px-28 py-8 lg:py-12 xl:py-16 bg-neutral-900 rounded-[20px] outline outline-1 outline-offset-[-1px] outline-stone-500 inline-flex flex-col justify-start items-start gap-2.5 max-h-[90vh] overflow-y-auto w-full max-w-[1000px] mx-4 mt-40"
           onClick={(e) => e.stopPropagation()}
           role="dialog"
           aria-modal="true"

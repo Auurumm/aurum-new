@@ -10,9 +10,14 @@ export const ProgressSection: React.FC<ProgressSectionProps> = ({ isCompleted = 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      element.scrollIntoView({ 
-        behavior: 'smooth',
-        block: 'start'
+      // ✅ 헤더 높이를 고려한 오프셋 계산
+      const headerHeight = window.innerWidth >= 1024 ? 96 : window.innerWidth >= 640 ? 80 : 64;
+      const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+      const offsetPosition = elementPosition - headerHeight - 20; // 20px 추가 여백
+  
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
       });
     }
   };
