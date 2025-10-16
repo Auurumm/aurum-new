@@ -21,12 +21,17 @@ const MODAL_MESSAGES = {
 // ==================== 커스텀 훅: 모달 히스토리 관리 ====================
 const useModalHistory = (isOpen: boolean, onClose: () => void) => {
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      document.body.removeAttribute('data-modal-open');
+      return;
+    }
 
+    document.body.setAttribute('data-modal-open', 'true');
     const handlePopState = () => onClose();
     window.addEventListener('popstate', handlePopState);
 
     return () => {
+      document.body.removeAttribute('data-modal-open');
       window.removeEventListener('popstate', handlePopState);
     };
   }, [isOpen, onClose]);

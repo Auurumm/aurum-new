@@ -562,3 +562,44 @@ header {
   position: relative;
   z-index: 10;
 }
+
+/* 모달이 열렸을 때 body 스크롤 방지 및 위치 고정 */
+body[data-modal-open] {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  left: 0;
+}
+
+/* 모달 컨테이너 스크롤 허용 */
+body[data-modal-open] .modal-scroll-container {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* iOS Safari 안전 영역 추가 패딩 */
+@supports (-webkit-touch-callout: none) {
+  body[data-modal-open] {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* 헤더가 항상 보이도록 최소 높이 보장 */
+header {
+  position: relative;
+  z-index: 10;
+  min-height: 288px; /* 모바일 기본 높이 */
+}
+
+@media (min-width: 640px) {
+  header {
+    min-height: 350px;
+  }
+}
+
+@media (min-width: 1024px) {
+  header {
+    min-height: 493px;
+  }
+}
