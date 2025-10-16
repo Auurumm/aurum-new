@@ -19,6 +19,7 @@ const MODAL_MESSAGES = {
 } as const;
 
 // ==================== 커스텀 훅: 모달 히스토리 관리 ====================
+// useModalHistory 훅 수정
 const useModalHistory = (isOpen: boolean, onClose: () => void) => {
   useEffect(() => {
     if (!isOpen) {
@@ -26,7 +27,9 @@ const useModalHistory = (isOpen: boolean, onClose: () => void) => {
       return;
     }
 
-    document.body.setAttribute('data-modal-open', 'true');
+    // ❌ 이 줄 제거
+    // document.body.setAttribute('data-modal-open', 'true');
+    
     const handlePopState = () => onClose();
     window.addEventListener('popstate', handlePopState);
 

@@ -563,14 +563,17 @@ header {
   z-index: 10;
 }
 
-/* 모달이 열렸을 때 body 처리 */
-body[data-modal-open] {
-  overflow: hidden;
-  position: fixed;
-  width: 100%;
-  height: 100vh;
-  top: 0;
-  left: 0;
+/* ✅ 새로운 방식: 모달이 실제로 DOM에 있을 때만 적용 */
+body:has(.modal-overlay) {
+  overflow: hidden !important;
+}
+
+body:has([data-modal="wisdom"]) {
+  overflow: hidden !important;
+}
+
+body:has(div[role="dialog"][aria-modal="true"]) {
+  overflow: hidden !important;
 }
 
 /* 헤더 네비게이션 항상 최상단 고정 */

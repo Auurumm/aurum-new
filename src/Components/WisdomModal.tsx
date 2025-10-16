@@ -95,7 +95,9 @@ const useModalHistory = (isOpen: boolean, onClose: () => void) => {
       return;
     }
 
-    document.body.setAttribute('data-modal-open', 'true');
+    // ❌ 이 줄 제거 - 속성 추가하지 않음
+    // document.body.setAttribute('data-modal-open', 'true');
+    
     window.history.pushState({ modal: 'wisdom' }, '', window.location.href);
     const handlePopState = () => onClose();
     window.addEventListener('popstate', handlePopState);

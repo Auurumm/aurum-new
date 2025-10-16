@@ -41,7 +41,6 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick, onLogoutClick }) =
 
   const handleProfileEditClick = () => {
     setShowProfileMenu(false);
-    document.body.setAttribute('data-modal-open', 'true');
     setShowProfileEditModal(true);
     window.history.pushState({ modal: 'profile-edit' }, '', window.location.href);
   };
