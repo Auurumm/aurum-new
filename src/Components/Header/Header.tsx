@@ -89,7 +89,7 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick, onLogoutClick }) =
         </div>
 
         {/* Navigation bar */}
-        <nav className="w-full h-16 sm:h-20 lg:h-24 top-0 absolute bg-stone-900/60 border-b border-white/20 backdrop-blur-[6px] z-20">
+        <nav className="w-full h-16 sm:h-20 lg:h-24 fixed top-0 left-0 right-0 bg-stone-900/60 border-b border-white/20 backdrop-blur-[6px] z-50">
           
           {/* Logo */}
           <div className="w-8 h-5 sm:w-9 sm:h-6 lg:w-11 lg:h-7 left-3 sm:left-4 lg:left-[10px] top-1/2 -translate-y-1/2 absolute">

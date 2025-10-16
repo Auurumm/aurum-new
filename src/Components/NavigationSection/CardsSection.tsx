@@ -126,19 +126,7 @@ export const WisdomCardGrid = ({
     loadUserReactionUsage();
   }, []);
 
-  // DetailModal이 열릴 때
-  useEffect(() => {
-    if (selectedCard) {
-      document.body.setAttribute('data-modal-open', 'true');
-    } else {
-      document.body.removeAttribute('data-modal-open');
-    }
-
-    return () => {
-      document.body.removeAttribute('data-modal-open');
-    };
-  }, [selectedCard]);
-
+  
   // 모달이 열릴 때 스크롤 위치 저장 및 조정
   useEffect(() => {
     if (selectedCard && modalTopPosition > 0) {

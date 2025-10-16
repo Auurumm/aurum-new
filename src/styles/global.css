@@ -563,29 +563,26 @@ header {
   z-index: 10;
 }
 
-/* 모달이 열렸을 때 body 스크롤 방지 및 위치 고정 */
+/* 모달이 열렸을 때 body 처리 */
 body[data-modal-open] {
   overflow: hidden;
   position: fixed;
   width: 100%;
+  height: 100vh;
   top: 0;
   left: 0;
 }
 
-/* 모달 컨테이너 스크롤 허용 */
-body[data-modal-open] .modal-scroll-container {
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+/* 헤더 네비게이션 항상 최상단 고정 */
+header nav {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50 !important;
 }
 
-/* iOS Safari 안전 영역 추가 패딩 */
-@supports (-webkit-touch-callout: none) {
-  body[data-modal-open] {
-    padding-top: env(safe-area-inset-top);
-  }
-}
-
-/* 헤더가 항상 보이도록 최소 높이 보장 */
+/* 헤더 컨테이너 자체는 relative 유지 */
 header {
   position: relative;
   z-index: 10;
@@ -602,4 +599,26 @@ header {
   header {
     min-height: 493px;
   }
+}
+
+/* iOS Safari 안전 영역 추가 패딩 */
+@supports (-webkit-touch-callout: none) {
+  body[data-modal-open] {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  header nav {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* 모달의 z-index 조정 */
+.modal-overlay,
+[data-modal] {
+  z-index: 60 !important;
+}
+
+/* 모바일 메뉴는 더 높은 z-index */
+.mobile-menu-overlay {
+  z-index: 70 !important;
 }
