@@ -569,34 +569,35 @@ export const WisdomCardGrid = ({
   // 반응 팝업 닫기
   const closeReactionPopup = () => {
     setShowReactionPopup(false);
-
+  
     if (isCompletePopup && reactionCount >= TOTAL_REACTIONS_REQUIRED && onAllReactionsComplete) {
       setSelectedCard(null);
       setSelectedReaction(null);
-
-      // ✅ 개선: 즉시 최상단으로 스크롤 시작
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
+  
+      // ✅ requestAnimationFrame으로 더 정확한 타이밍
+      requestAnimationFrame(() => {
+        // 모바일 safe area를 고려한 스크롤
+        const safeScrollTop = Math.max(0, -window.pageYOffset);
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
       });
       
-      // ✅ 추가: 확실하게 최상단 고정 (여러 번 시도)
+      // 추가 보정
       setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
-      }, 100);
+        document.documentElement.scrollTop = 0;
+      }, 50);
       
       setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
-      }, 300);
-
+        document.documentElement.scrollTop = 0;
+      }, 350);
+  
       onAllReactionsComplete();
     }
   };
-
   // 로딩 중일 때 표시
   if (loading) {
     return (
