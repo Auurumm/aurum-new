@@ -157,37 +157,15 @@ const useDraftLoader = (isOpen: boolean, isLoggedIn: boolean, setFormData: React
 const useScrollToTop = (isOpen: boolean, popupType: PopupType, onClose: () => void) => {
   const scrollPositionRef = useRef<number>(0);
 
-  // 모달 열릴 때 현재 스크롤 위치 저장 및 스크롤
+  // 모달 열릴 때 현재 스크롤 위치 저장만 수행
   useEffect(() => {
-    if (!isOpen) {
-      // 모달이 닫힐 때 스크롤 위치 복원
-      if (scrollPositionRef.current !== undefined) {
-        setTimeout(() => {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-          document.documentElement.scrollTop = 0;
-          document.body.scrollTop = 0;
-        }, 100);
-      }
-      return;
+    if (isOpen) {
+      scrollPositionRef.current = window.pageYOffset || document.documentElement.scrollTop;
     }
-
-    // 현재 스크롤 위치 저장
-    scrollPositionRef.current = window.pageYOffset || document.documentElement.scrollTop;
-
-    setTimeout(() => {
-      const modalElement = document.querySelector('[data-modal="wisdom"]');
-      if (modalElement) {
-        const modalRect = modalElement.getBoundingClientRect();
-        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        const modalTop = modalRect.top + scrollTop;
-        window.scrollTo({ top: modalTop - 50, behavior: 'smooth' });
-      } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    }, 100);
+    // 모달이 닫힐 때는 아무 작업도 하지 않음
   }, [isOpen]);
 
-  // 팝업 뜰 때 스크롤
+  // 팝업(임시저장/완료) 뜰 때만 스크롤
   useEffect(() => {
     if (!popupType) return;
 
