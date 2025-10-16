@@ -622,3 +622,25 @@ header {
 .mobile-menu-overlay {
   z-index: 70 !important;
 }
+
+/* 네비게이션 바 고정으로 인한 콘텐츠 밀림 방지 */
+body {
+  padding-top: 0; /* body에는 padding 없음 */
+}
+
+/* 헤더는 네비게이션 바 높이만큼 margin-top */
+header {
+  margin-top: 64px; /* 모바일: h-16 = 64px */
+}
+
+@media (min-width: 640px) {
+  header {
+    margin-top: 80px; /* 태블릿: h-20 = 80px */
+  }
+}
+
+@media (min-width: 1024px) {
+  header {
+    margin-top: 96px; /* 데스크톱: h-24 = 96px */
+  }
+}
